@@ -11,7 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.ui.theme.CurtinEATTheme
+import com.example.curtineat.view.CardScreen
+import com.example.curtineat.view.MainScreen
+import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,29 +25,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CurtinEATTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                ScreenNavigation()
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+@Serializable
+object RouteMainScreen
 
-@Preview(showBackground = true)
+@Serializable
+object RouteCardScreen
 @Composable
-fun GreetingPreview() {
-    CurtinEATTheme {
-        Greeting("Android")
+fun ScreenNavigation() {
+    val nav = rememberNavController()
+    val onCardButtonClick: () -> Unit = { nav.navigate(RouteCardScreen) }
+    val onBackButtonClick: () -> Unit = { nav.popBackStack() }
+
+    NavHost (
+        navController = nav,
+        startDestination = RouteMainScreen
+    ) {
+        composable <RouteMainScreen> { MainScreen(onCardButtonClick) }
+        composable <RouteCardScreen> { CardScreen(onBackButtonClick) }
     }
 }
