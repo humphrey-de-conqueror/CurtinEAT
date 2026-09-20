@@ -4,9 +4,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.curtineat.viewmodel.AppViewModel
 
 @Composable
-fun CardScreen(onBackButtonClick: () -> Unit) {
+fun CardScreen(
+    appViewModel: AppViewModel,
+    onBackButtonClick: () -> Unit
+) {
     Column() {
         Text(text = "this is card screen")
         Button(

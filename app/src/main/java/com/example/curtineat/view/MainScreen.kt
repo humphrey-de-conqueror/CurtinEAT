@@ -34,9 +34,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.curtineat.viewmodel.AppViewModel
 
 @Composable
-fun MainScreen(onCardButtonClick: () -> Unit) {
+fun MainScreen(
+    appViewModel: AppViewModel,
+    onCardButtonClick: () -> Unit
+) {
     Scaffold(
         topBar = { TopBarScreen() },
         bottomBar = { BottomBarScreen() },
