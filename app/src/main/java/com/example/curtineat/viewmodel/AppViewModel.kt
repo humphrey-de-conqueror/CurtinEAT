@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.curtineat.database.Customer
+import com.example.curtineat.database.CustomerDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
@@ -13,9 +15,13 @@ import kotlinx.coroutines.launch
 
 class AppViewModel(
     private var vendorDao: VendorDao,
+    private var customerDao: CustomerDao,
     private var productDao: ProductDao
 ): ViewModel() {
     var vendor by mutableStateOf(listOf<Vendor>())
+        private set
+
+    var customer by mutableStateOf(listOf<Customer>())
         private set
     var product by mutableStateOf(listOf<Product>())
         private set
@@ -27,6 +33,7 @@ class AppViewModel(
 
     fun refresh() = viewModelScope.launch {
         vendor = vendorDao.getAllVendor()
+        customer = customerDao.getAllCustomer()
         product = productDao.getAllProduct()
     }
 
@@ -38,19 +45,45 @@ class AppViewModel(
 
     fun updateVendor(vendor: Vendor) = viewModelScope.launch {
         vendorDao.updateVendor(vendor)
+        refresh()
     }
 
     fun deleteVendor(vendor: Vendor) = viewModelScope.launch {
         vendorDao.deleteVendor(vendor)
+        refresh()
     }
 
+    // customer dao
+    fun insertCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.insertCustomer(customer)
+        refresh()
+    }
+
+    fun updateCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.updateCustomer(customer)
+        refresh()
+    }
+
+    fun deleteCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.deleteCustomer(customer)
+        refresh()
+    }
+
+    // product dao
     fun insertProduct(product: Product) = viewModelScope.launch {
         productDao.insertProduct(product)
         refresh()
     }
 
-    // customer dao
+    fun updateProduct(product: Product) = viewModelScope.launch {
+        productDao.updateProduct(product)
+        refresh()
+    }
 
+    fun deleteProduct(product: Product) = viewModelScope.launch {
+        productDao.deleteProduct(product)
+        refresh()
+    }
 
 
     // please remove this seed data in production
