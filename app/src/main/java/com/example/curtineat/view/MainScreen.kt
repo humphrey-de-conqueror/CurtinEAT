@@ -221,16 +221,47 @@ fun TopBarScreen(
                         HorizontalDivider()
 
                         // Scrollable notification area
-                        LazyColumn(
+                        DropdownMenu(
+                            expanded = showNotifications,
+                            onDismissRequest = {
+                                showNotifications = false
+                            },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
+                                .width(320.dp)
+                                .height(400.dp)
                         ) {
 
-                            items(10) { index ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Notifications",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+
+                                IconButton(
+                                    onClick = {
+                                        showNotifications = false
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Close"
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider()
+
+                            repeat(10) { index ->
                                 Text(
                                     text = "Notification ${index + 1}",
-                                    modifier = Modifier.padding(vertical = 12.dp)
+                                    modifier = Modifier.padding(16.dp)
                                 )
 
                                 HorizontalDivider()
