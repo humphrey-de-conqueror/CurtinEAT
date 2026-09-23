@@ -24,8 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
