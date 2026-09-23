@@ -56,6 +56,7 @@ dependencies {
     // Lifecycle / MVVM
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.material3)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

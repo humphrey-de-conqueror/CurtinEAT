@@ -113,81 +113,8 @@ fun CardButton(onCardButtonClick: () -> Unit) {
 
 @Composable
 fun BodyScreen(innerPadding: PaddingValues) {
-    val restaurants = listOf(
-        "Restaurant Placeholder 1",
-        "Restaurant Placeholder 2",
-        "Restaurant Placeholder 3",
-        "Restaurant Placeholder 4"
-    )
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier.padding(innerPadding)
     ) {
-        item {
-            Text(
-                text = "Welcome to CurtinEat"
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            Text(
-                text = "Choose a restaurant or meal below."
-            )
-        }
-
-        items(restaurants) { restaurant ->
-            RestaurantPlaceholderCard(
-                name = restaurant
-            )
-        }
-    }
-}
-
-@Composable
-fun RestaurantPlaceholderCard(
-    name: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Placeholder for restaurant image
-            Card(
-                modifier = Modifier.size(64.dp)
-            ) {
-                // Image will go here later
-            }
-
-            Spacer(
-                modifier = Modifier.size(16.dp)
-            )
-
-            Column {
-                Text(text = name)
-
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
-
-                Text(
-                    text = "Placeholder description"
-                )
-
-                Text(
-                    text = "RM XX.XX"
-                )
-            }
-        }
-    }
+    RestaurantCard()}
 }
