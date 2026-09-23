@@ -12,6 +12,9 @@ interface VendorDao {
     @Query("SELECT * FROM Vendor")
     suspend fun getAllVendor(): List<Vendor>
 
+    @Query("DELETE FROM Vendor")
+    suspend fun deleteAllVendor(): Unit
+
     @Insert
     suspend fun insertVendor(vendor: Vendor): Unit
 

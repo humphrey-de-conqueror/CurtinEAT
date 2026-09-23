@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
+import com.example.curtineat.view.ApiTestingScreen
 import com.example.curtineat.view.CardScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.viewmodel.AppViewModel
@@ -39,15 +40,15 @@ class MainActivity : ComponentActivity() {
 }
 
 @Serializable
+object RouteApiTestingScreen
+@Serializable
 object RouteMainScreen
 
 @Serializable
 object RouteCardScreen
 
 @Composable
-fun ScreenNavigation(
-    appViewModel: AppViewModel
-) {
+fun ScreenNavigation(appViewModel: AppViewModel) {
     val nav = rememberNavController()
 
     val onCardButtonClick: () -> Unit = {
@@ -66,8 +67,14 @@ fun ScreenNavigation(
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+
+        //please change this
+        startDestination = RouteApiTestingScreen
     ) {
+        composable <RouteApiTestingScreen> {
+            ApiTestingScreen(appViewModel = appViewModel)
+        }
+
         composable<RouteMainScreen> {
             MainScreen(
                 appViewModel = appViewModel,

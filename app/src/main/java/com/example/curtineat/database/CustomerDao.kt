@@ -11,6 +11,9 @@ interface CustomerDao {
     @Query("SELECT * FROM Customer")
     suspend fun getAllCustomer(): List<Customer>
 
+    @Query("DELETE FROM Customer")
+    suspend fun deleteAllCustomer(): Unit
+
     @Insert
     suspend fun insertCustomer(customer: Customer): Unit
 

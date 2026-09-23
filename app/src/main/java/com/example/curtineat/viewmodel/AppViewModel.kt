@@ -27,14 +27,29 @@ class AppViewModel(
         private set
 
     init {
-        refresh()
-        seedData()
+        // when seed data is removed, remove this
+        // viewmodescope launc, as refresh itself
+        // is the coroutine already
+
+        // but clearAll is not coroutine, so we might
+        // need to persist launch{} anyway
+        viewModelScope.launch {
+            clearAll()
+            seedData()
+            refresh()
+        }
     }
 
     fun refresh() = viewModelScope.launch {
         vendor = vendorDao.getAllVendor()
         customer = customerDao.getAllCustomer()
         product = productDao.getAllProduct()
+    }
+
+    suspend fun clearAll() {
+        vendorDao.deleteAllVendor()
+        customerDao.deleteAllCustomer()
+        productDao.deleteAllProduct()
     }
 
     // vendor dao
@@ -87,7 +102,7 @@ class AppViewModel(
 
 
     // please remove this seed data in production
-    fun seedData() = viewModelScope.launch {
+    suspend fun seedData() {
         vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a"))
         vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b"))
         vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c"))
