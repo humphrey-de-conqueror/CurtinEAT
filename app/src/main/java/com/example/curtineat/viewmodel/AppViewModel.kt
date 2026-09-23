@@ -30,15 +30,28 @@ class AppViewModel(
         product = productDao.getAllProduct()
     }
 
+    // vendor dao
     fun insertVendor(vendor: Vendor) = viewModelScope.launch {
         vendorDao.insertVendor(vendor)
         refresh()
+    }
+
+    fun updateVendor(vendor: Vendor) = viewModelScope.launch {
+        vendorDao.updateVendor(vendor)
+    }
+
+    fun deleteVendor(vendor: Vendor) = viewModelScope.launch {
+        vendorDao.deleteVendor(vendor)
     }
 
     fun insertProduct(product: Product) = viewModelScope.launch {
         productDao.insertProduct(product)
         refresh()
     }
+
+    // customer dao
+
+
 
     // please remove this seed data in production
     fun seedData() = viewModelScope.launch {
