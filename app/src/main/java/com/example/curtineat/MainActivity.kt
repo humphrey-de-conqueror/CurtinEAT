@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
     private val vm: AppViewModel by viewModels {
         AppViewModelFactory(
             AppDatabase.buildDatabase(this).vendorDao(),
+            AppDatabase.buildDatabase(this).customerDao(),
             AppDatabase.buildDatabase(this).productDao()
         )
     }
