@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.CardScreen
 import com.example.curtineat.view.MainScreen
@@ -18,18 +19,19 @@ import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
 
-    private val appViewModel: AppViewModel by viewModels {
-        AppViewModelFactory(applicationContext)
+    private val vm: AppViewModel by viewModels {
+        AppViewModelFactory(
+            AppDatabase.buildDatabase(this).vendorDao(),
+            AppDatabase.buildDatabase(this).productDao()
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
-
         setContent {
             CurtinEATTheme {
-                ScreenNavigation(appViewModel)
+                ScreenNavigation(vm)
             }
         }
     }
