@@ -55,6 +55,12 @@ fun ScreenNavigation(
         nav.popBackStack()
     }
 
+    val onHomeClick: () -> Unit = {
+        nav.navigate(RouteMainScreen) {
+            launchSingleTop = true
+        }
+    }
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -62,7 +68,8 @@ fun ScreenNavigation(
         composable<RouteMainScreen> {
             MainScreen(
                 appViewModel = appViewModel,
-                onCardButtonClick = onCardButtonClick
+                onCardButtonClick = onCardButtonClick,
+                onHomeClick = onHomeClick
             )
         }
 
@@ -72,5 +79,6 @@ fun ScreenNavigation(
                 onBackButtonClick = onBackButtonClick
             )
         }
+
     }
 }

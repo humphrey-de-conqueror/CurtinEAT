@@ -1,26 +1,18 @@
 package com.example.curtineat.view
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -31,31 +23,54 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.example.curtineat.viewmodel.AppViewModel
+
 
 @Composable
 fun MainScreen(
     appViewModel: AppViewModel,
-    onCardButtonClick: () -> Unit
+    onCardButtonClick: () -> Unit,
+    onHomeClick: () -> Unit
 ) {
-    Scaffold(
-        topBar = { TopBarScreen() },
-        bottomBar = { BottomBarScreen() },
-        floatingActionButton = { CardButton(onCardButtonClick) }
-    ) { innerPadding ->
-        BodyScreen(innerPadding)
+    MainDrawer(
+        onHomeClick = onHomeClick
+    ) { onMenuClick ->
+
+        Scaffold(
+            topBar = {
+                TopBarScreen(onMenuClick)
+            },
+            bottomBar = {
+                BottomBarScreen()
+            },
+            floatingActionButton = {
+                CardButton(onCardButtonClick)
+            }
+        ) { innerPadding ->
+            BodyScreen(innerPadding)
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarScreen() {
+fun TopBarScreen(
+    onMenuClick: () -> Unit
+) {
     TopAppBar(
         title = {
-            Text(text = "CurtinEat")
+            Text("CurtinEAT")
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = onMenuClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu"
+                )
+            }
         }
     )
 }
