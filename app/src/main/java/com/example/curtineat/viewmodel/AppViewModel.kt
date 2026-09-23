@@ -1,347 +1,63 @@
 package com.example.curtineat.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.curtineat.database.Order
-import com.example.curtineat.database.OrderItem
-import com.example.curtineat.database.OrderItemRepository
-import com.example.curtineat.database.OrderRepository
 import com.example.curtineat.database.Product
-import com.example.curtineat.database.ProductRepository
-import com.example.curtineat.database.Student
-import com.example.curtineat.database.StudentRepository
-import com.example.curtineat.database.Vendor
-import com.example.curtineat.database.VendorRepository
+import com.example.curtineat.database.ProductDao
+import com.example.curtineat.database.VendorDao
+import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
 
-
-/*
- * Dear meimei and jojo:
- *
- * Greeting from gorgor, here is the AppViewModel API for the frontend. You dont need to
- * worry about what happens inside the database, DAO, or repository. Just call the API
- * provided by the ViewModel.
- *
- * For example:
- *
- * @Composable
- * fun SomeScreen( appViewModel: AppViewModel) {
- *      appViewModel.getVendors { vendors -> UI(vendors) }
- * }
- *
- *
- * You can similarly call things like:
- *
- * appViewModel.getProductsByVender(vendorId) { products -> UI(products) }
- * appViewModel.addOrder(order)
- *
- * Regards your mental health,
- * gorgor
- *
- *
- *
- * ------------------------------------------------------------
- * STUDENT
- * ------------------------------------------------------------
- *
- * addStudent(student)
- *     Register a new student.
- *
- * updateStudent(student)
- *     Update student information.
- *
- * deleteStudent(student)
- *     Delete a student.
- *
- * getStudent(studentId, onResult)
- *     Get a student's information using their student ID.
- *
- * ------------------------------------------------------------
- * VENDOR
- * ------------------------------------------------------------
- *
- * addVendor(vendor)
- *     Register a new vendor/store.
- *
- * updateVendor(vendor)
- *     Update vendor/store information.
- *
- * deleteVendor(vendor)
- *     Delete a vendor/store.
- *
- * getVendors(onResult)
- *     Get all registered vendors.
- *
- * getVendor(vendorId, onResult)
- *     Get one vendor using its ID.
- *
- * ------------------------------------------------------------
- * PRODUCT / MENU
- * ------------------------------------------------------------
- *
- * addProduct(product)
- *     Add a new product/menu item to a vendor.
- *
- * updateProduct(product)
- *     Modify an existing product/menu item.
- *
- * deleteProduct(product)
- *     Remove a product/menu item.
- *
- * getProducts(onResult)
- *     Get all products.
- *
- * getProductsByVendor(vendorId, onResult)
- *     Get the menu belonging to one vendor.
- *
- * getAvailableProducts(onResult)
- *     Get products that are currently available for ordering.
- *
- * ------------------------------------------------------------
- * ORDER
- * ------------------------------------------------------------
- *
- * addOrder(order)
- *     Create a new order.
- *
- * updateOrder(order)
- *     Update an existing order.
- *     This can be used for order status or payment status changes.
- *
- * deleteOrder(order)
- *     Delete an order.
- *
- * getOrder(orderId, onResult)
- *     Get one order using its ID.
- *
- * getStudentOrders(studentId, onResult)
- *     Get the order history of a student.
- *
- * getVendorOrders(vendorId, onResult)
- *     Get orders belonging to a vendor.
- *
- * ------------------------------------------------------------
- * ORDER ITEM
- * ------------------------------------------------------------
- *
- * addOrderItem(orderItem)
- *     Add a product/quantity to an order.
- *
- * updateOrderItem(orderItem)
- *     Change the quantity or information of an order item.
- *
- * deleteOrderItem(orderItem)
- *     Remove an item from an order.
- *
- * getOrderItems(orderId, onResult)
- *     Get all products/items belonging to an order.
- *
- * ------------------------------------------------------------
- * FRONTEND USAGE
- * ------------------------------------------------------------
- *
- * Screens receive the same AppViewModel instance from MainActivity.
- *
- * Example:
- *
- *     appViewModel.getProductsByVendor(vendorId) { products ->
- *         // Update UI state with products
- *     }
- *
- *     appViewModel.addProduct(product)
- *
- * Do NOT access repositories or DAOs directly from the UI.
- *
- * ============================================================
- */
-
 class AppViewModel(
-    private val studentRepository: StudentRepository,
-    private val vendorRepository: VendorRepository,
-    private val productRepository: ProductRepository,
-    private val orderRepository: OrderRepository,
-    private val orderItemRepository: OrderItemRepository
-) : ViewModel() {
+    private var vendorDao: VendorDao,
+    private var productDao: ProductDao
+): ViewModel() {
+    var vendor by mutableStateOf(listOf<Vendor>())
+        private set
+    var product by mutableStateOf(listOf<Product>())
+        private set
 
-    // Student
-
-    fun addStudent(student: Student) {
-        viewModelScope.launch {
-            studentRepository.insertStudent(student)
-        }
+    init {
+        refresh()
+        seedData()
     }
 
-    fun updateStudent(student: Student) {
-        viewModelScope.launch {
-            studentRepository.updateStudent(student)
-        }
+    fun refresh() = viewModelScope.launch {
+        vendor = vendorDao.getAllVendor()
+        product = productDao.getAllProduct()
     }
 
-    fun deleteStudent(student: Student) {
-        viewModelScope.launch {
-            studentRepository.deleteStudent(student)
-        }
+    fun insertVendor(vendor: Vendor) = viewModelScope.launch {
+        vendorDao.insertVendor(vendor)
+        refresh()
     }
 
-    fun getStudent(studentId: String, onResult: (Student?) -> Unit) {
-        viewModelScope.launch {
-            val student = studentRepository.getStudentById(studentId)
-            onResult(student)
-        }
+    fun insertProduct(product: Product) = viewModelScope.launch {
+        productDao.insertProduct(product)
+        refresh()
     }
 
-    // Vendor
+    // please remove this seed data in production
+    fun seedData() = viewModelScope.launch {
+        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3))
+        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8))
+        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2))
+        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0))
+        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5))
 
-    fun addVendor(vendor: Vendor) {
-        viewModelScope.launch {
-            vendorRepository.insertVendor(vendor)
-        }
-    }
+        productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
+        productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
+        productDao.insertProduct(Product(vendorID = 2, productName = "Cheeseburger", productPrice = 12.90, productImage = "cheeseburger"))
+        productDao.insertProduct(Product(vendorID = 2, productName = "Chicken Wings", productPrice = 9.90, productImage = "chicken_wings"))
+        productDao.insertProduct(Product(vendorID = 3, productName = "Salmon Sushi", productPrice = 18.00, productImage = "salmon_sushi"))
+        productDao.insertProduct(Product(vendorID = 3, productName = "Miso Soup", productPrice = 4.50, productImage = "miso_soup"))
+        productDao.insertProduct(Product(vendorID = 4, productName = "Beef Taco", productPrice = 8.90, productImage = "beef_taco"))
+        productDao.insertProduct(Product(vendorID = 5, productName = "Margherita Pizza", productPrice = 22.00, productImage = "margherita"))
+        productDao.insertProduct(Product(vendorID = 5, productName = "Garlic Bread", productPrice = 5.00, productImage = "garlic_bread"))
 
-    fun updateVendor(vendor: Vendor) {
-        viewModelScope.launch {
-            vendorRepository.updateVendor(vendor)
-        }
-    }
-
-    fun deleteVendor(vendor: Vendor) {
-        viewModelScope.launch {
-            vendorRepository.deleteVendor(vendor)
-        }
-    }
-
-    fun getVendors(onResult: (List<Vendor>) -> Unit) {
-        viewModelScope.launch {
-            val vendors = vendorRepository.getAllVendors()
-            onResult(vendors)
-        }
-    }
-
-    fun getVendor(vendorId: Int, onResult: (Vendor?) -> Unit) {
-        viewModelScope.launch {
-            val vendor = vendorRepository.getVendorById(vendorId)
-            onResult(vendor)
-        }
-    }
-
-    // Product
-
-    fun addProduct(product: Product) {
-        viewModelScope.launch {
-            productRepository.insertProduct(product)
-        }
-    }
-
-    fun updateProduct(product: Product) {
-        viewModelScope.launch {
-            productRepository.updateProduct(product)
-        }
-    }
-
-    fun deleteProduct(product: Product) {
-        viewModelScope.launch {
-            productRepository.deleteProduct(product)
-        }
-    }
-
-    fun getProducts(onResult: (List<Product>) -> Unit) {
-        viewModelScope.launch {
-            val products = productRepository.getAllProducts()
-            onResult(products)
-        }
-    }
-
-    fun getProductsByVendor(
-        vendorId: Int,
-        onResult: (List<Product>) -> Unit
-    ) {
-        viewModelScope.launch {
-            val products = productRepository.getProductsByVendor(vendorId)
-            onResult(products)
-        }
-    }
-
-    fun getAvailableProducts(onResult: (List<Product>) -> Unit) {
-        viewModelScope.launch {
-            val products = productRepository.getAvailableProducts()
-            onResult(products)
-        }
-    }
-
-    // Order
-
-    fun addOrder(order: Order) {
-        viewModelScope.launch {
-            orderRepository.insertOrder(order)
-        }
-    }
-
-    fun updateOrder(order: Order) {
-        viewModelScope.launch {
-            orderRepository.updateOrder(order)
-        }
-    }
-
-    fun deleteOrder(order: Order) {
-        viewModelScope.launch {
-            orderRepository.deleteOrder(order)
-        }
-    }
-
-    fun getOrder(orderId: Int, onResult: (Order?) -> Unit) {
-        viewModelScope.launch {
-            val order = orderRepository.getOrderById(orderId)
-            onResult(order)
-        }
-    }
-
-    fun getStudentOrders(
-        studentId: String,
-        onResult: (List<Order>) -> Unit
-    ) {
-        viewModelScope.launch {
-            val orders = orderRepository.getOrdersByStudent(studentId)
-            onResult(orders)
-        }
-    }
-
-    fun getVendorOrders(
-        vendorId: Int,
-        onResult: (List<Order>) -> Unit
-    ) {
-        viewModelScope.launch {
-            val orders = orderRepository.getOrdersByVendor(vendorId)
-            onResult(orders)
-        }
-    }
-
-    // Order Item
-
-    fun addOrderItem(orderItem: OrderItem) {
-        viewModelScope.launch {
-            orderItemRepository.insertOrderItem(orderItem)
-        }
-    }
-
-    fun updateOrderItem(orderItem: OrderItem) {
-        viewModelScope.launch {
-            orderItemRepository.updateOrderItem(orderItem)
-        }
-    }
-
-    fun deleteOrderItem(orderItem: OrderItem) {
-        viewModelScope.launch {
-            orderItemRepository.deleteOrderItem(orderItem)
-        }
-    }
-
-    fun getOrderItems(
-        orderId: Int,
-        onResult: (List<OrderItem>) -> Unit
-    ) {
-        viewModelScope.launch {
-            val items = orderItemRepository.getOrderItemsByOrder(orderId)
-            onResult(items)
-        }
+        refresh()
     }
 }
