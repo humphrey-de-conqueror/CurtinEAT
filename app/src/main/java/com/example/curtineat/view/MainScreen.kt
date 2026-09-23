@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -153,17 +155,6 @@ fun TopBarScreen(
                 )
             }
 
-            // Notification
-//            IconButton(
-//                onClick = {
-//                    showNotifications = true
-//                }
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Notifications,
-//                    contentDescription = "Notifications"
-//                )
-//            }
 
 
             Box {
@@ -184,137 +175,54 @@ fun TopBarScreen(
                         showNotifications = false
                     },
                     modifier = Modifier
-                        .width(320.dp)
-                        .height(400.dp)
+                        .widthIn(min = 280.dp, max = 320.dp)
+                        .heightIn(min = 300.dp, max = 400.dp)
                 ) {
 
-                    Column(
+                    // Header
+                    Row(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text(
+                            text = "Notifications",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
 
-                        // Header
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Notifications",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    showNotifications = false
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close"
-                                )
+                        IconButton(
+                            onClick = {
+                                showNotifications = false
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close"
+                            )
                         }
+                    }
+
+                    HorizontalDivider()
+
+                    // Notifications
+                    repeat(10) { index ->
+                        Text(
+                            text = "Notification ${index + 1}",
+                            modifier = Modifier.padding(16.dp)
+                        )
 
                         HorizontalDivider()
-
-                        // Scrollable notification area
-                        DropdownMenu(
-                            expanded = showNotifications,
-                            onDismissRequest = {
-                                showNotifications = false
-                            },
-                            modifier = Modifier
-                                .width(320.dp)
-                                .height(400.dp)
-                        ) {
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "Notifications",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp
-                                )
-
-                                IconButton(
-                                    onClick = {
-                                        showNotifications = false
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Close"
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider()
-
-                            repeat(10) { index ->
-                                Text(
-                                    text = "Notification ${index + 1}",
-                                    modifier = Modifier.padding(16.dp)
-                                )
-
-                                HorizontalDivider()
-                            }
-                        }
                     }
                 }
             }
         }
     )
 
-//    if (showNotifications) {
-//        NotificationDialog(
-//            onDismiss = {
-//                showNotifications = false
-//            }
-//        )
-//    }
 }
 
-//@Composable
-//fun NotificationDialog(
-//    onDismiss: () -> Unit
-//) {
-//    AlertDialog(
-//        onDismissRequest = onDismiss, //notif dialog disappears when the user either taps outside it or presses the Android back button.
-//
-//        title = {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Text("Notifications")
-//
-//                IconButton(
-//                    onClick = onDismiss
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Close,
-//                        contentDescription = "Close"
-//                    )
-//                }
-//            }
-//        },
-//
-//        text = {
-//            Text("No notifications yet.")
-//        },
-//
-//        confirmButton = {}
-//    )
-//}
 
 @Composable
 fun BottomBarScreen() {
