@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.curtineat.database.Customer
+import com.example.curtineat.database.CustomerDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
@@ -13,40 +15,101 @@ import kotlinx.coroutines.launch
 
 class AppViewModel(
     private var vendorDao: VendorDao,
+    private var customerDao: CustomerDao,
     private var productDao: ProductDao
 ): ViewModel() {
     var vendor by mutableStateOf(listOf<Vendor>())
+        private set
+
+    var customer by mutableStateOf(listOf<Customer>())
         private set
     var product by mutableStateOf(listOf<Product>())
         private set
 
     init {
-        refresh()
-        seedData()
+        // when seed data is removed, remove this
+        // viewmodescope launc, as refresh itself
+        // is the coroutine already
+
+        // but clearAll is not coroutine, so we might
+        // need to persist launch{} anyway
+        viewModelScope.launch {
+            clearAll()
+            seedData()
+            refresh()
+        }
     }
 
     fun refresh() = viewModelScope.launch {
         vendor = vendorDao.getAllVendor()
+        customer = customerDao.getAllCustomer()
         product = productDao.getAllProduct()
     }
 
+    suspend fun clearAll() {
+        vendorDao.deleteAllVendor()
+        customerDao.deleteAllCustomer()
+        productDao.deleteAllProduct()
+    }
+
+    // vendor dao
     fun insertVendor(vendor: Vendor) = viewModelScope.launch {
         vendorDao.insertVendor(vendor)
         refresh()
     }
 
+    fun updateVendor(vendor: Vendor) = viewModelScope.launch {
+        vendorDao.updateVendor(vendor)
+        refresh()
+    }
+
+    fun deleteVendor(vendor: Vendor) = viewModelScope.launch {
+        vendorDao.deleteVendor(vendor)
+        refresh()
+    }
+
+    // customer dao
+    fun insertCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.insertCustomer(customer)
+        refresh()
+    }
+
+    fun updateCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.updateCustomer(customer)
+        refresh()
+    }
+
+    fun deleteCustomer(customer: Customer) = viewModelScope.launch {
+        customerDao.deleteCustomer(customer)
+        refresh()
+    }
+
+    // product dao
     fun insertProduct(product: Product) = viewModelScope.launch {
         productDao.insertProduct(product)
         refresh()
     }
 
+    fun updateProduct(product: Product) = viewModelScope.launch {
+        productDao.updateProduct(product)
+        refresh()
+    }
+
+    fun deleteProduct(product: Product) = viewModelScope.launch {
+        productDao.deleteProduct(product)
+        refresh()
+    }
+
+
     // please remove this seed data in production
-    fun seedData() = viewModelScope.launch {
-        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3))
-        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8))
-        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2))
-        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0))
-        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5))
+    suspend fun seedData() {
+        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a"))
+        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b"))
+        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c"))
+        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d"))
+        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e"))
+
+        customerDao.insertCustomer(Customer(customerName = "a", customerEmail = "b", customerPassword = "c"))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
