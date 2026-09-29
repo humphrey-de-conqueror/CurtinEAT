@@ -36,9 +36,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalContext
 import com.example.curtineat.database.Product
 import com.example.curtineat.ui.theme.SecondaryCard
+import com.example.daodao.Vendor
 
 @Composable
 fun RestaurantCard(
+    vendor: Vendor,
     products: List<Product>
 ) {
     PrimaryCard(
@@ -48,7 +50,7 @@ fun RestaurantCard(
     ) {
 
         TextNormal(
-            "Claypot House",
+            text = vendor.vendorName,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp
         )
@@ -59,10 +61,14 @@ fun RestaurantCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextNormal("4.6", fontSize = 18.sp)
+                TextNormal(
+                    text = "%.1f".format(vendor.rating),
+                    fontSize = 18.sp
+                )
 
                 Icon(
                     imageVector = Icons.Filled.Star,
@@ -72,11 +78,18 @@ fun RestaurantCard(
                 )
             }
 
-            TextNormal("Non-Halal")
-            TextNormal("0.6km")
+            TextNormal(
+                text = vendor.category
+            )
+
+            TextNormal(
+                text = "%.1f km".format(vendor.distance)
+            )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -102,6 +115,7 @@ fun getDrawableId(imageName: String): Int {
         R.drawable.food1
     }
 }
+
 @Composable
 fun FoodItem(
     product: Product,

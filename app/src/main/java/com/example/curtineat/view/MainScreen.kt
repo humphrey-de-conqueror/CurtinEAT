@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
@@ -37,7 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.database.Product
-
+import androidx.compose.foundation.lazy.items
+import com.example.daodao.Vendor
 
 @Composable
 fun AppScaffold(
@@ -86,6 +88,7 @@ fun MainScreen(
 
         BodyScreen(
             innerPadding = innerPadding,
+            vendors = appViewModel.vendor,
             products = appViewModel.product
         )
     }
@@ -241,11 +244,22 @@ fun CartButton(onCartButtonClick: () -> Unit) {
 @Composable
 fun BodyScreen(
     innerPadding: PaddingValues,
+    vendors: List<Vendor>,
     products: List<Product>
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier.padding(innerPadding)
     ) {
-        RestaurantCard(products = products)
+        items(vendors) { vendor ->
+
+            val vendorProducts = products.filter {
+                it.vendorID == vendor.vendorId
+            }
+
+            RestaurantCard(
+                vendor = vendor,
+                products = vendorProducts
+            )
+        }
     }
 }
