@@ -1,14 +1,13 @@
 package com.example.curtineat.view
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -16,7 +15,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -31,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,6 +37,12 @@ import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.database.Product
 import androidx.compose.foundation.lazy.items
 import com.example.daodao.Vendor
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.foundation.clickable
+import com.example.curtineat.ui.theme.SecondaryCard
+import com.example.curtineat.ui.theme.TextNormal
+import com.example.curtineat.ui.theme.mySpacer
+
 
 @Composable
 fun AppScaffold(
@@ -94,6 +97,39 @@ fun MainScreen(
     }
 }
 
+@Composable
+fun NotificationItem(
+    message: String,
+    time: String,
+    onClick: () -> Unit = {}
+) {
+    SecondaryCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        contentPadding = PaddingValues(
+            horizontal = 12.dp,
+            vertical = 16.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            TextNormal(
+                text = message,
+                modifier = Modifier.weight(1f),
+                fontSize = 16.sp
+            )
+
+            TextNormal(
+                text = time,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 12.dp)
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarScreen(
@@ -104,9 +140,11 @@ fun TopBarScreen(
 ) {
     var searching by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-
-    // controls dropdown open/close
     var notificationsOpen by remember { mutableStateOf(false) }
+
+    val notificationSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false //allows partial to expanded behavior
+    )
 
     TopAppBar(
         title = {
@@ -115,13 +153,20 @@ fun TopBarScreen(
                     value = searchText,
                     onValueChange = { searchText = it },
                     placeholder = {
-                        Text("Search food...")
+                        TextNormal(
+                            text = "Search food...",
+                            fontSize = 16.sp
+                        )
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                Text(title)
+                TextNormal(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
             }
         },
 
@@ -162,70 +207,287 @@ fun TopBarScreen(
 
             // NOTIFICATION
             if (showNotifications) {
+                IconButton(
+                    onClick = {
+                        notificationsOpen = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications"
+                    )
+                }
+            }
 
-                Box {
-                    IconButton(
-                        onClick = {
-                            notificationsOpen = !notificationsOpen
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications"
+
+        }
+    )
+    if (notificationsOpen) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                notificationsOpen = false
+            },
+            sheetState = notificationSheetState
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.85f) //swipe up to 85% screen
+                    .padding(horizontal = 20.dp)
+            ) {
+                item {
+                    TextNormal(
+                        text = "Notifications",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(bottom = 20.dp)
+                    )
+                }
+
+                item {
+                    TextNormal(
+                        text = "Today",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Mama's Kitchen is preparing your food",
+                        time = "2:30 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been confirmed",
+                        time = "1:15 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    TextNormal(
+                        text = "Yesterday",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(
+                            top = 20.dp,
+                            bottom = 8.dp
                         )
-                    }
+                    )
+                }
 
-                    DropdownMenu(
-                        expanded = notificationsOpen,
-                        onDismissRequest = {
-                            notificationsOpen = false
-                        },
-                        modifier = Modifier
-                            .widthIn(min = 280.dp, max = 320.dp)
-                            .heightIn(min = 300.dp, max = 400.dp)
-                    ) {
+                item {
+                    NotificationItem(
+                        message = "Your order is ready for pickup",
+                        time = "6:40 PM"
+                    )
+                    mySpacer()
+                }
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                item {
+                    NotificationItem(
+                        message = "Your order has been accepted",
+                        time = "4:20 PM"
+                    )
+                    mySpacer()
+                }
 
-                            Text(
-                                text = "Notifications",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            )
+                item {
+                    NotificationItem(
+                        message = "Your order has been completed",
+                        time = "12:30 PM"
+                    )
+                    mySpacer()
+                }
 
-                            IconButton(
-                                onClick = {
-                                    notificationsOpen = false
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close"
-                                )
-                            }
-                        }
+                item {
+                    TextNormal(
+                        text = "Today",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
 
-                        HorizontalDivider()
+                item {
+                    NotificationItem(
+                        message = "Mama's Kitchen is preparing your food",
+                        time = "2:30 PM"
+                    )
+                    mySpacer()
+                }
 
-                        repeat(10) { index ->
-                            Text(
-                                text = "Notification ${index + 1}",
-                                modifier = Modifier.padding(16.dp)
-                            )
+                item {
+                    NotificationItem(
+                        message = "Your order has been confirmed",
+                        time = "1:15 PM"
+                    )
+                    mySpacer()
+                }
 
-                            HorizontalDivider()
-                        }
-                    }
+                item {
+                    TextNormal(
+                        text = "Yesterday",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(
+                            top = 20.dp,
+                            bottom = 8.dp
+                        )
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order is ready for pickup",
+                        time = "6:40 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been accepted",
+                        time = "4:20 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been completed",
+                        time = "12:30 PM"
+                    )
+                    mySpacer()
+                }
+                item {
+                    TextNormal(
+                        text = "Today",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Mama's Kitchen is preparing your food",
+                        time = "2:30 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been confirmed",
+                        time = "1:15 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    TextNormal(
+                        text = "Yesterday",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(
+                            top = 20.dp,
+                            bottom = 8.dp
+                        )
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order is ready for pickup",
+                        time = "6:40 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been accepted",
+                        time = "4:20 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been completed",
+                        time = "12:30 PM"
+                    )
+                    mySpacer()
+                }
+                item {
+                    TextNormal(
+                        text = "Today",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Mama's Kitchen is preparing your food",
+                        time = "2:30 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been confirmed",
+                        time = "1:15 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    TextNormal(
+                        text = "Yesterday",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(
+                            top = 20.dp,
+                            bottom = 8.dp
+                        )
+                    )
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order is ready for pickup",
+                        time = "6:40 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been accepted",
+                        time = "4:20 PM"
+                    )
+                    mySpacer()
+                }
+
+                item {
+                    NotificationItem(
+                        message = "Your order has been completed",
+                        time = "12:30 PM"
+                    )
+                    mySpacer()
                 }
             }
         }
-    )
+    }
 }
 
 
