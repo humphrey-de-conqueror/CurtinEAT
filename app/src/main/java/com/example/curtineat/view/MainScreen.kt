@@ -42,7 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.viewmodel.AppViewModel
-
+import com.example.curtineat.database.Product
 
 @Composable
 fun MainScreen(
@@ -65,7 +65,10 @@ fun MainScreen(
                 CardButton(onCardButtonClick)
             }
         ) { innerPadding ->
-            BodyScreen(innerPadding)
+            BodyScreen(
+                innerPadding = innerPadding,
+                products = appViewModel.product
+            )
         }
     }
 }
@@ -248,9 +251,13 @@ fun CardButton(onCardButtonClick: () -> Unit) {
 }
 
 @Composable
-fun BodyScreen(innerPadding: PaddingValues) {
+fun BodyScreen(
+    innerPadding: PaddingValues,
+    products: List<Product>
+) {
     Column(
         modifier = Modifier.padding(innerPadding)
     ) {
-    RestaurantCard()}
+        RestaurantCard(products = products)
+    }
 }
