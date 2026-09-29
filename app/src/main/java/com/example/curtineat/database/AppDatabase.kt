@@ -2,14 +2,14 @@ package com.example.curtineat.database
 
 import android.content.Context
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.Room.databaseBuilder
 import androidx.room.RoomDatabase
 import com.example.daodao.Vendor
 
-@Database(entities = [Vendor::class, Product::class], version = 1)
+@Database(entities = [Vendor::class, Customer::class, Product::class], version = 1)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun vendorDao(): VendorDao
+    abstract fun customerDao(): CustomerDao
     abstract fun productDao(): ProductDao
 
     companion object {
