@@ -10,5 +10,6 @@ data class Vendor (
     val vendorName: String,
     val rating: Double,
     val category: String,
-    val distance: Double
+    val distance: Double,
+    val vendorPassword: String
 )
