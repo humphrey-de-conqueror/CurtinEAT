@@ -46,6 +46,7 @@ import com.example.curtineat.ui.theme.mySpacer
 
 @Composable
 fun AppScaffold(
+    appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
     title: String = "CurtinEAT",
     showSearch: Boolean = true,
@@ -60,6 +61,7 @@ fun AppScaffold(
         Scaffold(
             topBar = {
                 TopBarScreen(
+                    appViewModel = appViewModel,
                     onMenuClick = onMenuClick,
                     title = title,
                     showSearch = showSearch,
@@ -80,6 +82,7 @@ fun MainScreen(
     onHomeClick: () -> Unit
 ) {
     AppScaffold(
+        appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         title = "CurtinEAT",
         showSearch = true,
@@ -91,8 +94,10 @@ fun MainScreen(
 
         BodyScreen(
             innerPadding = innerPadding,
-            vendors = appViewModel.vendor,
-            products = appViewModel.product
+            appViewModel = appViewModel
+            // removed
+//            vendors = appViewModel.vendor,
+//            products = appViewModel.product
         )
     }
 }
@@ -133,6 +138,7 @@ fun NotificationItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarScreen(
+    appViewModel: AppViewModel,
     onMenuClick: () -> Unit,
     title: String = "CurtinEAT",
     showSearch: Boolean = true,
@@ -231,259 +237,16 @@ fun TopBarScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
+                    .padding(horizontal = 20.dp)
                     .fillMaxWidth()
                     .fillMaxHeight(0.85f) //swipe up to 85% screen
-                    .padding(horizontal = 20.dp)
+
             ) {
-                item {
-                    TextNormal(
-                        text = "Notifications",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        modifier = Modifier.padding(bottom = 20.dp)
-                    )
-                }
-
-                item {
-                    TextNormal(
-                        text = "Today",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Mama's Kitchen is preparing your food",
-                        time = "2:30 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been confirmed",
-                        time = "1:15 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    TextNormal(
-                        text = "Yesterday",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(
-                            top = 20.dp,
-                            bottom = 8.dp
-                        )
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order is ready for pickup",
-                        time = "6:40 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been accepted",
-                        time = "4:20 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been completed",
-                        time = "12:30 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    TextNormal(
-                        text = "Today",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Mama's Kitchen is preparing your food",
-                        time = "2:30 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been confirmed",
-                        time = "1:15 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    TextNormal(
-                        text = "Yesterday",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(
-                            top = 20.dp,
-                            bottom = 8.dp
-                        )
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order is ready for pickup",
-                        time = "6:40 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been accepted",
-                        time = "4:20 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been completed",
-                        time = "12:30 PM"
-                    )
-                    mySpacer()
-                }
-                item {
-                    TextNormal(
-                        text = "Today",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Mama's Kitchen is preparing your food",
-                        time = "2:30 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been confirmed",
-                        time = "1:15 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    TextNormal(
-                        text = "Yesterday",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(
-                            top = 20.dp,
-                            bottom = 8.dp
-                        )
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order is ready for pickup",
-                        time = "6:40 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been accepted",
-                        time = "4:20 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been completed",
-                        time = "12:30 PM"
-                    )
-                    mySpacer()
-                }
-                item {
-                    TextNormal(
-                        text = "Today",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Mama's Kitchen is preparing your food",
-                        time = "2:30 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been confirmed",
-                        time = "1:15 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    TextNormal(
-                        text = "Yesterday",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(
-                            top = 20.dp,
-                            bottom = 8.dp
-                        )
-                    )
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order is ready for pickup",
-                        time = "6:40 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been accepted",
-                        time = "4:20 PM"
-                    )
-                    mySpacer()
-                }
-
-                item {
-                    NotificationItem(
-                        message = "Your order has been completed",
-                        time = "12:30 PM"
-                    )
-                    mySpacer()
+                items(
+                    items = appViewModel.notification,
+                    key = { eachNotification -> eachNotification.notificationId}
+                ) { eachNotification ->
+                    Text(text = eachNotification.message ?: "dump dump empty message")
                 }
             }
         }
@@ -506,15 +269,14 @@ fun CartButton(onCartButtonClick: () -> Unit) {
 @Composable
 fun BodyScreen(
     innerPadding: PaddingValues,
-    vendors: List<Vendor>,
-    products: List<Product>
+    appViewModel: AppViewModel
 ) {
     LazyColumn(
         modifier = Modifier.padding(innerPadding)
     ) {
-        items(vendors) { vendor ->
+        items(appViewModel.vendor) { vendor ->
 
-            val vendorProducts = products.filter {
+            val vendorProducts = appViewModel.product.filter {
                 it.vendorID == vendor.vendorId
             }
 

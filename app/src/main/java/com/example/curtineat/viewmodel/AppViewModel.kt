@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.curtineat.database.Customer
 import com.example.curtineat.database.CustomerDao
+import com.example.curtineat.database.Notification
+import com.example.curtineat.database.NotificationDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
@@ -16,33 +18,21 @@ import kotlinx.coroutines.launch
 class AppViewModel(
     private var vendorDao: VendorDao,
     private var customerDao: CustomerDao,
-    private var productDao: ProductDao
+    private var productDao: ProductDao,
+    private var notificationDao: NotificationDao
 ): ViewModel() {
+    var search by mutableStateOf("")
+
+    var notification by mutableStateOf(listOf<Notification>())
+        private set
     var vendor by mutableStateOf(listOf<Vendor>())
         private set
 
     var customer by mutableStateOf(listOf<Customer>())
         private set
+
     var product by mutableStateOf(listOf<Product>())
         private set
-
-    //cause trouble for fetching data for products
-    //This is how it looks lol
-    //delete Nasi Lemak id=1
-    //insert Nasi Lemak again → id=10
-//    init {
-//        // when seed data is removed, remove this
-//        // viewmodescope launc, as refresh itself
-//        // is the coroutine already
-//
-//        // but clearAll is not coroutine, so we might
-//        // need to persist launch{} anyway
-//        viewModelScope.launch {
-//            clearAll()
-//            seedData()
-//            refresh()
-//        }
-//    }
 
     init {
         viewModelScope.launch {
@@ -63,12 +53,14 @@ class AppViewModel(
         vendor = vendorDao.getAllVendor()
         customer = customerDao.getAllCustomer()
         product = productDao.getAllProduct()
+        notification = notificationDao.getAllNotification()
     }
 
     suspend fun clearAll() {
         vendorDao.deleteAllVendor()
         customerDao.deleteAllCustomer()
         productDao.deleteAllProduct()
+        notificationDao.deleteAllNotification()
     }
 
     // vendor dao
@@ -119,6 +111,22 @@ class AppViewModel(
         refresh()
     }
 
+    // notification dao
+    fun insertNotification(notification: Notification) = viewModelScope.launch {
+        notificationDao.insertNotification(notification)
+        refresh()
+    }
+
+    fun updateNotification(notification: Notification) = viewModelScope.launch {
+        notificationDao.updateNotification(notification)
+        refresh()
+    }
+
+    fun deleteNotification(notification: Notification) = viewModelScope.launch {
+        notificationDao.deleteNotification(notification)
+        refresh()
+    }
+
 
     // please remove this seed data in production
     suspend fun seedData() {
@@ -140,7 +148,9 @@ class AppViewModel(
         productDao.insertProduct(Product(vendorID = 5, productName = "Margherita Pizza", productPrice = 22.00, productImage = "margherita"))
         productDao.insertProduct(Product(vendorID = 5, productName = "Garlic Bread", productPrice = 5.00, productImage = "garlic_bread"))
 
-        //Had to comment it out so that the id of the food is not always changing (del n insert to new id)
-        //refresh()
+        notificationDao.insertNotification(Notification(message = "order submitted, pending for vendor verification", time = "12 p.m."))
+        notificationDao.insertNotification(Notification(message = "vendor accept your order, please wait", time = "11 p.m."))
+        notificationDao.insertNotification(Notification(message = "food prepared, please pick up or i buang your food", time = "10 p.m."))
+        notificationDao.insertNotification(Notification(message = "vendor blocklist you ", time = "14 p.m."))
     }
 }

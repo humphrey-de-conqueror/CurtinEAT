@@ -16,6 +16,7 @@ fun CartScreen(
     onHomeClick: () -> Unit
 ) {
     AppScaffold(
+        appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         title = "Order Summary",
         showSearch = false,

@@ -24,7 +24,8 @@ class MainActivity : ComponentActivity() {
         AppViewModelFactory(
             AppDatabase.buildDatabase(this).vendorDao(),
             AppDatabase.buildDatabase(this).customerDao(),
-            AppDatabase.buildDatabase(this).productDao()
+            AppDatabase.buildDatabase(this).productDao(),
+            AppDatabase.buildDatabase(this).notificationDao()
         )
     }
 
@@ -67,8 +68,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
     NavHost(
         navController = nav,
-
-        //please change this
         startDestination = RouteMainScreen
     ) {
         composable <RouteApiTestingScreen> {

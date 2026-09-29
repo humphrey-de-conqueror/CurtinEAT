@@ -6,11 +6,13 @@ import androidx.room.Room.databaseBuilder
 import androidx.room.RoomDatabase
 import com.example.daodao.Vendor
 
-@Database(entities = [Vendor::class, Customer::class, Product::class], version = 1)
+@Database(entities = [Vendor::class, Customer::class, Product::class, Notification::class], version = 1)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun vendorDao(): VendorDao
     abstract fun customerDao(): CustomerDao
     abstract fun productDao(): ProductDao
+
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         private var db: AppDatabase? = null
