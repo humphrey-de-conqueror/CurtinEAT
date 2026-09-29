@@ -9,6 +9,10 @@ import com.example.curtineat.database.Customer
 import com.example.curtineat.database.CustomerDao
 import com.example.curtineat.database.Notification
 import com.example.curtineat.database.NotificationDao
+import com.example.curtineat.database.Order
+import com.example.curtineat.database.OrderDao
+import com.example.curtineat.database.OrderItem
+import com.example.curtineat.database.OrderItemDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
@@ -19,12 +23,16 @@ class AppViewModel(
     private var vendorDao: VendorDao,
     private var customerDao: CustomerDao,
     private var productDao: ProductDao,
-    private var notificationDao: NotificationDao
+    private var notificationDao: NotificationDao,
+    private var orderDao: OrderDao,
+    private var orderItemDao: OrderItemDao
 ): ViewModel() {
     var search by mutableStateOf("")
-
-    var notification by mutableStateOf(listOf<Notification>())
         private set
+
+    var cart by mutableStateOf(listOf<Product>())
+        private set
+
     var vendor by mutableStateOf(listOf<Vendor>())
         private set
 
@@ -34,13 +42,26 @@ class AppViewModel(
     var product by mutableStateOf(listOf<Product>())
         private set
 
+    var notification by mutableStateOf(listOf<Notification>())
+        private set
+
+    var order by mutableStateOf(listOf<Order>())
+        private set
+
+    var orderItem by mutableStateOf(listOf<OrderItem>())
+        private set
+
+
     init {
         viewModelScope.launch {
 
             if (
-                vendorDao.getAllVendor().isEmpty() &&
-                customerDao.getAllCustomer().isEmpty() &&
-                productDao.getAllProduct().isEmpty()
+                vendorDao.getAllVendor().isEmpty()              ||
+                customerDao.getAllCustomer().isEmpty()          ||
+                productDao.getAllProduct().isEmpty()            ||
+                notificationDao.getAllNotification().isEmpty()
+//              no need to seed order
+//              no need to seed order item
             ) {
                 seedData()
             }
@@ -50,10 +71,12 @@ class AppViewModel(
     }
 
     fun refresh() = viewModelScope.launch {
-        vendor = vendorDao.getAllVendor()
-        customer = customerDao.getAllCustomer()
-        product = productDao.getAllProduct()
-        notification = notificationDao.getAllNotification()
+        vendor          = vendorDao.getAllVendor()
+        customer        = customerDao.getAllCustomer()
+        product         = productDao.getAllProduct()
+        notification    = notificationDao.getAllNotification()
+        order           = orderDao.getAllOrder()
+        orderItem       = orderItemDao.getAllOrderItem()
     }
 
     suspend fun clearAll() {
@@ -61,6 +84,8 @@ class AppViewModel(
         customerDao.deleteAllCustomer()
         productDao.deleteAllProduct()
         notificationDao.deleteAllNotification()
+        orderDao.deleteAllOrder()
+        orderItemDao.deleteAllOrderItem()
     }
 
     // vendor dao
@@ -127,6 +152,50 @@ class AppViewModel(
         refresh()
     }
 
+    // order dao
+    fun insertOrder(order: Order) = viewModelScope.launch {
+        orderDao.insertOrder(order)
+        refresh()
+    }
+
+    fun updateOrder(order: Order) = viewModelScope.launch {
+        orderDao.updateOrder(order)
+        refresh()
+    }
+
+    fun deleteOrder(order: Order) = viewModelScope.launch {
+        orderDao.deleteOrder(order)
+        refresh()
+    }
+
+    // order item dao
+    fun insertOrderItem(orderItem: OrderItem) = viewModelScope.launch {
+        orderItemDao.insertOrderItem(orderItem)
+        refresh()
+    }
+
+    fun updateOrderItem(orderItem: OrderItem) = viewModelScope.launch {
+        orderItemDao.updateOrderItem(orderItem)
+        refresh()
+    }
+
+    fun deleteOrderItem(orderItem: OrderItem) = viewModelScope.launch {
+        orderItemDao.deleteOrderItem(orderItem)
+        refresh()
+    }
+
+    // card method
+    fun addToCart(product: Product) = viewModelScope.launch {
+        cart += product
+    }
+
+    // sumOf is a synchronous function, no launch needed
+    fun cartTotalPrice(): Double {
+        return cart.sumOf { eachProduct ->
+            eachProduct.productPrice
+        }
+    }
+
 
     // please remove this seed data in production
     suspend fun seedData() {
@@ -152,5 +221,17 @@ class AppViewModel(
         notificationDao.insertNotification(Notification(message = "vendor accept your order, please wait", time = "11 p.m."))
         notificationDao.insertNotification(Notification(message = "food prepared, please pick up or i buang your food", time = "10 p.m."))
         notificationDao.insertNotification(Notification(message = "vendor blocklist you ", time = "14 p.m."))
+    }
+
+    // pls remove in production
+    var tempOrder by mutableStateOf(listOf<Order>())
+        private set
+
+    var tempOrderItem by mutableStateOf(listOf<OrderItem>())
+        private set
+
+    fun getTempOrder() = viewModelScope.launch {
+        tempOrder = orderDao.getAllOrder()
+        tempOrderItem = orderItemDao.getAllOrderItem()
     }
 }

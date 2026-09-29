@@ -25,7 +25,9 @@ class MainActivity : ComponentActivity() {
             AppDatabase.buildDatabase(this).vendorDao(),
             AppDatabase.buildDatabase(this).customerDao(),
             AppDatabase.buildDatabase(this).productDao(),
-            AppDatabase.buildDatabase(this).notificationDao()
+            AppDatabase.buildDatabase(this).notificationDao(),
+            AppDatabase.buildDatabase(this).orderDao(),
+            AppDatabase.buildDatabase(this).orderItemDao()
         )
     }
 

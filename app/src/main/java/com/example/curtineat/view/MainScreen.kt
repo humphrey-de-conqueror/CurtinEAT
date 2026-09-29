@@ -274,16 +274,15 @@ fun BodyScreen(
     LazyColumn(
         modifier = Modifier.padding(innerPadding)
     ) {
-        items(appViewModel.vendor) { vendor ->
+        items(
+            items = appViewModel.vendor,
+            key = { eachVendor -> eachVendor.vendorId }
+        ) { eachVendor ->
 
             val vendorProducts = appViewModel.product.filter {
-                it.vendorID == vendor.vendorId
+                it.vendorID == eachVendor.vendorId
             }
-
-            RestaurantCard(
-                vendor = vendor,
-                products = vendorProducts
-            )
+            RestaurantCard(appViewModel = appViewModel, eachVendor, vendorProducts)
         }
     }
 }

@@ -34,12 +34,16 @@ import androidx.compose.material.icons.filled.Star
 import com.example.curtineat.ui.theme.mySpacer
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalContext
+import com.example.curtineat.database.Order
+import com.example.curtineat.database.OrderDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.ui.theme.SecondaryCard
+import com.example.curtineat.viewmodel.AppViewModel
 import com.example.daodao.Vendor
 
 @Composable
 fun RestaurantCard(
+    appViewModel: AppViewModel,
     vendor: Vendor,
     products: List<Product>
 ) {
@@ -96,6 +100,7 @@ fun RestaurantCard(
         ) {
             items(products) { product ->
                 FoodItem(
+                    appViewModel = appViewModel,
                     product = product
                 )
             }
@@ -118,13 +123,16 @@ fun getDrawableId(imageName: String): Int {
 
 @Composable
 fun FoodItem(
-    product: Product,
-    onClick: () -> Unit = {}
+    appViewModel: AppViewModel,
+    product: Product
 ) {
     val imageRes = getDrawableId(product.productImage)
 
     SecondaryCard(
-        onClick = onClick,
+        onClick = {
+            appViewModel.addToCart(product)
+        },
+
         modifier = Modifier.width(150.dp)
     ) {
         Image(
