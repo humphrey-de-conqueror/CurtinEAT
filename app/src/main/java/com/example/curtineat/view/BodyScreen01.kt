@@ -87,17 +87,6 @@ fun RestaurantCard(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Image(
-            painter = painterResource(R.drawable.nasi_lemak),
-            contentDescription = "test",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            contentScale = ContentScale.Crop
-        )
     }
 }
 
@@ -119,11 +108,6 @@ fun FoodItem(
     onClick: () -> Unit = {}
 ) {
     val imageRes = getDrawableId(product.productImage)
-
-    Log.d(
-        "PRODUCT_TEST",
-        "id=${product.productId}, name=${product.productName}, image=${product.productImage}"
-    )
 
     SecondaryCard(
         onClick = onClick,
