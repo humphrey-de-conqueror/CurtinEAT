@@ -69,7 +69,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         navController = nav,
 
         //please change this
-        startDestination = RouteApiTestingScreen
+        startDestination = RouteMainScreen
     ) {
         composable <RouteApiTestingScreen> {
             ApiTestingScreen(appViewModel = appViewModel)

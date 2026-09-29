@@ -26,16 +26,35 @@ class AppViewModel(
     var product by mutableStateOf(listOf<Product>())
         private set
 
-    init {
-        // when seed data is removed, remove this
-        // viewmodescope launc, as refresh itself
-        // is the coroutine already
+    //cause trouble for fetching data for products
+    //This is how it looks lol
+    //delete Nasi Lemak id=1
+    //insert Nasi Lemak again → id=10
+//    init {
+//        // when seed data is removed, remove this
+//        // viewmodescope launc, as refresh itself
+//        // is the coroutine already
+//
+//        // but clearAll is not coroutine, so we might
+//        // need to persist launch{} anyway
+//        viewModelScope.launch {
+//            clearAll()
+//            seedData()
+//            refresh()
+//        }
+//    }
 
-        // but clearAll is not coroutine, so we might
-        // need to persist launch{} anyway
+    init {
         viewModelScope.launch {
-            clearAll()
-            seedData()
+
+            if (
+                vendorDao.getAllVendor().isEmpty() &&
+                customerDao.getAllCustomer().isEmpty() &&
+                productDao.getAllProduct().isEmpty()
+            ) {
+                seedData()
+            }
+
             refresh()
         }
     }
@@ -121,6 +140,7 @@ class AppViewModel(
         productDao.insertProduct(Product(vendorID = 5, productName = "Margherita Pizza", productPrice = 22.00, productImage = "margherita"))
         productDao.insertProduct(Product(vendorID = 5, productName = "Garlic Bread", productPrice = 5.00, productImage = "garlic_bread"))
 
-        refresh()
+        //Had to comment it out so that the id of the food is not always changing (del n insert to new id)
+        //refresh()
     }
 }

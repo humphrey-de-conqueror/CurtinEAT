@@ -130,3 +130,27 @@ fun PrimaryCard(
         )
     }
 }
+
+@Composable
+fun SecondaryCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    shape: Shape = RoundedCornerShape(14.dp),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    onClick: () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(contentPadding),
+            content = content
+        )
+    }
+}
