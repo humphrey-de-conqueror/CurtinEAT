@@ -105,7 +105,8 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             CartScreen(
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick,
-                onHomeClick = onHomeClick
+                onHomeClick = onHomeClick,
+                onLoginClick = onLoginClick
             )
         }
 

@@ -133,7 +133,8 @@ import com.example.curtineat.viewmodel.AppViewModel
 fun CartScreen(
     appViewModel: AppViewModel,
     onBackButtonClick: () -> Unit,
-    onHomeClick: () -> Unit
+    onHomeClick: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     val vendorId = appViewModel.cart
         .firstOrNull()
