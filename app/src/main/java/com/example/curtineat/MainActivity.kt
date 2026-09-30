@@ -11,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
-import com.example.curtineat.view.ApiTestingScreen
 import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.LoginScreen
@@ -46,8 +45,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Serializable
-object RouteApiTestingScreen
 @Serializable
 object RouteMainScreen
 
@@ -92,10 +89,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         navController = nav,
         startDestination = RouteMainScreen
     ) {
-        composable <RouteApiTestingScreen> {
-            ApiTestingScreen(appViewModel = appViewModel)
-        }
-
         composable<RouteMainScreen> {
             MainScreen(
                 appViewModel = appViewModel,

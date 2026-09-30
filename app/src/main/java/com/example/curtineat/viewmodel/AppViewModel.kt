@@ -405,21 +405,4 @@ class AppViewModel(
         notificationDao.insertNotification(Notification(message = "food prepared, please pick up or i buang your food", time = "10 p.m."))
         notificationDao.insertNotification(Notification(message = "vendor blocklist you ", time = "14 p.m."))
     }
-
-    // pls remove in production
-//    tempOrder        → resets
-//    tempOrderItem    → resets
-//
-//    Room Order table     → still there
-//    Room OrderItem table → still there
-    var tempOrder by mutableStateOf(listOf<Order>())
-        private set
-
-    var tempOrderItem by mutableStateOf(listOf<OrderItem>())
-        private set
-
-    fun getTempOrder() = viewModelScope.launch {
-        tempOrder = orderDao.getAllOrder()
-        tempOrderItem = orderItemDao.getAllOrderItem()
-    }
 }
