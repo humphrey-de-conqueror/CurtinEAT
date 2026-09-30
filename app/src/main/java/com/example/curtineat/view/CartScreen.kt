@@ -22,6 +22,7 @@ fun CartScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onLoginClick = onLoginClick,
         showSearch = false,
         showNotifications = true
     ) { innerPadding ->

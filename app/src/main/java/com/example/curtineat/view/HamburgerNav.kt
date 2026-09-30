@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainDrawer(
     onHomeClick: () -> Unit,
+    onLoginClick: () -> Unit,
     content: @Composable (onMenuClick: () -> Unit) -> Unit
 ) {
     val drawerState = rememberDrawerState(
@@ -47,7 +48,10 @@ fun MainDrawer(
                 },
                 onHistoryClick = { closeDrawer() },
                 onSettingClick = { closeDrawer() },
-                onLogInClick = { closeDrawer() }
+                onLogInClick = {
+                    closeDrawer()
+                    onLoginClick()
+                }
             )
         }
     ) {

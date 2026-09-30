@@ -55,13 +55,15 @@ import com.example.curtineat.ui.theme.mySpacer
 fun AppScaffold(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onLoginClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     MainDrawer(
-        onHomeClick = onHomeClick
+        onHomeClick = onHomeClick,
+        onLoginClick = onLoginClick
     ) { onMenuClick ->
 
         Scaffold(
@@ -84,11 +86,13 @@ fun AppScaffold(
 fun MainScreen(
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
-    onHomeClick: () -> Unit
+    onHomeClick: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onLoginClick = onLoginClick,
         showSearch = true,
         showNotifications = true,
         floatingActionButton = {

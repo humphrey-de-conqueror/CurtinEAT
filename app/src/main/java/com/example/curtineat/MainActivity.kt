@@ -13,7 +13,9 @@ import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.ApiTestingScreen
 import com.example.curtineat.view.CartScreen
+import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
+import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
@@ -50,6 +52,11 @@ object RouteMainScreen
 @Serializable
 object RouteCartScreen
 
+@Serializable
+object RouteLoginScreen
+
+@Serializable
+object RouteRegistrationScreen
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
     val nav = rememberNavController()
@@ -68,6 +75,14 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
+    val onLoginClick: () -> Unit = {
+        nav.navigate(RouteLoginScreen)
+    }
+
+    val onRegistrationClick: () -> Unit = {
+        nav.navigate(RouteRegistrationScreen)
+    }
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -80,7 +95,8 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             MainScreen(
                 appViewModel = appViewModel,
                 onCartButtonClick = onCartButtonClick,
-                onHomeClick = onHomeClick
+                onHomeClick = onHomeClick,
+                onLoginClick = onLoginClick
             )
         }
 
@@ -89,6 +105,21 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick,
                 onHomeClick = onHomeClick
+            )
+        }
+
+        composable <RouteLoginScreen> {
+            LoginScreen(
+                appViewModel = appViewModel,
+                onRegistrationClick = onRegistrationClick,
+                onBackButtonClick = onBackButtonClick
+            )
+        }
+
+        composable <RouteRegistrationScreen> {
+            RegistrationScreen(
+                appViewModel = appViewModel,
+                onBackButtonClick = onBackButtonClick
             )
         }
 
