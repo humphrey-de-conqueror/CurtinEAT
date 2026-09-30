@@ -378,16 +378,95 @@ class AppViewModel(
 //        refresh()
 //    }
 
+//    ================================
+//          login method
+//    ================================
+
+    fun login(
+        email: String,
+        password: String,
+        isVendor: Boolean
+    ) {
+        if (isVendor) {
+            val vendorFound = vendor.find { eachVendor ->
+                eachVendor.vendorEmail == email && eachVendor.vendorPassword == password
+            }
+
+            if (vendorFound != null) {
+                account = account.copy(
+                    vendorId = vendorFound.vendorId
+                )
+            }
+        } else {
+            val customerFound = customer.find { eachCustomer ->
+                eachCustomer.customerEmail == email && eachCustomer.customerPassword == password
+            }
+
+            if (customerFound != null) {
+                account = account.copy(
+                    customerId = customerFound.customerId
+                )
+            }
+        }
+    }
+
+    fun register(
+        email: String,
+        password: String,
+        isVendor: Boolean
+    ) {
+        if (isVendor) {
+            // this must fail for registration to proceed
+            val vendorExists = vendor.any { eachVendor ->
+                eachVendor.vendorEmail == email
+            }
+
+            if (!vendorExists) {
+                val newVendor = Vendor(
+                    vendorEmail = email,
+                    vendorPassword = password
+                )
+
+                // Insert into Room
+                vendorDao.insertVendor(newVendor)
+            }
+        } else {
+            val customerExists = customer.any { eachCustomer ->
+                eachCustomer.customerEmail == email
+            }
+
+            if (!customerExists) {
+                val newCustomer = Customer(
+                    customerEmail = email,
+                    customerPassword = password
+                )
+
+                // Insert into Room
+                customerDao.insertCustomer(newCustomer)
+            }
+        }
+    }
+
+    //for wallet top up
+//    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
+//        val updatedCustomer = customer.copy(
+//            walletBalance = customer.walletBalance + amount
+//        )
+//
+//        customerDao.updateCustomer(updatedCustomer)
+//        refresh()
+//    }
+
 
     // please remove this seed data in production
     suspend fun seedData() {
-        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a"))
-        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b"))
-        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c"))
-        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d"))
-        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e"))
+        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a", vendorEmail = "mamakitchen@gmail.com"))
+        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b", vendorEmail = "burgerbros@gmail.com"))
+        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c", vendorEmail = "sushizen@gmail.com"))
+        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))
+        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e", vendorEmail = "pizzapalace@gmail.com"))
 
-        customerDao.insertCustomer(Customer(customerName = "a", customerEmail = "b", customerPassword = "c", walletBalance = 100.00))
+        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c",))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
