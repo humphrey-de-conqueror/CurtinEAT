@@ -16,7 +16,7 @@ interface VendorDao {
     suspend fun deleteAllVendor(): Unit
 
     @Insert
-    suspend fun insertVendor(vendor: Vendor): Unit
+    suspend fun insertVendor(vendor: Vendor): Long    //Unit
 
     @Update
     suspend fun updateVendor(vendor: Vendor): Unit

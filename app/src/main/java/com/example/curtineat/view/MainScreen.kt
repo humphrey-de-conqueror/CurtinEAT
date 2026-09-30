@@ -48,16 +48,19 @@ import com.example.curtineat.ui.theme.mySpacer
 fun AppScaffold(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onLogInClick: () -> Unit = {},
+    onVendorToggle: (Boolean) -> Unit = {},
     title: String = "CurtinEAT",
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit,
-    onLoginClick: () -> Unit
+    content: @Composable (PaddingValues) -> Unit
 ) {
     MainDrawer(
         onHomeClick = onHomeClick,
-        onLoginClick = onLoginClick
+        onLogInClick = onLogInClick,
+        isVendorMode = appViewModel.isVendorMode,
+        onVendorToggle = onVendorToggle
     ) { onMenuClick ->
 
         Scaffold(
@@ -81,11 +84,13 @@ fun AppScaffold(
 fun MainScreen(
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
-    onHomeClick: () -> Unit
+    onHomeClick: () -> Unit,
+    onVendorToggle: (Boolean) -> Unit = {}
 ) {
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onVendorToggle = onVendorToggle,
         title = "CurtinEAT",
         showSearch = true,
         showNotifications = true,
@@ -226,6 +231,7 @@ fun TopBarScreen(
                     )
                 }
             }
+            //login goes here
 
 
         }

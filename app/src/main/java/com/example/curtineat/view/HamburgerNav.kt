@@ -18,13 +18,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonNull.content
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 
 
 @Composable
 fun MainDrawer(
     onHomeClick: () -> Unit,
-    onLogInClick: () -> Unit
+    onLogInClick: () -> Unit = {},
+    isVendorMode: Boolean = false,
+    onVendorToggle: (Boolean) -> Unit = {},
+    content: @Composable (onMenuClick: () -> Unit) -> Unit
 ) {
     val drawerState = rememberDrawerState(
         initialValue = DrawerValue.Closed
@@ -48,7 +61,15 @@ fun MainDrawer(
                 },
                 onHistoryClick = { closeDrawer() },
                 onSettingClick = { closeDrawer() },
-                onLogInClick = { closeDrawer(); onLogInClick }
+                onLogInClick = {
+                    closeDrawer()
+                    onLogInClick()
+                },
+                isVendorMode = isVendorMode,
+                onVendorToggle = {
+                    closeDrawer()
+                    onVendorToggle(it)
+                }
             )
         }
     ) {
@@ -60,19 +81,58 @@ fun MainDrawer(
     }
 }
 
+@Composable
+fun ToggleBox(
+    isVendorMode: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    val boxColor by animateColorAsState(
+        targetValue = if (isVendorMode)
+            MaterialTheme.colorScheme.tertiary
+        else
+            MaterialTheme.colorScheme.primary,
+        label = "modeToggleColor"
+    )
+
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(boxColor)
+            .clickable { onToggle(!isVendorMode) },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = if (isVendorMode) "Vendor Mode" else "Customer Mode",
+            color = if (isVendorMode)
+                MaterialTheme.colorScheme.onTertiary
+            else
+                MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
 
 @Composable
 fun HamburgerNav(
     onHomeClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onSettingClick: () -> Unit,
-    onLogInClick: () -> Unit
+    onLogInClick: () -> Unit,
+    isVendorMode: Boolean,
+    onVendorToggle: (Boolean) -> Unit
 ) {
     ModalDrawerSheet {
 
         Text(
             text = "CurtinEAT",
             modifier = Modifier.padding(16.dp)
+        )
+
+        ToggleBox(
+            isVendorMode = isVendorMode,
+            onToggle = onVendorToggle
         )
 
         NavigationDrawerItem(

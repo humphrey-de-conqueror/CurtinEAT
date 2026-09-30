@@ -27,6 +27,25 @@ class AppViewModel(
     private var orderDao: OrderDao,
     private var orderItemDao: OrderItemDao
 ): ViewModel() {
+
+    var username by mutableStateOf("")
+        private set
+
+    var email by mutableStateOf("")
+        private set
+
+    var password by mutableStateOf("")
+        private set
+
+    var passwordCheck by mutableStateOf("")
+        private set
+
+    var selectedGender by mutableStateOf("")
+        private set
+
+    var dob by mutableStateOf("")
+        private set
+
     var search by mutableStateOf("")
         private set
 
@@ -51,6 +70,51 @@ class AppViewModel(
     var orderItem by mutableStateOf(listOf<OrderItem>())
         private set
 
+    var myVendorId by mutableStateOf<Int?>(null)
+        private set
+
+    var isVendorMode by mutableStateOf(false)
+        private set
+
+
+    var myStoreName by mutableStateOf("")
+        private set
+
+    fun updateVendorMode(value: Boolean) {
+        isVendorMode = value
+    }
+
+    fun createStore(name: String) = viewModelScope.launch {
+        val newId = vendorDao.insertVendor(
+            Vendor(
+                vendorName = name,
+                rating = 0.0,            // placeholders until the store form grows
+                category = "",
+                distance = 0.0,
+                vendorPassword = ""
+            )
+        )
+        myVendorId = newId.toInt()
+        myStoreName = name
+        refresh()
+    }
+
+    fun addProduct(name: String, price: Double, imagePath: String) {
+        val vendorId = myVendorId ?: return
+        viewModelScope.launch {
+            productDao.insertProduct(
+                Product(
+                    vendorID = vendorId,
+                    productName = name,
+                    productPrice = price,
+                    productImage = imagePath
+                )
+            )
+            refresh()
+        }
+    }
+
+
 
     init {
         viewModelScope.launch {
@@ -68,6 +132,38 @@ class AppViewModel(
 
             refresh()
         }
+    }
+
+    fun updateUsername(value: String) {
+        username = value
+    }
+
+    fun updateEmail(value: String) {
+        email = value
+    }
+
+    fun updatePassword(value: String) {
+        password = value
+    }
+
+    fun updatePasswordCheck(value: String) {
+        passwordCheck = value
+    }
+
+    fun updateGender(value: String) {
+        selectedGender = value
+    }
+
+    fun updateDob(value: String) {
+        dob = value
+    }
+
+    fun Login() {
+        // Login logic
+    }
+
+    fun CreateAccount() {
+        // Create account logic
     }
 
     fun refresh() = viewModelScope.launch {

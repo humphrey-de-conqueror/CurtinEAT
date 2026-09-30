@@ -16,6 +16,7 @@ import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.LogIn
 import com.example.curtineat.view.Registeration
+import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
@@ -58,6 +59,12 @@ object RouteLogInScreen
 @Serializable
 object RouteRegistrationScreen
 
+@Serializable
+object RouteVendorScreen
+
+//@Serializable
+//object RouteXYZScreen
+
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
     val nav = rememberNavController()
@@ -71,16 +78,19 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
     }
 
     val onHomeClick: () -> Unit = {
+        appViewModel.updateVendorMode(false)
         nav.navigate(RouteMainScreen) {
+            popUpTo(RouteMainScreen) { inclusive = false }
             launchSingleTop = true
         }
     }
-    val onRegisterClick: () -> Unit = {
-        nav.navigate(RouteRegistrationScreen)
-    }
 
-    val onLoginClick: () -> Unit = {
-        nav.navigate(RouteLogInScreen)
+    val onVendorToggle: (Boolean) -> Unit = { toVendor ->
+        appViewModel.updateVendorMode(toVendor)
+        nav.navigate(if (toVendor) RouteVendorScreen else RouteMainScreen) {
+            popUpTo(RouteMainScreen) { inclusive = false }
+            launchSingleTop = true
+        }
     }
 
     NavHost(
@@ -95,7 +105,8 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             MainScreen(
                 appViewModel = appViewModel,
                 onCartButtonClick = onCartButtonClick,
-                onHomeClick = onHomeClick
+                onHomeClick = onHomeClick,
+                onVendorToggle = onVendorToggle
             )
         }
 
@@ -109,13 +120,22 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
         composable<RouteLogInScreen> {
             LogIn(
-                appViewModel = appViewModel,
-                onRegisterClick = onRegisterClick
+                onRegisterHit = {
+                nav.navigate(RouteRegistrationScreen)}
             )
         }
 
         composable<RouteRegistrationScreen> {
-            Registeration(appViewModel = appViewModel)
+            Registeration()
+        }
+
+        composable<RouteVendorScreen> {
+            VendorLandingScreen(
+                appViewModel = appViewModel,
+                onHomeClick = onHomeClick,
+                onVendorToggle = onVendorToggle
+
+            )
         }
     }
 }
