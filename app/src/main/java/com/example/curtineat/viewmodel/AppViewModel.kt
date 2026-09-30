@@ -28,7 +28,7 @@ class AppViewModel(
     private var orderDao: OrderDao,
     private var orderItemDao: OrderItemDao
 ): ViewModel() {
-    var search by mutableStateOf("")
+    var searchVendorId by mutableStateOf<Int?>(null)
         private set
 
 //    var cart by mutableStateOf(listOf<Product>())
@@ -263,6 +263,19 @@ class AppViewModel(
         cart = emptyList()
     }
 
+
+    // search method
+    fun searchProduct(productName: String) {
+        val productFound = product.find { eachProduct ->
+            eachProduct.productName.contains(productName, ignoreCase = true)
+        }
+
+        if (productFound != null) {
+            searchVendorId = productFound.vendorID
+        } else {
+            searchVendorId = null
+        }
+    }
 
 
     // please remove this seed data in production

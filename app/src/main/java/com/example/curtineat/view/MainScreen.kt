@@ -39,6 +39,13 @@ import androidx.compose.foundation.lazy.items
 import com.example.daodao.Vendor
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActionScope
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.input.ImeAction
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
@@ -48,7 +55,6 @@ import com.example.curtineat.ui.theme.mySpacer
 fun AppScaffold(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
-    title: String = "CurtinEAT",
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
@@ -63,7 +69,6 @@ fun AppScaffold(
                 TopBarScreen(
                     appViewModel = appViewModel,
                     onMenuClick = onMenuClick,
-                    title = title,
                     showSearch = showSearch,
                     showNotifications = showNotifications
                 )
@@ -84,7 +89,6 @@ fun MainScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
-        title = "CurtinEAT",
         showSearch = true,
         showNotifications = true,
         floatingActionButton = {
@@ -140,12 +144,11 @@ fun NotificationItem(
 fun TopBarScreen(
     appViewModel: AppViewModel,
     onMenuClick: () -> Unit,
-    title: String = "CurtinEAT",
     showSearch: Boolean = true,
     showNotifications: Boolean = true
 ) {
     var searching by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
+    var searchText by rememberSaveable { mutableStateOf("") }
     var notificationsOpen by remember { mutableStateOf(false) }
 
     val notificationSheetState = rememberModalBottomSheetState(
@@ -165,11 +168,19 @@ fun TopBarScreen(
                         )
                     },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+
+                    // change the meaning of phone's bottom right ENTER key
+                    keyboardOptions = KeyboardOptions( imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            appViewModel.searchProduct(productName = searchText)
+                        }
+                    )
                 )
             } else {
                 TextNormal(
-                    text = title,
+                    text = "CurtinEAT",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -271,14 +282,35 @@ fun BodyScreen(
     innerPadding: PaddingValues,
     appViewModel: AppViewModel
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(
+        appViewModel.searchVendorId,
+        appViewModel.vendor
+    ) {
+        val searchVendorId = appViewModel.searchVendorId
+
+        if (searchVendorId != null) {
+            val index = appViewModel.vendor.indexOfFirst {
+                it.vendorId == searchVendorId
+            }
+
+            println("VENDOR INDEX = $index")
+
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+            }
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.padding(innerPadding)
     ) {
         items(
             items = appViewModel.vendor,
             key = { eachVendor -> eachVendor.vendorId }
         ) { eachVendor ->
-
             val vendorProducts = appViewModel.product.filter {
                 it.vendorID == eachVendor.vendorId
             }
