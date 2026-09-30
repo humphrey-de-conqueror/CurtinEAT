@@ -1,15 +1,22 @@
 package com.example.curtineat.view
 
+import android.R.attr.contentDescription
+import android.R.attr.fontWeight
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,112 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.model.CartItem
+import com.example.curtineat.ui.theme.BackButton
 import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
-import com.example.curtineat.view.AppScaffold
-import com.example.curtineat.view.getDrawableId
+import com.example.curtineat.ui.theme.mySpacerWidth
 import com.example.curtineat.viewmodel.AppViewModel
 
 
-//package com.example.curtineat.view
-//
-//import androidx.compose.foundation.layout.Column
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.material3.Button
-//import androidx.compose.material3.Text
-//import androidx.compose.runtime.Composable
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.unit.dp
-//import androidx.room.util.TableInfo
-//import com.example.curtineat.database.Order
-//import com.example.curtineat.database.OrderItem
-//import com.example.curtineat.database.OrderItemDao
-//import com.example.curtineat.viewmodel.AppViewModel
-//
-//@Composable
-//fun CartScreen(
-//    appViewModel: AppViewModel,
-//    onBackButtonClick: () -> Unit,
-//    onHomeClick: () -> Unit
-//) {
-//    val vendorId = appViewModel.cart
-//        .firstOrNull()
-//        ?.product
-//        ?.vendorID
-//
-//    val cartVendor = appViewModel.vendor.find {
-//        it.vendorId == vendorId
-//    }
-//    val totalPrice = appViewModel.cartTotalPrice()
-//    val order = Order(totalPrice = totalPrice)
-//    appViewModel.insertOrder(order)
-//
-//    AppScaffold(
-//        appViewModel = appViewModel,
-//        onHomeClick = onHomeClick,
-//        title = "Order Summary",
-//        showSearch = false,
-//        showNotifications = true
-//    ) { innerPadding ->
-//
-//        Column(
-//            modifier = Modifier
-//                .padding(innerPadding)
-//                .padding(16.dp)
-//        ) {
-//            Text(text = "This is cart screen")
-//
-//            appViewModel.cart.forEach { eachProduct ->
-//                Text(text = eachProduct.product.productName)
-//            }
-//
-//            Button(
-//                onClick = {
-//                    val totalPrice = appViewModel.cartTotalPrice()
-//                    val order = Order(totalPrice = totalPrice)
-//                    appViewModel.insertOrder(order)
-//                    appViewModel.cart.forEach { eachProduct ->
-//                        val orderItem = OrderItem(
-//                            orderId = order.orderId,
-//                            productId = eachProduct.product.productId,
-//                            quantity = eachProduct.quantity
-//                            )
-//
-//                        appViewModel.insertOrderItem(orderItem)
-//                    }
-//                }
-//            ) { Text(text = "Confirm order & Submit") }
-//
-//            Button(
-//                onClick = onBackButtonClick
-//            ) {
-//                Text(text = "Back")
-//            }
-//
-//            // pls remove in production
-//            Button(
-//                onClick = {
-////                    appViewModel.getTempOrder()
-//                }
-//            ) {
-//                Text("Take a look at order/order item database")
-//            }
-//
-//            appViewModel.tempOrder.forEach { eachOrder ->
-//                Text(text = (eachOrder.orderId - 1).toString())
-//            }
-//
-//            appViewModel.tempOrderItem.forEach { eachOrderItem ->
-//                Text(
-//                    text = "${eachOrderItem.orderId} | ${eachOrderItem.productId}"
-//                )
-//            }
-//        }
-//    }
-//}
-
+// ---------------- CART SCREEN ----------------
 @Composable
 fun CartScreen(
     appViewModel: AppViewModel,
@@ -153,90 +64,150 @@ fun CartScreen(
         showNotifications = true
     ) { innerPadding ->
 
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .padding(16.dp)
         ) {
 
             if (appViewModel.cart.isEmpty()) {
 
-                TextNormal(
-                    text = "Your cart is empty"
+                EmptyCart(
+                    onBackButtonClick = onBackButtonClick
                 )
 
             } else {
 
-                TextNormal(
-                    text = cartVendor?.vendorName ?: "",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
 
-                TextNormal(
-                    text = "${cartVendor?.distance ?: 0.0} km away",
-                    fontSize = 14.sp
-                )
-
-                mySpacer()
-
-                appViewModel.cart.forEach { cartItem ->
-
-                    CartItemRow(
-                        cartItem = cartItem,
-                        onIncrease = {
-                            appViewModel.increaseQuantity(
-                                cartItem.product.productId
-                            )
-                        },
-                        onDecrease = {
-                            appViewModel.decreaseQuantity(
-                                cartItem.product.productId
-                            )
-                        }
+                    // Vendor
+                    CartHeader(
+                        vendorName = cartVendor?.vendorName ?: "",
+                        distance = cartVendor?.distance ?: 0.0,
+                        onBackButtonClick = onBackButtonClick
                     )
 
                     mySpacer()
+
+                    // Cart items
+                    appViewModel.cart.forEach { cartItem ->
+
+                        CartItemRow(
+                            cartItem = cartItem,
+                            onIncrease = {
+                                appViewModel.increaseQuantity(
+                                    cartItem.product.productId
+                                )
+                            },
+                            onDecrease = {
+                                appViewModel.decreaseQuantity(
+                                    cartItem.product.productId
+                                )
+                            }
+                        )
+
+                        mySpacer()
+                    }
+
+                    // Payment summary
+                    CartPaymentSummary(
+                        totalPrice = appViewModel.cartTotalPrice()
+                    )
+
+                    mySpacer()
+
+                    PrimaryButton(
+                        text = "Checkout",
+                        onClick = {
+                            // no function yet
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-
-                TextNormal(
-                    text = "Total: RM %.2f".format(
-                        appViewModel.cartTotalPrice()
-                    ),
-                    fontWeight = FontWeight.Bold
-                )
-
-                mySpacer()
-
-                PrimaryButton(
-                    text = "Checkout",
-                    onClick = {
-                        // no function yet
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         }
     }
 }
 
+
+// ---------------- EMPTY CART ----------------
+@Composable
+fun EmptyCart(
+    onBackButtonClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        BackButton(
+            onClick = onBackButtonClick,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+
+        TextNormal(
+            text = "Your cart is empty",
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+
+// ---------------- CART HEADER ----------------
+@Composable
+fun CartHeader(
+    vendorName: String,
+    distance: Double,
+    onBackButtonClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        BackButton(
+            onClick = onBackButtonClick
+        )
+
+        Column {
+            TextNormal(
+                text = vendorName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
+
+            TextNormal(
+                text = "$distance km away",
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+
+// ---------------- CART ITEM ----------------
 @Composable
 fun CartItemRow(
     cartItem: CartItem,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    val imageRes = getDrawableId(cartItem.product.productImage)
+    val imageRes = getDrawableId(
+        cartItem.product.productImage
+    )
 
     SecondaryCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(12.dp)
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
+            // Food image
             Image(
                 painter = painterResource(imageRes),
                 contentDescription = cartItem.product.productName,
@@ -246,11 +217,13 @@ fun CartItemRow(
                 contentScale = ContentScale.Crop
             )
 
+            // Food information
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 12.dp)
             ) {
+
                 TextNormal(
                     text = cartItem.product.productName,
                     fontWeight = FontWeight.Bold,
@@ -258,15 +231,21 @@ fun CartItemRow(
                 )
 
                 TextNormal(
-                    text = "RM %.2f".format(cartItem.product.productPrice),
+                    text = "RM %.2f".format(
+                        cartItem.product.productPrice
+                    ),
                     fontSize = 16.sp
                 )
             }
 
+            // Quantity
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onDecrease) {
+
+                IconButton(
+                    onClick = onDecrease
+                ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
                         contentDescription = "Decrease"
@@ -278,7 +257,9 @@ fun CartItemRow(
                     fontSize = 16.sp
                 )
 
-                IconButton(onClick = onIncrease) {
+                IconButton(
+                    onClick = onIncrease
+                ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Increase"
@@ -286,5 +267,58 @@ fun CartItemRow(
                 }
             }
         }
+    }
+}
+
+
+// ---------------- PAYMENT SUMMARY ----------------
+@Composable
+fun CartPaymentSummary(
+    totalPrice: Double
+) {
+    // Hardcoded wallet balance for now
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextNormal(
+                text = "Wallet Balance",
+                fontSize = 16.sp
+            )
+            mySpacerWidth()
+            Icon(
+                imageVector = Icons.Default.AccountBalanceWallet,
+                contentDescription = "Wallet",
+                modifier = Modifier.size(20.dp)
+            )
+        }
+//
+//        TextNormal(
+//            text = "RM %.2f".format(customer.walletBalance),
+//            fontWeight = FontWeight.Bold
+//        )
+    }
+
+    mySpacer()
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+
+        TextNormal(
+            text = "Total",
+            fontWeight = FontWeight.Bold
+        )
+
+        TextNormal(
+            text = "RM %.2f".format(totalPrice),
+            fontWeight = FontWeight.Bold
+        )
     }
 }

@@ -14,6 +14,9 @@ interface CustomerDao {
     @Query("DELETE FROM Customer")
     suspend fun deleteAllCustomer(): Unit
 
+    @Query("SELECT * FROM Customer WHERE customerId = :customerId LIMIT 1")
+    suspend fun getCustomerById(customerId: Int): Customer?
+
     @Insert
     suspend fun insertCustomer(customer: Customer): Unit
 

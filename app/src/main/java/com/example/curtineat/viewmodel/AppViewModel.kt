@@ -55,6 +55,9 @@ class AppViewModel(
         private set
 
 
+
+
+
     init {
         viewModelScope.launch {
 
@@ -277,6 +280,16 @@ class AppViewModel(
         }
     }
 
+    //for wallet top up
+    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
+        val updatedCustomer = customer.copy(
+            walletBalance = customer.walletBalance + amount
+        )
+
+        customerDao.updateCustomer(updatedCustomer)
+        refresh()
+    }
+
 
     // please remove this seed data in production
     suspend fun seedData() {
@@ -286,7 +299,7 @@ class AppViewModel(
         vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d"))
         vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e"))
 
-        customerDao.insertCustomer(Customer(customerName = "a", customerEmail = "b", customerPassword = "c"))
+        customerDao.insertCustomer(Customer(customerName = "a", customerEmail = "b", customerPassword = "c", walletBalance = 100.00))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
