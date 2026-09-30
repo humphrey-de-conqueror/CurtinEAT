@@ -22,7 +22,6 @@ fun CartScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
-        title = "Order Summary",
         showSearch = false,
         showNotifications = true
     ) { innerPadding ->
