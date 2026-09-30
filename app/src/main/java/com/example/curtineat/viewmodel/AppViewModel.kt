@@ -16,6 +16,7 @@ import com.example.curtineat.database.OrderItemDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
+import com.example.curtineat.model.Account
 import com.example.curtineat.model.CartItem
 import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
@@ -28,11 +29,12 @@ class AppViewModel(
     private var orderDao: OrderDao,
     private var orderItemDao: OrderItemDao
 ): ViewModel() {
+    var account by mutableStateOf(Account())
+        private set
+
     var searchVendorId by mutableStateOf<Int?>(null)
         private set
 
-//    var cart by mutableStateOf(listOf<Product>())
-//        private set
     var cart by mutableStateOf(listOf<CartItem>())
         private set
 
@@ -53,8 +55,6 @@ class AppViewModel(
 
     var orderItem by mutableStateOf(listOf<OrderItem>())
         private set
-
-
 
 
 
@@ -190,20 +190,6 @@ class AppViewModel(
         refresh()
     }
 
-    // card method
-//    fun addToCart(product: Product) = viewModelScope.launch {
-//        cart += product
-//    }
-
-
-
-    // sumOf is a synchronous function, no launch needed
-//    fun cartTotalPrice(): Double {
-//        return cart.sumOf { eachProduct ->
-//            eachProduct.productPrice
-//        }
-//    }
-
     fun addToCart(product: Product) {
 
         // if cart already has another vendor, clear it
@@ -266,7 +252,6 @@ class AppViewModel(
         cart = emptyList()
     }
 
-
     // search method
     fun searchProduct(productName: String) {
         val productFound = product.find { eachProduct ->
@@ -288,6 +273,75 @@ class AppViewModel(
 
         customerDao.updateCustomer(updatedCustomer)
         refresh()
+    }
+
+//    ================================
+//          login method
+//    ================================
+
+    fun login(
+        email: String,
+        password: String,
+        isVendor: Boolean
+    ) {
+        if (isVendor) {
+            val vendorFound = vendor.find { eachVendor ->
+                eachVendor.vendorEmail == email && eachVendor.vendorPassword == password
+            }
+
+            if (vendorFound != null) {
+                account = account.copy(
+                    vendorId = vendorFound.vendorId
+                )
+            }
+        } else {
+            val customerFound = customer.find { eachCustomer ->
+                eachCustomer.customerEmail == email && eachCustomer.customerPassword == password
+            }
+
+            if (customerFound != null) {
+                account = account.copy(
+                    customerId = customerFound.customerId
+                )
+            }
+        }
+    }
+
+    fun register(
+        email: String,
+        password: String,
+        isVendor: Boolean
+    ) {
+        if (isVendor) {
+            // this must fail for registration to proceed
+            val vendorExists = vendor.any { eachVendor ->
+                eachVendor.vendorEmail == email
+            }
+
+            if (!vendorExists) {
+                val newVendor = Vendor(
+                    vendorEmail = email,
+                    vendorPassword = password
+                )
+
+                // Insert into Room
+                vendorDao.insertVendor(newVendor)
+            }
+        } else {
+            val customerExists = customer.any { eachCustomer ->
+                eachCustomer.customerEmail == email
+            }
+
+            if (!customerExists) {
+                val newCustomer = Customer(
+                    customerEmail = email,
+                    customerPassword = password
+                )
+
+                // Insert into Room
+                customerDao.insertCustomer(newCustomer)
+            }
+        }
     }
 
 
