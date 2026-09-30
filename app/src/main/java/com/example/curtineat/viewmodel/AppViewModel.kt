@@ -299,75 +299,6 @@ class AppViewModel(
         refresh()
     }
 
-//    ================================
-//          login method
-//    ================================
-
-    fun login(
-        email: String,
-        password: String,
-        isVendor: Boolean
-    ) {
-        if (isVendor) {
-            val vendorFound = vendor.find { eachVendor ->
-                eachVendor.vendorEmail == email && eachVendor.vendorPassword == password
-            }
-
-            if (vendorFound != null) {
-                account = account.copy(
-                    vendorId = vendorFound.vendorId
-                )
-            }
-        } else {
-            val customerFound = customer.find { eachCustomer ->
-                eachCustomer.customerEmail == email && eachCustomer.customerPassword == password
-            }
-
-            if (customerFound != null) {
-                account = account.copy(
-                    customerId = customerFound.customerId
-                )
-            }
-        }
-    }
-
-    fun register(
-        email: String,
-        password: String,
-        isVendor: Boolean
-    ) {
-        if (isVendor) {
-            // this must fail for registration to proceed
-            val vendorExists = vendor.any { eachVendor ->
-                eachVendor.vendorEmail == email
-            }
-
-            if (!vendorExists) {
-                val newVendor = Vendor(
-                    vendorEmail = email,
-                    vendorPassword = password
-                )
-
-                // Insert into Room
-                vendorDao.insertVendor(newVendor)
-            }
-        } else {
-            val customerExists = customer.any { eachCustomer ->
-                eachCustomer.customerEmail == email
-            }
-
-            if (!customerExists) {
-                val newCustomer = Customer(
-                    customerEmail = email,
-                    customerPassword = password
-                )
-
-                // Insert into Room
-                customerDao.insertCustomer(newCustomer)
-            }
-        }
-    }
-
     //for wallet top up
 //    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
 //        val updatedCustomer = customer.copy(
@@ -414,7 +345,7 @@ class AppViewModel(
         email: String,
         password: String,
         isVendor: Boolean
-    ) {
+    ) = viewModelScope.launch {
         if (isVendor) {
             // this must fail for registration to proceed
             val vendorExists = vendor.any { eachVendor ->
@@ -447,15 +378,6 @@ class AppViewModel(
         }
     }
 
-    //for wallet top up
-//    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
-//        val updatedCustomer = customer.copy(
-//            walletBalance = customer.walletBalance + amount
-//        )
-//
-//        customerDao.updateCustomer(updatedCustomer)
-//        refresh()
-//    }
 
 
     // please remove this seed data in production
