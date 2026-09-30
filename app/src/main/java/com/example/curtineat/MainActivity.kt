@@ -15,6 +15,8 @@ import com.example.curtineat.view.MainScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
+import com.example.curtineat.view.LogIn
+import com.example.curtineat.view.Registeration
 
 class MainActivity : ComponentActivity() {
 
@@ -41,6 +43,16 @@ object RouteMainScreen
 @Serializable
 object RouteCardScreen
 
+@Serializable
+object RouteLogInScreen
+
+@Serializable
+object RouteRegistrationScreen
+
+
+
+
+
 @Composable
 fun ScreenNavigation(
     appViewModel: AppViewModel
@@ -53,11 +65,12 @@ fun ScreenNavigation(
 
     val onBackButtonClick: () -> Unit = {
         nav.popBackStack()
+
     }
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination = RouteLogInScreen
     ) {
         composable<RouteMainScreen> {
             MainScreen(
@@ -71,6 +84,16 @@ fun ScreenNavigation(
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick
             )
+        }
+
+        composable<RouteLogInScreen> {
+            LogIn (
+                onRegisterHit = { nav.navigate(RouteRegistrationScreen) }
+            )
+        }
+
+        composable<RouteRegistrationScreen> {
+            Registeration()
         }
     }
 }

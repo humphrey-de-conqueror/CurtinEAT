@@ -1,175 +1,61 @@
-//package com.example.curtineat.view
-//
-//
-//
-//import android.widget.NumberPicker
-//import com.example.curtineat.R
-//import androidx.compose.foundation.Image
-//import androidx.compose.foundation.clickable
-//import androidx.compose.foundation.layout.Arrangement
-//import androidx.compose.foundation.layout.Column
-//import androidx.compose.foundation.layout.Row
-//import androidx.compose.foundation.layout.fillMaxWidth
-//import androidx.compose.foundation.layout.height
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.foundation.layout.width
-//import androidx.compose.foundation.shape.RoundedCornerShape
-//import androidx.compose.material.icons.Icons
-//import androidx.compose.material3.Card
-//import androidx.compose.material3.CardDefaults
-//import androidx.compose.material3.MaterialTheme
-//import androidx.compose.runtime.Composable
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.layout.ContentScale
-//import androidx.compose.ui.res.painterResource
-//import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-//import androidx.compose.ui.unit.sp
-//import com.example.curtineat.ui.theme.PrimaryCard
-//import com.example.curtineat.ui.theme.TextNormal
-//import androidx.compose.foundation.lazy.LazyRow
-//import androidx.compose.foundation.layout.Spacer
-//import androidx.compose.foundation.layout.fillMaxHeight
-//import androidx.compose.foundation.layout.size
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.graphics.Color
-//import androidx.compose.material3.Icon
-//import androidx.compose.material.icons.filled.Star
-//import androidx.compose.material3.Button
-//import androidx.compose.material3.OutlinedTextField
-//import androidx.compose.material3.Text
-//import androidx.compose.material3.TextField
-//import com.example.curtineat.ui.theme.mySpacer
-//
-//@Composable
-//fun LogIn(){
-//
-//    // var email by remember { mutableStateOf("")}
-//    // var password by remember { mutableStateOf("")}
-//
-//    Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Top){
-//
-//        Text( text = "Welcome to CurtinEat o reverend one")
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        TextField(value = email, onValueChange = {email = it})
-//        TextField(value = password, onValueChange = {password = it})
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        Button(onClick = { /* save details */ }, modifier = Modifier.fillMaxWidth()) {Text ("Log In")}
-//
-//        Text(
-//            text = "Register Account",
-//            modifier = Modifier.clickable {
-//                // the function to open register page
-//            }
-//        )
-//
-//    }
-//}
-//
-//@Composable
-//fun Registeration()
-//{
-//
-////     var selectedGender by remember { mutableStateOf("")}
-////     var username by remember { mutableStateOf("")}
-////     var email by remember { mutableStateOf("")}
-////     var password by remember { mutableStateOf("")}
-////     var passwordcheck by remember { mutableStateOf("")}
-////     var dob by remember { mutableStateOf("") }
-//
-//    Column( horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)){
-//        TextField(value = username, onValueChange = {username = it})
-//        TextField(value = email, onValueChange = {email = it})
-//        TextField(value = password, onValueChange = {password = it})
-//        TextField(value = passwordcheck, onValueChange = {passwordcheck = it})
-//
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.Center
-//        ) {
-//
-//            Text(
-//                text = "♂",
-//                fontSize = 50.sp,
-//                color = if (selectedGender == "Male")
-//                    Color.Blue
-//                else
-//                    Color.Gray,
-//                modifier = Modifier.clickable {
-//                    selectedGender = "Male"
-//                }
-//            )
-//
-//            //Spacer(modifier = Modifier.width(40.dp))
-//
-//            Text(
-//                text = "♀",
-//                fontSize = 50.sp,
-//                color = if (selectedGender == "Female")
-//                    Color.Magenta
-//                else
-//                    Color.Gray,
-//                modifier = Modifier.clickable {
-//                    selectedGender = "Female"
-//                }
-//            )
-//        }
-//
-//
-//        OutlinedTextField(
-//            value = dob,
-//            onValueChange = { },
-//            readOnly = true,
-//            label = { Text("Date of Birth") },
-//            placeholder = { Text("DD/MM/YYYY") },
-//            trailingIcon = {
-//                Icon(
-//                    imageVector = Icons.Default.DateRange,
-//                    contentDescription = "Select date"
-//                )
-//            },
-//            modifier = Modifier.fillMaxWidth()
-//        )
-//
-//    }
-//}
-//
-// everything above is before mvvm
-
 package com.example.curtineat.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.curtineat.viewmodel.AuthViewModel
+import com.example.curtineat.validation.InputValidation
 
 @Composable
-fun LogIn( viewModel: AuthViewModel = viewModel() ){
-    Column(verticalArrangement = Arrangement.Top){
+fun LogIn(
+    onRegisterHit: () -> Unit,
+    viewModel: AuthViewModel = viewModel() ){
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp),
+        verticalArrangement = Arrangement.Top){
 
-        Text( text = "Welcome to CurtinEat o reverend one" )
+        Text( text = "Welcome to CurtinEat o reverend one",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp),
+            textAlign = TextAlign.Center)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -180,7 +66,8 @@ fun LogIn( viewModel: AuthViewModel = viewModel() ){
             },
             label = {
                 Text("Email")
-            }
+            } ,
+            modifier = Modifier.fillMaxWidth()
         )
 
         TextField(
@@ -190,7 +77,8 @@ fun LogIn( viewModel: AuthViewModel = viewModel() ){
             },
             label = {
                 Text("Password")
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
 
@@ -198,31 +86,41 @@ fun LogIn( viewModel: AuthViewModel = viewModel() ){
 
         Button(
             onClick = {  viewModel.Login() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .width(200.dp)
+                .align(Alignment.CenterHorizontally)
         )
         { Text("Log In") }
 
         Text(
-            text = "Register Account",
-            modifier = Modifier.clickable {
-                // the function to open register page
-            }
+            text = "Create New Account",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable {
+                        onRegisterHit()
+                }
         )
 
     }
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Registeration(
     viewModel: AuthViewModel = viewModel()
 ) {
 
+    //calendar box show boolean
+    var showDateBox by remember { mutableStateOf (false)}
+
+    val datePickerState = rememberDatePickerState()
+
     Column(
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-        modifier = Modifier.fillMaxWidth()
+        verticalArrangement = Arrangement.Top
+
     ) {
 
         // Username
@@ -233,7 +131,8 @@ fun Registeration(
             },
             label = {
                 Text("Username")
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -246,7 +145,8 @@ fun Registeration(
             },
             label = {
                 Text("Email")
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -259,7 +159,8 @@ fun Registeration(
             },
             label = {
                 Text("Password")
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -272,7 +173,8 @@ fun Registeration(
             },
             label = {
                 Text("Confirm Password")
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -280,35 +182,60 @@ fun Registeration(
 
         // Gender
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(8.dp),
             horizontalArrangement = Arrangement.Center
         ) {
 
-            Text(
-                text = "♂",
-                fontSize = 50.sp,
-                color = if (viewModel.selectedGender == "Male")
-                    Color.Blue
-                else
-                    Color.Gray,
+            Box(
+               modifier = Modifier
+                   .weight(1f)
+                   .height(80.dp)
+                   .background(
+                       if (viewModel.selectedGender == "Male")
+                           MaterialTheme.colorScheme.primary
+                       else
+                           MaterialTheme.colorScheme.surfaceContainerHighest,
+                       shape = RoundedCornerShape(8.dp)
+                   )
+                   .clickable { viewModel.updateGender("Male") },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "♂",
+                    fontSize = 50.sp,
+                    color = if (viewModel.selectedGender == "Male")
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
 
-                modifier = Modifier.clickable {
-                    viewModel.updateGender("Male")
-                }
-            )
-
-            Text(
-                text = "♀",
-                fontSize = 50.sp,
-                color = if (viewModel.selectedGender == "Female")
-                    Color.Magenta
-                else
-                    Color.Gray,
-
-                modifier = Modifier.clickable {
-                    viewModel.updateGender("Female")
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(80.dp)
+                    .background(
+                        if (viewModel.selectedGender == "Female")
+                            MaterialTheme.colorScheme.tertiary
+                        else
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .clickable { viewModel.updateGender("Female") },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "♀",
+                    fontSize = 50.sp,
+                    color = if (viewModel.selectedGender == "Female")
+                        MaterialTheme.colorScheme.onTertiary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -317,8 +244,7 @@ fun Registeration(
         // Date of Birth
         OutlinedTextField(
             value = viewModel.dob,
-            onValueChange = { },
-            readOnly = true,
+            onValueChange = { viewModel.updateDob(it)},
 
             label = {
                 Text("Date of Birth")
@@ -329,23 +255,97 @@ fun Registeration(
             },
 
             trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Select date"
-                )
+                IconButton(
+                    onClick = { showDateBox = true
+                    }
+                ) { Icon(imageVector = Icons.Default.DateRange,
+                    contentDescription = "Select Date")
+                }
+
             },
 
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Button(
-            onClick = {  viewModel.CreateAccount() },
+            onClick = {
+
+                if (!InputValidation.areAllFieldsFilled(
+                        viewModel.username,
+                        viewModel.email,
+                        viewModel.password,
+                        viewModel.passwordCheck,
+                        viewModel.selectedGender,
+                        viewModel.dob
+                    )
+                ) {
+                    // any empty
+                }
+                else if (!InputValidation.isValidEmail(viewModel.email)) {
+                    // invalid email format
+                }
+                else if (!InputValidation.passwordsMatch(
+                        viewModel.password,
+                        viewModel.passwordCheck
+                    )
+                ) {
+                    // passwords no match
+                }
+                else {
+                    // if all ok
+                    viewModel.CreateAccount()
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
         { Text("Create Account") }
     }
-}
 
+    // Calendar dialog
+    if (showDateBox) {
+        DatePickerDialog(
+            onDismissRequest = {
+                showDateBox = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val formatter = java.text.SimpleDateFormat(
+                                "dd/MM/yyyy",
+                                java.util.Locale.getDefault()
+                            ).apply {
+                                timeZone = java.util.TimeZone.getTimeZone("UTC")
+                            }
+
+                            viewModel.updateDob(
+                                formatter.format(java.util.Date(millis))
+                            )
+                        }
+
+                        showDateBox = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDateBox = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState
+            )
+        }
+    }
+}
 // havent make the model file for the data class
 //package com.example.curtineat.model
 //
@@ -356,3 +356,7 @@ fun Registeration(
 //    val gender: String,
 //    val dob: String
 //)
+
+
+
+
