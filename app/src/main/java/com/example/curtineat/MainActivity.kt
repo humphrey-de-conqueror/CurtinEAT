@@ -20,6 +20,7 @@ import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
 
+
 class MainActivity : ComponentActivity() {
 
     private val vm: AppViewModel by viewModels {
