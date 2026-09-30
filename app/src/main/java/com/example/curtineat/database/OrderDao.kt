@@ -14,8 +14,11 @@ interface OrderDao {
     @Query("DELETE FROM `Order`")
     suspend fun deleteAllOrder(): Unit
 
+//    @Insert
+//    suspend fun insertOrder(order: Order): Unit
+
     @Insert
-    suspend fun insertOrder(order: Order): Unit
+    suspend fun insertOrder(order: Order): Long
 
     @Update
     suspend fun updateOrder(order: Order): Unit

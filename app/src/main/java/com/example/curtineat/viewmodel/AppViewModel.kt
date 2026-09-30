@@ -265,13 +265,37 @@ class AppViewModel(
         }
     }
 
-    //for wallet top up
-    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
-        val updatedCustomer = customer.copy(
-            walletBalance = customer.walletBalance + amount
+    //for checking out & create order & order item
+    fun checkout(customerId: Int) = viewModelScope.launch {
+
+        if (cart.isEmpty()) {
+            return@launch
+        }
+
+        val vendorId = cart.first().product.vendorID
+        val totalPrice = cartTotalPrice()
+
+        val order = Order(
+            customerId = customerId,
+            vendorId = vendorId,
+            totalPrice = totalPrice
         )
 
-        customerDao.updateCustomer(updatedCustomer)
+        val generatedOrderId = orderDao.insertOrder(order)
+
+        cart.forEach { cartItem ->
+
+            val orderItem = OrderItem(
+                orderId = generatedOrderId.toInt(),
+                productId = cartItem.product.productId,
+                quantity = cartItem.quantity
+            )
+
+            orderItemDao.insertOrderItem(orderItem)
+        }
+
+        cart = emptyList()
+
         refresh()
     }
 
@@ -343,6 +367,16 @@ class AppViewModel(
             }
         }
     }
+
+    //for wallet top up
+//    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
+//        val updatedCustomer = customer.copy(
+//            walletBalance = customer.walletBalance + amount
+//        )
+//
+//        customerDao.updateCustomer(updatedCustomer)
+//        refresh()
+//    }
 
 
     // please remove this seed data in production

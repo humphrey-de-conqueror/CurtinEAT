@@ -1,7 +1,5 @@
 package com.example.curtineat.view
 
-import android.R.attr.contentDescription
-import android.R.attr.fontWeight
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,11 +14,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +45,15 @@ fun CartScreen(
     onHomeClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
+    val loggedInCustomerId: Int? = 1 // hardcoded change to null if want
+
+    //test logged out
+    //val loggedInCustomerId: Int? = null
+
+    val currentCustomer = appViewModel.customer.find {
+        it.customerId == loggedInCustomerId
+    }
+
     val vendorId = appViewModel.cart
         .firstOrNull()
         ?.product
@@ -82,6 +89,25 @@ fun CartScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
+                    //----
+                    mySpacer()
+                    if (loggedInCustomerId != null) {
+                        TextNormal(
+                            text = "Customer ID: $loggedInCustomerId",
+                        )
+
+                        TextNormal(
+                            text = "Ordering as: ${currentCustomer?.customerName ?: ""}",
+
+                        )
+                    } else {
+                        TextNormal(
+                            text = "Not logged in",
+                        )
+                    }
+                    mySpacer()
+                    //----
 
                     // Vendor
                     CartHeader(
@@ -122,7 +148,11 @@ fun CartScreen(
                     PrimaryButton(
                         text = "Checkout",
                         onClick = {
-                            // no function yet
+                            if (loggedInCustomerId != null) {
+                                appViewModel.checkout(loggedInCustomerId)
+                            } else {
+                                onLoginClick()
+                            }
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
