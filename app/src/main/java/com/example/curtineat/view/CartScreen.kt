@@ -40,9 +40,11 @@ import com.example.curtineat.viewmodel.AppViewModel
 // ---------------- CART SCREEN ----------------
 @Composable
 fun CartScreen(
+    // since cardScreen can see humburger, expect full onAction
     appViewModel: AppViewModel,
     onBackButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
+    onWalletClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
     val loggedInCustomerId: Int? = 1 // hardcoded change to null if want
@@ -66,6 +68,7 @@ fun CartScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = false,
         showNotifications = true

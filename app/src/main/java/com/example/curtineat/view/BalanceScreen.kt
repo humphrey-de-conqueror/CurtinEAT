@@ -15,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.curtineat.ui.theme.BackButton
 import com.example.curtineat.viewmodel.AppViewModel
 
 @Composable
 fun BalanceScreen(
-    appViewModel: AppViewModel
+    appViewModel: AppViewModel,
+    onBackButtonClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -27,6 +29,10 @@ fun BalanceScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        BackButton(
+            onClick = onBackButtonClick,
+            modifier = Modifier.align(Alignment.Start)
+        )
 
         // Balance area
         Column(

@@ -77,6 +77,10 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
+    val onWalletClick: () -> Unit = {
+        nav.navigate(RouteBalanceScreen)
+    }
+
     val onLoginClick: () -> Unit = {
         nav.navigate(RouteLoginScreen)
     }
@@ -94,6 +98,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 appViewModel = appViewModel,
                 onCartButtonClick = onCartButtonClick,
                 onHomeClick = onHomeClick,
+                onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick
             )
         }
@@ -103,6 +108,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick,
                 onHomeClick = onHomeClick,
+                onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick
             )
         }
@@ -124,7 +130,8 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
         composable <RouteBalanceScreen> {
             BalanceScreen(
-                appViewModel = appViewModel
+                appViewModel = appViewModel,
+                onBackButtonClick = onBackButtonClick
             )
         }
     }

@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -22,7 +23,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MainDrawer(
+    //waiting for onHistoryClick and onSettingClick
     onHomeClick: () -> Unit,
+    onWalletClick:() -> Unit,
     onLoginClick: () -> Unit,
     content: @Composable (onMenuClick: () -> Unit) -> Unit
 ) {
@@ -46,6 +49,10 @@ fun MainDrawer(
                     closeDrawer()
                     onHomeClick()
                 },
+                onWalletClick = {
+                    closeDrawer()
+                    onWalletClick()
+                },
                 onHistoryClick = { closeDrawer() },
                 onSettingClick = { closeDrawer() },
                 onLogInClick = {
@@ -67,6 +74,7 @@ fun MainDrawer(
 @Composable
 fun HamburgerNav(
     onHomeClick: () -> Unit,
+    onWalletClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onSettingClick: () -> Unit,
     onLogInClick: () -> Unit
@@ -85,6 +93,13 @@ fun HamburgerNav(
             },
             selected = false,
             onClick = onHomeClick
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Wallet") },
+            icon = { Icon(Icons.Default.Wallet, contentDescription = null) },
+            selected = false,
+            onClick = onWalletClick
         )
 
         NavigationDrawerItem(

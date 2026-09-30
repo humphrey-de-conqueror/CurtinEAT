@@ -1,5 +1,6 @@
 package com.example.curtineat.view
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -39,13 +40,26 @@ import androidx.compose.foundation.lazy.items
 import com.example.daodao.Vendor
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import com.example.curtineat.R
+import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
@@ -53,8 +67,10 @@ import com.example.curtineat.ui.theme.mySpacer
 
 @Composable
 fun AppScaffold(
+    // expect onHistoryClick and onSettingClick
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
@@ -62,7 +78,9 @@ fun AppScaffold(
     content: @Composable (PaddingValues) -> Unit
 ) {
     MainDrawer(
+        // expect to give onHistoryClick and onSettingClick
         onHomeClick = onHomeClick,
+        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick
     ) { onMenuClick ->
 
@@ -84,14 +102,18 @@ fun AppScaffold(
 
 @Composable
 fun MainScreen(
+    //expect onHistory and onSetting
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
+    onWalletClick:() -> Unit,
     onLoginClick: () -> Unit
 ) {
     AppScaffold(
+        // expect onHistory and onSetting
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = true,
         showNotifications = true,
@@ -319,6 +341,126 @@ fun BodyScreen(
                 it.vendorID == eachVendor.vendorId
             }
             RestaurantCard(appViewModel = appViewModel, eachVendor, vendorProducts)
+        }
+    }
+}
+
+@Composable
+fun RestaurantCard(
+    appViewModel: AppViewModel,
+    vendor: Vendor,
+    products: List<Product>
+) {
+    PrimaryCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        TextNormal(
+            text = vendor.vendorName,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp
+        )
+
+        mySpacer()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextNormal(
+                    text = "%.1f".format(vendor.rating),
+                    fontSize = 18.sp
+                )
+
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = Color(0xffEA7422),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            TextNormal(
+                text = vendor.category
+            )
+
+            TextNormal(
+                text = "%.1f km".format(vendor.distance)
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(products) { product ->
+                FoodItem(
+                    appViewModel = appViewModel,
+                    product = product
+                )
+            }
+        }
+    }
+}
+
+
+//Helper to get product Image
+@Composable
+fun getDrawableId(imageName: String): Int {
+    return try {
+        R.drawable::class.java
+            .getField(imageName)
+            .getInt(null)
+    } catch (e: Exception) {
+        R.drawable.food1
+    }
+}
+
+@Composable
+fun FoodItem(
+    appViewModel: AppViewModel,
+    product: Product
+) {
+    val imageRes = getDrawableId(product.productImage)
+
+    SecondaryCard(
+        onClick = {
+            appViewModel.addToCart(product)
+        },
+
+        modifier = Modifier.width(150.dp)
+    ) {
+        Image(
+            painter = painterResource(imageRes),
+            contentDescription = product.productName,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            TextNormal(
+                text = "RM %.2f".format(product.productPrice),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            TextNormal(
+                text = product.productName,
+                fontSize = 14.sp
+            )
         }
     }
 }
