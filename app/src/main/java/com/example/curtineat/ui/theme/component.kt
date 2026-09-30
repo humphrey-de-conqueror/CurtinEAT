@@ -6,11 +6,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,6 +56,11 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun mySpacer(){
     Spacer(modifier = Modifier.height(12.dp))
+}
+
+@Composable
+fun mySpacerWidth(){
+    Spacer(modifier = Modifier.width(12.dp))
 }
 
 // ---------------- TEXT ----------------
@@ -151,6 +162,23 @@ fun SecondaryCard(
         Column(
             modifier = Modifier.padding(contentPadding),
             content = content
+        )
+    }
+}
+
+@Composable
+fun BackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.Default.ChevronLeft,
+            contentDescription = "Back",
+            modifier = Modifier.size(36.dp)
         )
     }
 }
