@@ -16,6 +16,7 @@ import com.example.curtineat.database.OrderItemDao
 import com.example.curtineat.database.Product
 import com.example.curtineat.database.ProductDao
 import com.example.curtineat.database.VendorDao
+import com.example.curtineat.model.CartItem
 import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
 
@@ -30,7 +31,9 @@ class AppViewModel(
     var search by mutableStateOf("")
         private set
 
-    var cart by mutableStateOf(listOf<Product>())
+//    var cart by mutableStateOf(listOf<Product>())
+//        private set
+    var cart by mutableStateOf(listOf<CartItem>())
         private set
 
     var vendor by mutableStateOf(listOf<Vendor>())
@@ -185,16 +188,81 @@ class AppViewModel(
     }
 
     // card method
-    fun addToCart(product: Product) = viewModelScope.launch {
-        cart += product
-    }
+//    fun addToCart(product: Product) = viewModelScope.launch {
+//        cart += product
+//    }
+
+
 
     // sumOf is a synchronous function, no launch needed
-    fun cartTotalPrice(): Double {
-        return cart.sumOf { eachProduct ->
-            eachProduct.productPrice
+//    fun cartTotalPrice(): Double {
+//        return cart.sumOf { eachProduct ->
+//            eachProduct.productPrice
+//        }
+//    }
+
+    fun addToCart(product: Product) {
+
+        // if cart already has another vendor, clear it
+        if (cart.isNotEmpty()) {
+            val currentVendorId = cart.first().product.vendorID
+
+            if (currentVendorId != product.vendorID) {
+                cart = emptyList()
+            }
+        }
+
+        val existingItem = cart.find {
+            it.product.productId == product.productId
+        }
+
+        if (existingItem != null) {
+            cart = cart.map {
+                if (it.product.productId == product.productId) {
+                    it.copy(quantity = it.quantity + 1)
+                } else {
+                    it
+                }
+            }
+        } else {
+            cart = cart + CartItem(product)
         }
     }
+
+    fun cartTotalPrice(): Double {
+        return cart.sumOf { cartItem ->
+            cartItem.product.productPrice * cartItem.quantity
+        }
+    }
+
+    fun increaseQuantity(productId: Int) {
+        cart = cart.map { cartItem ->
+            if (cartItem.product.productId == productId) {
+                cartItem.copy(quantity = cartItem.quantity + 1)
+            } else {
+                cartItem
+            }
+        }
+    }
+
+    fun decreaseQuantity(productId: Int) {
+        cart = cart.mapNotNull { cartItem ->
+            if (cartItem.product.productId == productId) {
+                if (cartItem.quantity > 1) {
+                    cartItem.copy(quantity = cartItem.quantity - 1)
+                } else {
+                    null
+                }
+            } else {
+                cartItem
+            }
+        }
+    }
+
+    fun clearCart() {
+        cart = emptyList()
+    }
+
 
 
     // please remove this seed data in production
@@ -224,6 +292,11 @@ class AppViewModel(
     }
 
     // pls remove in production
+//    tempOrder        → resets
+//    tempOrderItem    → resets
+//
+//    Room Order table     → still there
+//    Room OrderItem table → still there
     var tempOrder by mutableStateOf(listOf<Order>())
         private set
 
