@@ -41,11 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.curtineat.viewmodel.AuthViewModel
 import com.example.curtineat.validation.InputValidation
+import com.example.curtineat.viewmodel.AppViewModel
 
 @Composable
 fun LogIn(
-    onRegisterHit: () -> Unit,
-    viewModel: AuthViewModel = viewModel() ){
+    appViewModel: AppViewModel,
+    onRegisterClick: () -> Unit
+){
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp),
@@ -60,9 +62,9 @@ fun LogIn(
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
-            value = viewModel.email,
+            value = appViewModel.email,
             onValueChange = {
-                viewModel.updateEmail(it)
+                appViewModel.updateEmail(it)
             },
             label = {
                 Text("Email")
@@ -71,9 +73,9 @@ fun LogIn(
         )
 
         TextField(
-            value = viewModel.password,
+            value = appViewModel.password,
             onValueChange = {
-                viewModel.updatePassword(it)
+                appViewModel.updatePassword(it)
             },
             label = {
                 Text("Password")
@@ -85,7 +87,7 @@ fun LogIn(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {  viewModel.Login() },
+            onClick = {  appViewModel.Login() },
             modifier = Modifier
                 .width(200.dp)
                 .align(Alignment.CenterHorizontally)
@@ -97,7 +99,7 @@ fun LogIn(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .clickable {
-                        onRegisterHit()
+                        onRegisterClick()
                 }
         )
 
@@ -108,7 +110,7 @@ fun LogIn(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Registeration(
-    viewModel: AuthViewModel = viewModel()
+    appViewModel: AppViewModel
 ) {
 
     //calendar box show boolean
@@ -125,9 +127,9 @@ fun Registeration(
 
         // Username
         TextField(
-            value = viewModel.username,
+            value = appViewModel.username,
             onValueChange = {
-                viewModel.updateUsername(it)
+                appViewModel.updateUsername(it)
             },
             label = {
                 Text("Username")
@@ -139,9 +141,9 @@ fun Registeration(
 
         // Email
         TextField(
-            value = viewModel.email,
+            value = appViewModel.email,
             onValueChange = {
-                viewModel.updateEmail(it)
+                appViewModel.updateEmail(it)
             },
             label = {
                 Text("Email")
@@ -153,9 +155,9 @@ fun Registeration(
 
         // Password
         TextField(
-            value = viewModel.password,
+            value = appViewModel.password,
             onValueChange = {
-                viewModel.updatePassword(it)
+                appViewModel.updatePassword(it)
             },
             label = {
                 Text("Password")
@@ -167,9 +169,9 @@ fun Registeration(
 
         // Confirm Password
         TextField(
-            value = viewModel.passwordCheck,
+            value = appViewModel.passwordCheck,
             onValueChange = {
-                viewModel.updatePasswordCheck(it)
+                appViewModel.updatePasswordCheck(it)
             },
             label = {
                 Text("Confirm Password")
@@ -194,19 +196,19 @@ fun Registeration(
                    .weight(1f)
                    .height(80.dp)
                    .background(
-                       if (viewModel.selectedGender == "Male")
+                       if (appViewModel.selectedGender == "Male")
                            MaterialTheme.colorScheme.primary
                        else
                            MaterialTheme.colorScheme.surfaceContainerHighest,
                        shape = RoundedCornerShape(8.dp)
                    )
-                   .clickable { viewModel.updateGender("Male") },
+                   .clickable { appViewModel.updateGender("Male") },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "♂",
                     fontSize = 50.sp,
-                    color = if (viewModel.selectedGender == "Male")
+                    color = if (appViewModel.selectedGender == "Male")
                         MaterialTheme.colorScheme.onPrimary
                     else
                         MaterialTheme.colorScheme.onSurface
@@ -218,19 +220,19 @@ fun Registeration(
                     .weight(1f)
                     .height(80.dp)
                     .background(
-                        if (viewModel.selectedGender == "Female")
+                        if (appViewModel.selectedGender == "Female")
                             MaterialTheme.colorScheme.tertiary
                         else
                             MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .clickable { viewModel.updateGender("Female") },
+                    .clickable { appViewModel.updateGender("Female") },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "♀",
                     fontSize = 50.sp,
-                    color = if (viewModel.selectedGender == "Female")
+                    color = if (appViewModel.selectedGender == "Female")
                         MaterialTheme.colorScheme.onTertiary
                     else
                         MaterialTheme.colorScheme.onSurface
@@ -243,8 +245,8 @@ fun Registeration(
 
         // Date of Birth
         OutlinedTextField(
-            value = viewModel.dob,
-            onValueChange = { viewModel.updateDob(it)},
+            value = appViewModel.dob,
+            onValueChange = { appViewModel.updateDob(it)},
 
             label = {
                 Text("Date of Birth")
@@ -272,29 +274,29 @@ fun Registeration(
             onClick = {
 
                 if (!InputValidation.areAllFieldsFilled(
-                        viewModel.username,
-                        viewModel.email,
-                        viewModel.password,
-                        viewModel.passwordCheck,
-                        viewModel.selectedGender,
-                        viewModel.dob
+                        appViewModel.username,
+                        appViewModel.email,
+                        appViewModel.password,
+                        appViewModel.passwordCheck,
+                        appViewModel.selectedGender,
+                        appViewModel.dob
                     )
                 ) {
                     // any empty
                 }
-                else if (!InputValidation.isValidEmail(viewModel.email)) {
+                else if (!InputValidation.isValidEmail(appViewModel.email)) {
                     // invalid email format
                 }
                 else if (!InputValidation.passwordsMatch(
-                        viewModel.password,
-                        viewModel.passwordCheck
+                        appViewModel.password,
+                        appViewModel.passwordCheck
                     )
                 ) {
                     // passwords no match
                 }
                 else {
                     // if all ok
-                    viewModel.CreateAccount()
+                    appViewModel.CreateAccount()
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -319,7 +321,7 @@ fun Registeration(
                                 timeZone = java.util.TimeZone.getTimeZone("UTC")
                             }
 
-                            viewModel.updateDob(
+                            appViewModel.updateDob(
                                 formatter.format(java.util.Date(millis))
                             )
                         }

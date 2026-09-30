@@ -18,12 +18,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonNull.content
 
 
 @Composable
 fun MainDrawer(
     onHomeClick: () -> Unit,
-    content: @Composable (onMenuClick: () -> Unit) -> Unit
+    onLogInClick: () -> Unit
 ) {
     val drawerState = rememberDrawerState(
         initialValue = DrawerValue.Closed
@@ -47,7 +48,7 @@ fun MainDrawer(
                 },
                 onHistoryClick = { closeDrawer() },
                 onSettingClick = { closeDrawer() },
-                onLogInClick = { closeDrawer() }
+                onLogInClick = { closeDrawer(); onLogInClick }
             )
         }
     ) {

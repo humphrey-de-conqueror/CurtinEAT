@@ -52,10 +52,12 @@ fun AppScaffold(
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit,
+    onLoginClick: () -> Unit
 ) {
     MainDrawer(
-        onHomeClick = onHomeClick
+        onHomeClick = onHomeClick,
+        onLoginClick = onLoginClick
     ) { onMenuClick ->
 
         Scaffold(

@@ -14,6 +14,8 @@ import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.ApiTestingScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.MainScreen
+import com.example.curtineat.view.LogIn
+import com.example.curtineat.view.Registeration
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
@@ -50,6 +52,12 @@ object RouteMainScreen
 @Serializable
 object RouteCartScreen
 
+@Serializable
+object RouteLogInScreen
+
+@Serializable
+object RouteRegistrationScreen
+
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
     val nav = rememberNavController()
@@ -66,6 +74,13 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         nav.navigate(RouteMainScreen) {
             launchSingleTop = true
         }
+    }
+    val onRegisterClick: () -> Unit = {
+        nav.navigate(RouteRegistrationScreen)
+    }
+
+    val onLoginClick: () -> Unit = {
+        nav.navigate(RouteLogInScreen)
     }
 
     NavHost(
@@ -92,5 +107,15 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             )
         }
 
+        composable<RouteLogInScreen> {
+            LogIn(
+                appViewModel = appViewModel,
+                onRegisterClick = onRegisterClick
+            )
+        }
+
+        composable<RouteRegistrationScreen> {
+            Registeration(appViewModel = appViewModel)
+        }
     }
 }
