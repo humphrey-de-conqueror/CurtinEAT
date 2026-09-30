@@ -280,15 +280,49 @@ class AppViewModel(
         }
     }
 
-    //for wallet top up
-    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
-        val updatedCustomer = customer.copy(
-            walletBalance = customer.walletBalance + amount
+    //for checking out & create order & order item
+    fun checkout(customerId: Int) = viewModelScope.launch {
+
+        if (cart.isEmpty()) {
+            return@launch
+        }
+
+        val vendorId = cart.first().product.vendorID
+        val totalPrice = cartTotalPrice()
+
+        val order = Order(
+            customerId = customerId,
+            vendorId = vendorId,
+            totalPrice = totalPrice
         )
 
-        customerDao.updateCustomer(updatedCustomer)
+        val generatedOrderId = orderDao.insertOrder(order)
+
+        cart.forEach { cartItem ->
+
+            val orderItem = OrderItem(
+                orderId = generatedOrderId.toInt(),
+                productId = cartItem.product.productId,
+                quantity = cartItem.quantity
+            )
+
+            orderItemDao.insertOrderItem(orderItem)
+        }
+
+        cart = emptyList()
+
         refresh()
     }
+
+    //for wallet top up
+//    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
+//        val updatedCustomer = customer.copy(
+//            walletBalance = customer.walletBalance + amount
+//        )
+//
+//        customerDao.updateCustomer(updatedCustomer)
+//        refresh()
+//    }
 
 
     // please remove this seed data in production
@@ -299,7 +333,7 @@ class AppViewModel(
         vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))
         vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e", vendorEmail = "pizzapalace@gmail.com"))
 
-        customerDao.insertCustomer(Customer(customerName = "a", customerEmail = "b", customerPassword = "c", walletBalance = 100.00))
+        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c",))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
