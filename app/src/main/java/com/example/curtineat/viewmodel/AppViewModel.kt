@@ -56,6 +56,10 @@ class AppViewModel(
     var orderItem by mutableStateOf(listOf<OrderItem>())
         private set
 
+    //Checkout testing
+    var checkoutMessage by mutableStateOf<String?>(null)
+        private set
+
 
 
     init {
@@ -266,7 +270,7 @@ class AppViewModel(
     }
 
     //for checking out & create order & order item
-    fun checkout(customerId: Int) = viewModelScope.launch {
+    fun checkoutTesting(customerId: Int) = viewModelScope.launch {
 
         if (cart.isEmpty()) {
             return@launch
@@ -275,15 +279,28 @@ class AppViewModel(
         val vendorId = cart.first().product.vendorID
         val totalPrice = cartTotalPrice()
 
+        // Create Order
         val order = Order(
             customerId = customerId,
             vendorId = vendorId,
             totalPrice = totalPrice
         )
 
+        // Get actual generated order ID
         val generatedOrderId = orderDao.insertOrder(order)
 
-        cart.forEach { cartItem ->
+        val message = StringBuilder()
+
+        message.appendLine("ORDER CREATED")
+        message.appendLine("Order ID: $generatedOrderId")
+        message.appendLine("Customer ID: $customerId")
+        message.appendLine("Vendor ID: $vendorId")
+        message.appendLine("Total Price: RM %.2f".format(totalPrice))
+        message.appendLine()
+        message.appendLine("ORDER ITEMS")
+        message.appendLine("--------------------")
+
+        cart.forEachIndexed { index, cartItem ->
 
             val orderItem = OrderItem(
                 orderId = generatedOrderId.toInt(),
@@ -291,8 +308,31 @@ class AppViewModel(
                 quantity = cartItem.quantity
             )
 
-            orderItemDao.insertOrderItem(orderItem)
+            // Get actual generated OrderItem ID
+            val generatedOrderItemId =
+                orderItemDao.insertOrderItem(orderItem)
+
+            val subtotal =
+                cartItem.product.productPrice * cartItem.quantity
+
+            message.appendLine("Item ${index + 1}")
+            message.appendLine("Order Item ID: $generatedOrderItemId")
+            message.appendLine("Order ID: $generatedOrderId")
+            message.appendLine("Product ID: ${cartItem.product.productId}")
+            message.appendLine("Product Name: ${cartItem.product.productName}")
+            message.appendLine("Quantity: ${cartItem.quantity}")
+            message.appendLine(
+                "Unit Price: RM %.2f".format(
+                    cartItem.product.productPrice
+                )
+            )
+            message.appendLine(
+                "Subtotal: RM %.2f".format(subtotal)
+            )
+            message.appendLine("--------------------")
         }
+
+        checkoutMessage = message.toString()
 
         cart = emptyList()
 

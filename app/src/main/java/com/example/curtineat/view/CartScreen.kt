@@ -65,6 +65,7 @@ fun CartScreen(
         it.vendorId == vendorId
     }
 
+
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
@@ -81,13 +82,36 @@ fun CartScreen(
                 .padding(16.dp)
         ) {
 
+//            if (appViewModel.cart.isEmpty()) {
+//
+//                EmptyCart(
+//                    onBackButtonClick = onBackButtonClick
+//                )
+//
+//            }
+
             if (appViewModel.cart.isEmpty()) {
 
-                EmptyCart(
-                    onBackButtonClick = onBackButtonClick
-                )
+                Column {
+//                    EmptyCart(
+//                        onBackButtonClick = onBackButtonClick
+//                    )
 
-            } else {
+                    EmptyCart(
+                        onBackButtonClick = onBackButtonClick,
+                        checkoutMessage = appViewModel.checkoutMessage
+                    )
+
+                    appViewModel.checkoutMessage?.let { message ->
+                        TextNormal(
+                            text = message
+                        )
+                    }
+                }
+
+            }
+
+            else {
 
                 Column(
                     modifier = Modifier.fillMaxWidth()
@@ -152,7 +176,7 @@ fun CartScreen(
                         text = "Checkout",
                         onClick = {
                             if (loggedInCustomerId != null) {
-                                appViewModel.checkout(loggedInCustomerId)
+                                appViewModel.checkoutTesting(loggedInCustomerId)
                             } else {
                                 onLoginClick()
                             }
@@ -168,7 +192,7 @@ fun CartScreen(
 
 // ---------------- EMPTY CART ----------------
 @Composable
-fun EmptyCart(
+fun EmptyCart2(
     onBackButtonClick: () -> Unit
 ) {
     Box(
@@ -184,6 +208,49 @@ fun EmptyCart(
             text = "Your cart is empty",
             modifier = Modifier.align(Alignment.Center)
         )
+    }
+}
+
+@Composable
+fun EmptyCart(
+    onBackButtonClick: () -> Unit,
+    checkoutMessage: String? = null
+) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        BackButton(
+            onClick = onBackButtonClick,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            if (checkoutMessage != null) {
+
+                TextNormal(
+                    text = "Checkout successful!",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+
+                mySpacer()
+
+                TextNormal(
+                    text = checkoutMessage
+                )
+
+            } else {
+
+                TextNormal(
+                    text = "Your cart is empty"
+                )
+            }
+        }
     }
 }
 
