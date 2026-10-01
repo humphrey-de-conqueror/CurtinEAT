@@ -95,7 +95,15 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
 
     val onWalletClick: () -> Unit = {
-        nav.navigate(RouteBalanceScreen)
+
+        if (
+            appViewModel.account.vendorId != null ||
+            appViewModel.account.customerId != null
+        ) {
+            nav.navigate(RouteBalanceScreen)
+        } else {
+            nav.navigate(RouteLoginScreen)
+        }
     }
 
 

@@ -29,6 +29,12 @@ enum class RegisterResult {
     EMAIL_EXISTS,
     ERROR
 }
+enum class TopUpResult {
+    SUCCESS,
+    INVALID_AMOUNT,
+    ERROR
+}
+
 
 class AppViewModel(
     private var vendorDao: VendorDao,
@@ -126,6 +132,11 @@ class AppViewModel(
         refresh()
     }
 
+    suspend fun getVendorById(vendorId: Int): Vendor? {
+        return vendorDao.getVendorById(vendorId)
+    }
+
+
     // customer dao
     fun insertCustomer(customer: Customer) = viewModelScope.launch {
         customerDao.insertCustomer(customer)
@@ -140,6 +151,10 @@ class AppViewModel(
     fun deleteCustomer(customer: Customer) = viewModelScope.launch {
         customerDao.deleteCustomer(customer)
         refresh()
+    }
+
+    suspend fun getCustomerById(customerId: Int): Customer? {
+        return customerDao.getCustomerById(customerId)
     }
 
     // product dao
@@ -434,7 +449,8 @@ class AppViewModel(
                 if (vendorFound != null) {
 
                     account = account.copy(
-                        vendorId = vendorFound.vendorId
+                        vendorId = vendorFound.vendorId,
+                        customerId = null
                     )
 
                     onResult(true)
@@ -453,6 +469,7 @@ class AppViewModel(
                 if (customerFound != null) {
 
                     account = account.copy(
+                        vendorId = null,
                         customerId = customerFound.customerId
                     )
 
@@ -500,7 +517,8 @@ class AppViewModel(
                     vendorDao.insertVendor(newVendor).toInt()
 
                 account = account.copy(
-                    vendorId = generatedVendorId
+                    vendorId = generatedVendorId,
+                    customerId = null
                 )
 
             } else {
@@ -519,6 +537,7 @@ class AppViewModel(
                     customerDao.insertCustomer(newCustomer).toInt()
 
                 account = account.copy(
+                    vendorId = null,
                     customerId = generatedCustomerId
                 )
             }
@@ -538,7 +557,100 @@ class AppViewModel(
             .matches()
     }
 
+    // ================
+    // meney money honk
+    // ==================
+    fun getCurrentBalance(
+        onResult: (Double) -> Unit
+    ) = viewModelScope.launch {
 
+        val vendorId = account.vendorId
+        val customerId = account.customerId
+
+        if (vendorId != null) {
+
+            val vendor = vendorDao.getVendorById(vendorId)
+
+            if (vendor != null) {
+                onResult(vendor.moneyBalance)
+            }
+
+        } else if (customerId != null) {
+
+            val customer = customerDao.getCustomerById(customerId)
+
+            if (customer != null) {
+                onResult(customer.moneyBalance)
+            }
+        }
+    }
+    fun topUp(
+        amount: Double,
+        onResult: (TopUpResult) -> Unit
+    ) = viewModelScope.launch {
+
+        if (amount <= 0.0) {
+            onResult(TopUpResult.INVALID_AMOUNT)
+            return@launch
+        }
+
+        try {
+
+            // Placeholder for bank / third-party payment API
+            val paymentSuccessful = true
+
+            if (!paymentSuccessful) {
+                onResult(TopUpResult.ERROR)
+                return@launch
+            }
+
+            val vendorId = account.vendorId
+            val customerId = account.customerId
+
+            if (vendorId != null) {
+
+                val vendor = vendorDao.getVendorById(vendorId)
+
+                if (vendor == null) {
+                    onResult(TopUpResult.ERROR)
+                    return@launch
+                }
+
+                vendorDao.updateVendor(
+                    vendor.copy(
+                        moneyBalance = vendor.moneyBalance + amount
+                    )
+                )
+
+            } else if (customerId != null) {
+
+                val customer = customerDao.getCustomerById(customerId)
+
+                if (customer == null) {
+                    onResult(TopUpResult.ERROR)
+                    return@launch
+                }
+
+                customerDao.updateCustomer(
+                    customer.copy(
+                        moneyBalance = customer.moneyBalance + amount
+                    )
+                )
+
+            } else {
+
+                onResult(TopUpResult.ERROR)
+                return@launch
+            }
+
+            refresh()
+
+            onResult(TopUpResult.SUCCESS)
+
+        } catch (e: Exception) {
+            onResult(TopUpResult.ERROR)
+        }
+    }
 
     // please remove this seed data in production
     suspend fun seedData() {
