@@ -654,7 +654,7 @@ class AppViewModel(
 
     // please remove this seed data in production
     suspend fun seedData() {
-        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a", vendorEmail = "mamakitchen@gmail.com"))
+        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a", vendorEmail = "abc"))
         vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b", vendorEmail = "burgerbros@gmail.com"))
         vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c", vendorEmail = "sushizen@gmail.com"))
         vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))

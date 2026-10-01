@@ -127,6 +127,14 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
     }
 
 
+    //Vendor Home Page
+    val onVendorHomeClick: () -> Unit = {
+        nav.navigate(RouteVendorLandingScreen) {
+            launchSingleTop = true
+        }
+    }
+
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -188,8 +196,18 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
 
         composable<RouteVendorLandingScreen> {
+            VendorLandingScreen(
+                appViewModel = appViewModel,
+                onHomeClick = onVendorHomeClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick,
 
-            VendorLandingScreen()
+                onOrderStatusClick = {},
+
+                onFoodClick = { productId -> },
+
+                onAddFoodClick = {}
+            )
         }
     }
 }
