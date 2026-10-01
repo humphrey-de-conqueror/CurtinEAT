@@ -143,7 +143,7 @@ fun CartScreen(
                         vendorName = cartVendor?.vendorName ?: "",
                         distance = cartVendor?.distance ?: 0.0,
                         //testing
-                        moneyBalance = cartVendor?.moneyBalance ?: 0.0,
+//                        moneyBalance = cartVendor?.moneyBalance ?: 0.0,
                         onBackButtonClick = onBackButtonClick
                     )
 
@@ -315,7 +315,7 @@ fun EmptyCart(
 fun CartHeader(
     vendorName: String,
     distance: Double,
-    moneyBalance: Double, //Testing
+//    moneyBalance: Double, //Testing
     onBackButtonClick: () -> Unit
 ) {
     Row(
@@ -339,10 +339,10 @@ fun CartHeader(
             )
 
             //testing
-            TextNormal(
-                text = "Vendor Balance: RM %.2f".format(moneyBalance),
-                fontSize = 14.sp
-            )
+//            TextNormal(
+//                text = "Vendor Balance: RM %.2f".format(moneyBalance),
+//                fontSize = 14.sp
+//            )
         }
     }
 }

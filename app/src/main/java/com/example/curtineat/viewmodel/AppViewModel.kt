@@ -660,7 +660,7 @@ class AppViewModel(
         vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))
         vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e", vendorEmail = "pizzapalace@gmail.com"))
 
-        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c", moneyBalance = 100.00))
+        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c"))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
