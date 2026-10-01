@@ -1,6 +1,7 @@
 package com.example.curtineat.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,6 +41,7 @@ import androidx.compose.foundation.lazy.items
 import com.example.daodao.Vendor
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -47,6 +49,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -118,7 +121,10 @@ fun MainScreen(
         showSearch = true,
         showNotifications = true,
         floatingActionButton = {
-            CartButton(onCartButtonClick)
+            CartButton(
+                onCartButtonClick = onCartButtonClick,
+                totalQuantity = appViewModel.cart.sumOf { it.quantity }
+            )
         }
     ) { innerPadding ->
 
@@ -292,14 +298,40 @@ fun TopBarScreen(
 
 
 @Composable
-fun CartButton(onCartButtonClick: () -> Unit) {
-    FloatingActionButton(
-        onClick = onCartButtonClick
-    ) {
-        Icon(
-            imageVector = Icons.Default.ShoppingCart,
-            contentDescription = "Cart"
-        )
+fun CartButton(
+    onCartButtonClick: () -> Unit,
+    totalQuantity: Int
+) {
+    Box {
+
+        FloatingActionButton(
+            onClick = onCartButtonClick
+        ) {
+            Icon(
+                imageVector = Icons.Default.ShoppingCart,
+                contentDescription = "Cart"
+            )
+        }
+
+        if (totalQuantity > 0) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .align(Alignment.TopEnd)
+                    .background(
+                        color = Color.Red,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = totalQuantity.toString(),
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 

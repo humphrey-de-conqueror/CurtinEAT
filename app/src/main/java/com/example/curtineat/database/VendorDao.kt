@@ -13,6 +13,9 @@ interface VendorDao {
     @Query("SELECT * FROM Vendor")
     suspend fun getAllVendor(): List<Vendor>
 
+    @Query("SELECT * FROM Vendor WHERE vendorId = :vendorId LIMIT 1")
+    suspend fun getVendorById(vendorId: Int): Vendor?
+
     @Query("DELETE FROM Vendor")
     suspend fun deleteAllVendor(): Unit
 

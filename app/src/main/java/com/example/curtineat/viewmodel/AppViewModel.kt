@@ -20,6 +20,8 @@ import com.example.curtineat.model.Account
 import com.example.curtineat.model.CartItem
 import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
+import android.util.Log
+
 
 enum class RegisterResult {
     SUCCESS,
@@ -64,6 +66,12 @@ class AppViewModel(
     var orderItem by mutableStateOf(listOf<OrderItem>())
         private set
 
+    var checkoutCompleted by mutableStateOf(false)
+        private set
+
+    fun clearCheckoutCompleted() {
+        checkoutCompleted = false
+    }
 
 
     init {
@@ -200,6 +208,8 @@ class AppViewModel(
 
     fun addToCart(product: Product) {
 
+        checkoutCompleted = false
+
         // if cart already has another vendor, clear it
         if (cart.isNotEmpty()) {
             val currentVendorId = cart.first().product.vendorID
@@ -283,39 +293,121 @@ class AppViewModel(
         val vendorId = cart.first().product.vendorID
         val totalPrice = cartTotalPrice()
 
-        val order = Order(
+        val currentCustomer = customerDao.getCustomerById(customerId)
+        val currentVendor = vendorDao.getVendorById(vendorId)
+
+        if (currentCustomer == null || currentVendor == null) {
+            Log.d("CHECKOUT", "Checkout failed: customer or vendor not found")
+            return@launch
+        }
+
+        if (currentCustomer.moneyBalance < totalPrice) {
+            Log.d("CHECKOUT", "Checkout failed: insufficient balance")
+            return@launch
+        }
+
+        // 1. Create order
+        val newOrder = Order(
             customerId = customerId,
             vendorId = vendorId,
             totalPrice = totalPrice
         )
 
-        val generatedOrderId = orderDao.insertOrder(order)
+        val generatedOrderId = orderDao.insertOrder(newOrder)
 
-        cart.forEach { cartItem ->
+        val message = StringBuilder()
 
-            val orderItem = OrderItem(
+        message.appendLine("========== CHECKOUT SUCCESS ==========")
+        message.appendLine("Order ID: $generatedOrderId")
+        message.appendLine("Customer ID: $customerId")
+        message.appendLine("Vendor ID: $vendorId")
+        message.appendLine("Total: RM %.2f".format(totalPrice))
+        message.appendLine()
+        message.appendLine("ORDER ITEMS")
+
+        // 2. Create order items
+        cart.forEachIndexed { index, cartItem ->
+
+            val newOrderItem = OrderItem(
                 orderId = generatedOrderId.toInt(),
                 productId = cartItem.product.productId,
                 quantity = cartItem.quantity
             )
 
-            orderItemDao.insertOrderItem(orderItem)
+            val generatedOrderItemId =
+                orderItemDao.insertOrderItem(newOrderItem)
+
+            val subtotal =
+                cartItem.product.productPrice * cartItem.quantity
+
+            message.appendLine("------------------------------")
+            message.appendLine("Item ${index + 1}")
+            message.appendLine("Order Item ID: $generatedOrderItemId")
+            message.appendLine("Order ID: $generatedOrderId")
+            message.appendLine("Product ID: ${cartItem.product.productId}")
+            message.appendLine("Product: ${cartItem.product.productName}")
+            message.appendLine("Quantity: ${cartItem.quantity}")
+            message.appendLine(
+                "Unit Price: RM %.2f".format(
+                    cartItem.product.productPrice
+                )
+            )
+            message.appendLine(
+                "Subtotal: RM %.2f".format(subtotal)
+            )
         }
 
+        // 3. Deduct customer money
+        val updatedCustomer = currentCustomer.copy(
+            moneyBalance = currentCustomer.moneyBalance - totalPrice
+        )
+
+        customerDao.updateCustomer(updatedCustomer)
+
+        // 4. Add money to vendor
+        val updatedVendor = currentVendor.copy(
+            moneyBalance = currentVendor.moneyBalance + totalPrice
+        )
+
+        vendorDao.updateVendor(updatedVendor)
+
+        message.appendLine()
+        message.appendLine("PAYMENT")
+        message.appendLine(
+            "Customer before: RM %.2f".format(
+                currentCustomer.moneyBalance
+            )
+        )
+        message.appendLine(
+            "Customer after: RM %.2f".format(
+                updatedCustomer.moneyBalance
+            )
+        )
+        message.appendLine(
+            "Vendor before: RM %.2f".format(
+                currentVendor.moneyBalance
+            )
+        )
+        message.appendLine(
+            "Vendor after: RM %.2f".format(
+                updatedVendor.moneyBalance
+            )
+        )
+        message.appendLine("======================================")
+
+        Log.d("CHECKOUT", message.toString())
+
+
+        // 5. Clear cart
         cart = emptyList()
 
+        // 6. Refresh states
         refresh()
-    }
 
-    //for wallet top up
-//    fun topUp(customer: Customer, amount: Double) = viewModelScope.launch {
-//        val updatedCustomer = customer.copy(
-//            walletBalance = customer.walletBalance + amount
-//        )
-//
-//        customerDao.updateCustomer(updatedCustomer)
-//        refresh()
-//    }
+        // Tell CartScreen checkout finished
+        checkoutCompleted = true
+
+    }
 
 //    ================================
 //          login method
@@ -456,7 +548,7 @@ class AppViewModel(
         vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))
         vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e", vendorEmail = "pizzapalace@gmail.com"))
 
-        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c",))
+        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c", moneyBalance = 100.00))
 
         productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
         productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
