@@ -55,9 +55,9 @@ fun CartScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
-    val loggedInCustomerId: Int? = 1 // hardcoded change to null if want
+//    val loggedInCustomerId: Int? = 1 // hardcoded change to null if want
 
-//    val loggedInCustomerId = appViewModel.account.customerId
+    val loggedInCustomerId = appViewModel.account.customerId
 
     var showEmptyCartDialog by remember {
         mutableStateOf(false)
