@@ -21,6 +21,13 @@ import com.example.curtineat.model.CartItem
 import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
 
+enum class RegisterResult {
+    SUCCESS,
+    INVALID_EMAIL,
+    EMAIL_EXISTS,
+    ERROR
+}
+
 class AppViewModel(
     private var vendorDao: VendorDao,
     private var customerDao: CustomerDao,
@@ -29,6 +36,7 @@ class AppViewModel(
     private var orderDao: OrderDao,
     private var orderItemDao: OrderItemDao
 ): ViewModel() {
+
     var account by mutableStateOf(Account())
         private set
 
@@ -316,66 +324,126 @@ class AppViewModel(
     fun login(
         email: String,
         password: String,
-        isVendor: Boolean
-    ) {
-        if (isVendor) {
-            val vendorFound = vendor.find { eachVendor ->
-                eachVendor.vendorEmail == email && eachVendor.vendorPassword == password
+        isVendor: Boolean,
+        onResult: (Boolean) -> Unit
+    ) = viewModelScope.launch {
+
+        val cleanEmail = email.trim()
+
+        try {
+
+            if (isVendor) {
+
+                val vendorFound = vendorDao.login(
+                    email = cleanEmail,
+                    password = password
+                )
+
+                if (vendorFound != null) {
+
+                    account = account.copy(
+                        vendorId = vendorFound.vendorId
+                    )
+
+                    onResult(true)
+
+                } else {
+                    onResult(false)
+                }
+
+            } else {
+
+                val customerFound = customerDao.login(
+                    email = cleanEmail,
+                    password = password
+                )
+
+                if (customerFound != null) {
+
+                    account = account.copy(
+                        customerId = customerFound.customerId
+                    )
+
+                    onResult(true)
+
+                } else {
+                    onResult(false)
+                }
             }
 
-            if (vendorFound != null) {
-                account = account.copy(
-                    vendorId = vendorFound.vendorId
-                )
-            }
-        } else {
-            val customerFound = customer.find { eachCustomer ->
-                eachCustomer.customerEmail == email && eachCustomer.customerPassword == password
-            }
-
-            if (customerFound != null) {
-                account = account.copy(
-                    customerId = customerFound.customerId
-                )
-            }
+        } catch (e: Exception) {
+            onResult(false)
         }
     }
 
     fun register(
         email: String,
         password: String,
-        isVendor: Boolean
+        isVendor: Boolean,
+        onResult: (RegisterResult) -> Unit
     ) = viewModelScope.launch {
-        if (isVendor) {
-            // this must fail for registration to proceed
-            val vendorExists = vendor.any { eachVendor ->
-                eachVendor.vendorEmail == email
-            }
 
-            if (!vendorExists) {
+        val cleanEmail = email.trim()
+
+        if (!isValidEmail(cleanEmail)) {
+            onResult(RegisterResult.INVALID_EMAIL)
+            return@launch
+        }
+
+        try {
+
+            if (isVendor) {
+
+                if (vendorDao.vendorEmailExists(cleanEmail)) {
+                    onResult(RegisterResult.EMAIL_EXISTS)
+                    return@launch
+                }
+
                 val newVendor = Vendor(
-                    vendorEmail = email,
+                    vendorEmail = cleanEmail,
                     vendorPassword = password
                 )
 
-                // Insert into Room
-                vendorDao.insertVendor(newVendor)
-            }
-        } else {
-            val customerExists = customer.any { eachCustomer ->
-                eachCustomer.customerEmail == email
-            }
+                val generatedVendorId =
+                    vendorDao.insertVendor(newVendor).toInt()
 
-            if (!customerExists) {
+                account = account.copy(
+                    vendorId = generatedVendorId
+                )
+
+            } else {
+
+                if (customerDao.customerEmailExists(cleanEmail)) {
+                    onResult(RegisterResult.EMAIL_EXISTS)
+                    return@launch
+                }
+
                 val newCustomer = Customer(
-                    customerEmail = email,
+                    customerEmail = cleanEmail,
                     customerPassword = password
                 )
 
-                // Insert into Room
-                customerDao.insertCustomer(newCustomer)
+                val generatedCustomerId =
+                    customerDao.insertCustomer(newCustomer).toInt()
+
+                account = account.copy(
+                    customerId = generatedCustomerId
+                )
             }
+
+            refresh()
+
+            onResult(RegisterResult.SUCCESS)
+
+        } catch (e: Exception) {
+            onResult(RegisterResult.ERROR)
         }
+    }
+
+    fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS
+            .matcher(email)
+            .matches()
     }
 
 
