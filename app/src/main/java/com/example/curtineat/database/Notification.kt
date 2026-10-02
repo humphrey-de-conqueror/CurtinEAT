@@ -11,11 +11,7 @@ import androidx.room.PrimaryKey
 //    val orderId: Int,
 //    val time: String,
 //    val message: String? = null
-//) {
-//    fun displayNotification(notification: Notification) {
-//
-//    }
-//}
+//)
 
 @Entity
 data class Notification (

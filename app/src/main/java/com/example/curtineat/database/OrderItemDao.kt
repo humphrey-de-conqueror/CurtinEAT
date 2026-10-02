@@ -16,7 +16,7 @@ interface OrderItemDao {
     suspend fun deleteAllOrderItem(): Unit
 
     @Insert
-    suspend fun insertOrderItem(orderItem: OrderItem): Unit
+    suspend fun insertOrderItem(orderItem: OrderItem): Long  //was unit
 
     @Update
     suspend fun updateOrderItem(orderItem: OrderItem): Unit

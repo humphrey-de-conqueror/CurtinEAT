@@ -6,7 +6,10 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -28,9 +35,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.curtineat.database.Product
+import com.example.curtineat.ui.theme.PrimaryButton
+import com.example.curtineat.ui.theme.PrimaryCard
+import com.example.curtineat.ui.theme.TextNormal
+import com.example.curtineat.ui.theme.mySpacer
 import coil.compose.AsyncImage
 import com.example.curtineat.viewmodel.AppViewModel
 import java.io.File
@@ -41,9 +57,24 @@ fun VendorLandingScreen(
     onHomeClick: () -> Unit,
     onLogInClick: () -> Unit = {},
     onVendorToggle: (Boolean) -> Unit
+    onWalletClick: () -> Unit,
+    onLoginClick: () -> Unit,
+    onOrderStatusClick: () -> Unit,
+    onFoodClick: (Int) -> Unit,
+    onAddFoodClick: () -> Unit
 ) {
     // system back returns to customer mode so the toggle never gets out of sync
     BackHandler { onVendorToggle(false) }
+    val loggedInVendorId: Int? = 1
+    // val loggedInVendorId = appViewModel.account.vendorId
+
+    val currentVendor = appViewModel.vendor.find {
+        it.vendorId == loggedInVendorId
+    }
+
+    val vendorProducts = appViewModel.product.filter {
+        it.vendorID == loggedInVendorId
+    }
 
     AppScaffold(
         appViewModel = appViewModel,
@@ -53,11 +84,30 @@ fun VendorLandingScreen(
         title = "Vendor",
         showSearch = false,
         showNotifications = false
+        onWalletClick = onWalletClick,
+        onLoginClick = onLoginClick,
+        showSearch = true,
+        showNotifications = true,
+
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddFoodClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add food"
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
+
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (appViewModel.myVendorId == null) {
                 CreateStoreForm(onCreate = { appViewModel.createStore(it) })
@@ -72,6 +122,11 @@ fun VendorLandingScreen(
 private fun CreateStoreForm(onCreate: (String) -> Unit) {
     var storeName by remember { mutableStateOf("") }
 
+            item {
+                TextNormal(
+                    text = currentVendor?.vendorName ?: "Vendor",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp
     Text("Create your store", style = MaterialTheme.typography.titleLarge)
     Spacer(Modifier.height(12.dp))
 
@@ -136,6 +191,7 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Add a product", style = MaterialTheme.typography.titleMedium)
 
+                mySpacer()
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -144,6 +200,11 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
+                PrimaryButton(
+                    text = "Order Status",
+                    onClick = onOrderStatusClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
         OutlinedTextField(
             value = price,
             onValueChange = { price = it },
@@ -153,6 +214,28 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
+                mySpacer()
+
+                TextNormal(
+                    text = "My Product(s)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp
+                )
+            }
+
+            items(
+                items = vendorProducts,
+                key = { it.productId }
+            ) { product ->
+
+                VendorFoodItem(
+                    product = product,
+                    onClick = {
+                        onFoodClick(product.productId)
+                    }
+                )
+            }
+        }
         OutlinedButton(
             onClick = {
                 picker.launch(
@@ -181,6 +264,41 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
     }
 }
 
+@Composable
+fun VendorFoodItem(
+    product: Product,
+    onClick: () -> Unit
+) {
+    val imageRes = getDrawableId(product.productImage)
+
+    PrimaryCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        contentPadding = PaddingValues(12.dp)
+    ) {
+
+        Image(
+            painter = painterResource(imageRes),
+            contentDescription = product.productName,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp),
+            contentScale = ContentScale.Crop
+        )
+
+        mySpacer()
+
+        TextNormal(
+            text = product.productName,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        )
+
+        TextNormal(
+            text = "RM %.2f".format(product.productPrice),
+            fontSize = 16.sp
+        )
 // Picker URIs stop working after a restart, so copy the image into app storage
 // and save that file path instead.
 private fun copyImageToInternalStorage(context: Context, uri: Uri): String {

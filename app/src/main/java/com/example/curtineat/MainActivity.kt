@@ -11,26 +11,30 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
-import com.example.curtineat.view.ApiTestingScreen
+import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
+import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
-import com.example.curtineat.view.LogIn
-import com.example.curtineat.view.Registeration
+import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
 
+
 class MainActivity : ComponentActivity() {
 
     private val vm: AppViewModel by viewModels {
+
+        val database = AppDatabase.buildDatabase(this)
+
         AppViewModelFactory(
-            AppDatabase.buildDatabase(this).vendorDao(),
-            AppDatabase.buildDatabase(this).customerDao(),
-            AppDatabase.buildDatabase(this).productDao(),
-            AppDatabase.buildDatabase(this).notificationDao(),
-            AppDatabase.buildDatabase(this).orderDao(),
-            AppDatabase.buildDatabase(this).orderItemDao()
+            database.vendorDao(),
+            database.customerDao(),
+            database.productDao(),
+            database.notificationDao(),
+            database.orderDao(),
+            database.orderItemDao()
         )
     }
 
@@ -45,8 +49,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Serializable
-object RouteApiTestingScreen
+
 @Serializable
 object RouteMainScreen
 
@@ -54,16 +57,17 @@ object RouteMainScreen
 object RouteCartScreen
 
 @Serializable
-object RouteLogInScreen
+object RouteLoginScreen
 
 @Serializable
 object RouteRegistrationScreen
 
 @Serializable
-object RouteVendorScreen
+object RouteBalanceScreen
 
-//@Serializable
-//object RouteXYZScreen
+@Serializable
+object RouteVendorLandingScreen
+
 
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
@@ -93,18 +97,60 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
+
+    val onWalletClick: () -> Unit = {
+
+        if (
+            appViewModel.account.vendorId != null ||
+            appViewModel.account.customerId != null
+        ) {
+            nav.navigate(RouteBalanceScreen)
+        } else {
+            nav.navigate(RouteLoginScreen)
+        }
+    }
+
+
+    val onLoginClick: () -> Unit = {
+        nav.navigate(RouteLoginScreen)
+    }
+
+
+    val onRegistrationClick: () -> Unit = {
+        nav.navigate(RouteRegistrationScreen)
+    }
+
+
+    val onLoginSuccess: (Boolean) -> Unit = { isVendor ->
+
+        if (isVendor) {
+            nav.navigate(RouteVendorLandingScreen)
+        } else {
+            nav.navigate(RouteMainScreen)
+        }
+    }
+
+
+    //Vendor Home Page
+    val onVendorHomeClick: () -> Unit = {
+        nav.navigate(RouteVendorLandingScreen) {
+            launchSingleTop = true
+        }
+    }
+
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
     ) {
-        composable <RouteApiTestingScreen> {
-            ApiTestingScreen(appViewModel = appViewModel)
-        }
 
         composable<RouteMainScreen> {
             MainScreen(
                 appViewModel = appViewModel,
                 onCartButtonClick = onCartButtonClick,
+                onHomeClick = onHomeClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick
                 onHomeClick = onHomeClick,
                 onVendorToggle = onVendorToggle
             )
@@ -114,27 +160,56 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             CartScreen(
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick,
-                onHomeClick = onHomeClick
+                onHomeClick = onHomeClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick
             )
         }
 
-        composable<RouteLogInScreen> {
-            LogIn(
-                onRegisterHit = {
-                nav.navigate(RouteRegistrationScreen)}
+
+        composable<RouteLoginScreen> {
+
+            LoginScreen(
+                appViewModel = appViewModel,
+                onLoginSuccess = onLoginSuccess,
+                onRegistrationClick = onRegistrationClick,
+                onHomeClick = onHomeClick,
+                onBackButtonClick = onBackButtonClick
             )
         }
 
         composable<RouteRegistrationScreen> {
-            Registeration()
+
+            RegistrationScreen(
+                appViewModel = appViewModel,
+                onLoginSuccess = onLoginSuccess,
+                onHomeClick = onHomeClick,
+                onBackButtonClick = onBackButtonClick
+            )
         }
 
-        composable<RouteVendorScreen> {
+
+        composable<RouteBalanceScreen> {
+
+            BalanceScreen(
+                appViewModel = appViewModel,
+                onBackButtonClick = onBackButtonClick
+            )
+        }
+
+
+        composable<RouteVendorLandingScreen> {
             VendorLandingScreen(
                 appViewModel = appViewModel,
-                onHomeClick = onHomeClick,
-                onVendorToggle = onVendorToggle
+                onHomeClick = onVendorHomeClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick,
 
+                onOrderStatusClick = {},
+
+                onFoodClick = { productId -> },
+
+                onAddFoodClick = {}
             )
         }
     }

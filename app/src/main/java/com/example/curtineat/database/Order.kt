@@ -13,9 +13,18 @@ import androidx.room.PrimaryKey
 //    val status: String = "padding"
 //)
 
+//@Entity
+//data class Order (
+//    @PrimaryKey(autoGenerate = true)
+//    val orderId: Int = 0,
+//    val totalPrice: Double
+//)
+
 @Entity
-data class Order (
+data class Order(
     @PrimaryKey(autoGenerate = true)
     val orderId: Int = 0,
+    val customerId: Int,
+    val vendorId: Int,
     val totalPrice: Double
 )

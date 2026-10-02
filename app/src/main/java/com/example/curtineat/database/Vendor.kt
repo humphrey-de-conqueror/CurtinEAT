@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 data class Vendor (
     @PrimaryKey(autoGenerate = true)
     val vendorId: Int = 0,
-    val vendorName: String,
-    val rating: Double,
-    val category: String,
-    val distance: Double,
-    val vendorPassword: String
+    val vendorName: String = "",
+    val vendorEmail: String,
+    val rating: Double = 0.0,
+    val category: String = "",
+    val distance: Double = 0.0,
+    val vendorPassword: String,
+    val moneyBalance : Double = 0.0,
 )

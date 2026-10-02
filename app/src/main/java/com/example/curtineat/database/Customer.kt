@@ -7,8 +7,9 @@ import androidx.room.PrimaryKey
 data class Customer (
     @PrimaryKey(autoGenerate = true)
     val customerId: Int = 0,
-    val customerName: String,
+    val customerName: String = "",
     val customerEmail: String,
-    val customerPassword: String
+    val customerPassword: String,
+    //a new one for wallet money
+    val moneyBalance: Double = 0.0
 )
-
