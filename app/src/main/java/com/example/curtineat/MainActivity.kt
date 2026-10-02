@@ -150,8 +150,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onCartButtonClick = onCartButtonClick,
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick
-                onHomeClick = onHomeClick,
+                onLoginClick = onLoginClick,
                 onVendorToggle = onVendorToggle
             )
         }

@@ -83,7 +83,7 @@ fun VendorLandingScreen(
         onVendorToggle = onVendorToggle,
         title = "Vendor",
         showSearch = false,
-        showNotifications = false
+        showNotifications = false,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = true,
@@ -144,6 +144,7 @@ private fun CreateStoreForm(onCreate: (String) -> Unit) {
         enabled = storeName.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     ) { Text("Create Store") }
+    }
 }
 
 @Composable
@@ -235,7 +236,6 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
                     }
                 )
             }
-        }
         OutlinedButton(
             onClick = {
                 picker.launch(
@@ -260,8 +260,8 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
             },
             enabled = name.isNotBlank() && price.toDoubleOrNull() != null && imageUri != null,
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Add Product") }
-    }
+        ) { Text("Add Product")
+        }
 }
 
 @Composable
@@ -299,8 +299,10 @@ fun VendorFoodItem(
             text = "RM %.2f".format(product.productPrice),
             fontSize = 16.sp
         )
-// Picker URIs stop working after a restart, so copy the image into app storage
-// and save that file path instead.
+    }
+}
+
+
 private fun copyImageToInternalStorage(context: Context, uri: Uri): String {
     val file = File(context.filesDir, "product_${System.currentTimeMillis()}.jpg")
     context.contentResolver.openInputStream(uri)?.use { input ->
