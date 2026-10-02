@@ -80,6 +80,27 @@ class AppViewModel(
     var myStoreName by mutableStateOf("")
         private set
 
+    var vendorName by mutableStateOf("")
+        private set
+
+    var vendorEmail by mutableStateOf("")
+        private set
+
+    var vendorPassword by mutableStateOf("")
+        private set
+
+    var vendorPasswordCheck by mutableStateOf("")
+        private set
+
+    var vendorRating by mutableStateOf("")
+        private set
+
+    var category by mutableStateOf("")
+        private set
+
+    var distance by mutableStateOf("")
+        private set
+
     fun updateVendorMode(value: Boolean) {
         isVendorMode = value
     }
@@ -292,6 +313,34 @@ class AppViewModel(
         }
     }
 
+    fun updateVendorName(value: String) {
+        vendorName = value
+    }
+
+    fun updateVendorEmail(value: String) {
+        vendorEmail = value
+    }
+
+    fun updateVendorPassword(value: String) {
+        vendorPassword = value
+    }
+
+    fun updateVendorPasswordCheck(value: String) {
+        vendorPasswordCheck = value
+    }
+
+    fun updateVendorRating(value: String) {
+        vendorRating = value
+    }
+
+    fun updateCategory(value: String) {
+        category = value
+    }
+
+    fun updateDistance(value: String) {
+        distance = value
+    }
+
 
     // please remove this seed data in production
     suspend fun seedData() {
@@ -330,4 +379,14 @@ class AppViewModel(
         tempOrder = orderDao.getAllOrder()
         tempOrderItem = orderItemDao.getAllOrderItem()
     }
+
+
+//    private val db by lazy { AppDatabase.buildDatabase(this) }
+//
+//    private val vm: AppViewModel by viewModels {
+//        AppViewModelFactory(
+//            db.vendorDao(), db.customerDao(), db.productDao(),
+//            db.notificationDao(), db.orderDao(), db.orderItemDao()
+//        )
+//    }
 }

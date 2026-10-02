@@ -17,6 +17,8 @@ import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.LogIn
 import com.example.curtineat.view.Registeration
 import com.example.curtineat.view.VendorLandingScreen
+import com.example.curtineat.view.OrderTrackingScreen
+import com.example.curtineat.view.OrderProgressBar
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
@@ -62,8 +64,8 @@ object RouteRegistrationScreen
 @Serializable
 object RouteVendorScreen
 
-//@Serializable
-//object RouteXYZScreen
+@Serializable
+object RouteOrderListScreen
 
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
@@ -95,7 +97,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination = RouteOrderListScreen
     ) {
         composable <RouteApiTestingScreen> {
             ApiTestingScreen(appViewModel = appViewModel)
@@ -121,12 +123,13 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         composable<RouteLogInScreen> {
             LogIn(
                 onRegisterHit = {
-                nav.navigate(RouteRegistrationScreen)}
+                nav.navigate(RouteRegistrationScreen)},
+                viewModel = appViewModel
             )
         }
 
         composable<RouteRegistrationScreen> {
-            Registeration()
+            Registeration(viewModel = appViewModel)
         }
 
         composable<RouteVendorScreen> {
@@ -135,6 +138,14 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onHomeClick = onHomeClick,
                 onVendorToggle = onVendorToggle
 
+            )
+        }
+
+        composable <RouteOrderListScreen> {
+            OrderTrackingScreen(
+                appViewModel = appViewModel,
+                onHomeClick = onHomeClick,
+                onVendorToggle = onVendorToggle
             )
         }
     }

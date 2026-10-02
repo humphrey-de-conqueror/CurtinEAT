@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -35,17 +36,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.validation.InputValidation
 
 @Composable
 fun LogIn(
     onRegisterHit: () -> Unit,
-    viewModel: AppViewModel = viewModel() ){
+    viewModel: AppViewModel ){
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp),
@@ -108,21 +109,45 @@ fun LogIn(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Registeration(
-    viewModel: AppViewModel = viewModel()
+    viewModel: AppViewModel
 ) {
 
     //calendar box show boolean
     var showDateBox by remember { mutableStateOf (false)}
-
     val datePickerState = rememberDatePickerState()
 
+    var isVendor by remember { mutableStateOf(false)}
+
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
 
     ) {
 
+        Spacer(modifier = Modifier.height(32.dp))
+
+        //toggler
+        Row(
+            modifier= Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = if (isVendor) "Vendor" else "Customer"
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Switch(
+                checked = isVendor,
+                onCheckedChange = { isVendor = it }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Set A - Customer details
         // Username
         TextField(
             value = viewModel.username,
@@ -302,6 +327,114 @@ fun Registeration(
         { Text("Create Account") }
     }
 
+
+    //Set B - Vendor details
+    if (isVendor){
+        TextField(
+            value = viewModel.vendorName,
+            onValueChange = {
+                viewModel.updateVendorName(it)
+            },
+            label = {
+                Text("Vendor name")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Email
+        TextField(
+            value = viewModel.vendorEmail,
+            onValueChange = {
+                viewModel.updateVendorEmail(it)
+            },
+            label = {
+                Text("Email")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Password
+        TextField(
+            value = viewModel.vendorPassword,
+            onValueChange = {
+                viewModel.updateVendorPassword(it)
+            },
+            label = {
+                Text("Password")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Confirm Password
+        TextField(
+            value = viewModel.vendorPasswordCheck,
+            onValueChange = {
+                viewModel.updateVendorPasswordCheck(it)
+            },
+            label = {
+                Text("Confirm Password")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = viewModel.vendorRating,
+            onValueChange = {
+                viewModel.updateVendorRating(it)
+            },
+            label = {
+                Text("Rating")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = viewModel.category,
+            onValueChange = {
+                viewModel.updateCategory(it)
+            },
+            label = {
+                Text("Category")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = viewModel.distance,
+            onValueChange = {
+                viewModel.updateDistance(it)
+            },
+            label = {
+                Text("Distance")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                //Vendor valid stuff
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text ("Create Vendor Account")
+        }
+
+    }
+
     // Calendar dialog
     if (showDateBox) {
         DatePickerDialog(
@@ -346,16 +479,7 @@ fun Registeration(
         }
     }
 }
-// havent make the model file for the data class
-//package com.example.curtineat.model
-//
-//data class User(
-//    val username: String,
-//    val email: String,
-//    val password: String,
-//    val gender: String,
-//    val dob: String
-//)
+
 
 
 
