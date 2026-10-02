@@ -109,6 +109,7 @@ class AppViewModel(
     fun createStore(name: String) = viewModelScope.launch {
         val newId = vendorDao.insertVendor(
             Vendor(
+                vendorEmail = "",
                 vendorName = name,
                 rating = 0.0,            // placeholders until the store form grows
                 category = "",
