@@ -76,6 +76,7 @@ fun AppScaffold(
     onHomeClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
+//    onVendorToggle: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
@@ -85,7 +86,7 @@ fun AppScaffold(
         // expect to give onHistoryClick and onSettingClick
         onHomeClick = onHomeClick,
         onWalletClick = onWalletClick,
-        onLoginClick = onLoginClick
+        onLoginClick = onLoginClick,
     ) { onMenuClick ->
 
         Scaffold(
