@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import com.example.curtineat.R
+import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
@@ -78,7 +79,7 @@ fun AppScaffold(
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit,
 ) {
     MainDrawer(
         // expect to give onHistoryClick and onSettingClick
@@ -110,7 +111,8 @@ fun MainScreen(
     onCartButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onFirestoreTestClick: () -> Unit //testing Firebase
 ) {
     AppScaffold(
         // expect onHistory and onSetting
@@ -130,11 +132,13 @@ fun MainScreen(
 
         BodyScreen(
             innerPadding = innerPadding,
-            appViewModel = appViewModel
+            appViewModel = appViewModel,
+            onFirestoreTestClick = onFirestoreTestClick //Testing Firebase
             // removed
 //            vendors = appViewModel.vendor,
 //            products = appViewModel.product
         )
+
     }
 }
 
@@ -338,7 +342,8 @@ fun CartButton(
 @Composable
 fun BodyScreen(
     innerPadding: PaddingValues,
-    appViewModel: AppViewModel
+    appViewModel: AppViewModel,
+    onFirestoreTestClick: () -> Unit //Testing Firestore
 ) {
     val listState = rememberLazyListState()
 
@@ -361,10 +366,30 @@ fun BodyScreen(
         }
     }
 
+
     LazyColumn(
         state = listState,
         modifier = Modifier.padding(innerPadding)
     ) {
+        //Testing Firebase
+        item {
+            PrimaryButton(
+                text = "Test Firebase",
+                onClick = onFirestoreTestClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+
+//            PrimaryButton(
+//                text = "Seed Firestore",
+//                onClick = {
+//                    appViewModel.seedFirestore()
+//                }
+//            )
+
+        }
+
         items(
             items = appViewModel.vendor,
             key = { eachVendor -> eachVendor.vendorId }
@@ -374,6 +399,7 @@ fun BodyScreen(
             }
             RestaurantCard(appViewModel = appViewModel, eachVendor, vendorProducts)
         }
+
     }
 }
 

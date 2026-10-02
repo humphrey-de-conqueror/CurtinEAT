@@ -13,6 +13,7 @@ import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
+import com.example.curtineat.view.FirestoreTestingScreen
 import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.RegistrationScreen
@@ -69,6 +70,10 @@ object RouteBalanceScreen
 
 @Serializable
 object RouteVendorLandingScreen
+
+//Firestore
+@Serializable
+object RouteFirestoreTestingScreen
 
 
 @Composable
@@ -134,6 +139,10 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
+    val onFirestoreTestClick: () -> Unit = {
+        nav.navigate(RouteFirestoreTestingScreen)
+    }
+
 
     NavHost(
         navController = nav,
@@ -147,7 +156,8 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onCartButtonClick = onCartButtonClick,
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick
+                onLoginClick = onLoginClick,
+                onFirestoreTestClick = onFirestoreTestClick //Testing Firestore
             )
         }
 
@@ -207,6 +217,12 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onFoodClick = { productId -> },
 
                 onAddFoodClick = {}
+            )
+        }
+
+        composable<RouteFirestoreTestingScreen> {
+            FirestoreTestingScreen(
+                appViewModel = appViewModel
             )
         }
     }

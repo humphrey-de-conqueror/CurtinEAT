@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    //Google Services Gradle Plugin
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -68,6 +71,15 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    // Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+
+    // Firebase
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-firestore")
+    // to use .await() with Firebase
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
 
     // Testing
     testImplementation(libs.junit)

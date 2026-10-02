@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "273045471606",
+    "project_id": "curtineat",
+    "storage_bucket": "curtineat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273045471606:android:e8b9ebebb4c2a72a433a57",
+        "android_client_info": {
+          "package_name": "com.example.curtineat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDviL0b5zSQfVF8tjEUICsetrYjxYdY1p8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

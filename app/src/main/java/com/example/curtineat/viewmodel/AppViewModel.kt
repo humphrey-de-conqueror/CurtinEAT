@@ -21,7 +21,9 @@ import com.example.curtineat.model.CartItem
 import com.example.daodao.Vendor
 import kotlinx.coroutines.launch
 import android.util.Log
-
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import com.example.curtineat.database.FirestoreRepository
 
 enum class RegisterResult {
     SUCCESS,
@@ -44,6 +46,12 @@ class AppViewModel(
     private var orderDao: OrderDao,
     private var orderItemDao: OrderItemDao
 ): ViewModel() {
+
+    private val firestoreRepository = FirestoreRepository()
+    var firestoreState by mutableStateOf<FirestoreState>(
+        FirestoreState.Idle
+    )
+        private set
 
     var account by mutableStateOf(Account())
         private set
@@ -423,6 +431,80 @@ class AppViewModel(
         checkoutCompleted = true
 
     }
+
+
+    //TO Test FIRESTORE
+    fun testFirebase() = viewModelScope.launch {
+        try {
+            val document = FirebaseFirestore
+                .getInstance()
+                .collection("testData")
+                .document("test1")
+                .get()
+                .await()
+
+            val message = document.getString("message")
+
+            Log.d("FIREBASE_TEST", "Message: $message")
+
+        } catch (e: Exception) {
+            Log.e("FIREBASE_TEST", "Error: ${e.message}")
+        }
+    }
+
+    fun loadFirestoreProducts() = viewModelScope.launch {
+
+        firestoreState = FirestoreState.Loading
+
+        try {
+
+            val remoteProducts =
+                firestoreRepository.getProducts()
+
+            if (remoteProducts.isEmpty()) {
+
+                firestoreState =
+                    FirestoreState.Empty
+
+            } else {
+
+                firestoreState =
+                    FirestoreState.Success(
+                        remoteProducts
+                    )
+            }
+
+        } catch (e: Exception) {
+
+            firestoreState =
+                FirestoreState.Error(
+                    e.message ?: "Unable to load products"
+                )
+        }
+    }
+
+
+    //temporary seeding
+    fun seedFirestore() = viewModelScope.launch {
+
+        try {
+            firestoreRepository.seedFirestoreData()
+
+            Log.d(
+                "FIRESTORE_SEED",
+                "Firestore seed successful"
+            )
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "FIRESTORE_SEED",
+                "Seed failed: ${e.message}"
+            )
+        }
+    }
+    
+    
 
 //    ================================
 //          login method
