@@ -15,6 +15,8 @@ import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
+import com.example.curtineat.view.OrderProgressBar
+import com.example.curtineat.view.OrderTrackingScreen
 import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.viewmodel.AppViewModel
@@ -68,6 +70,8 @@ object RouteBalanceScreen
 @Serializable
 object RouteVendorLandingScreen
 
+@Serializable
+object RouteOrderTrackingScreen
 
 @Composable
 fun ScreenNavigation(appViewModel: AppViewModel) {
@@ -91,7 +95,7 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
 
     val onVendorToggle: (Boolean) -> Unit = { toVendor ->
         appViewModel.updateVendorMode(toVendor)
-        nav.navigate(if (toVendor) RouteVendorScreen else RouteMainScreen) {
+        nav.navigate(if (toVendor) RouteVendorLandingScreen else RouteMainScreen) {
             popUpTo(RouteMainScreen) { inclusive = false }
             launchSingleTop = true
         }
@@ -203,12 +207,21 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onHomeClick = onVendorHomeClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
+                onVendorToggle = onVendorToggle,
+                onOrderStatusClick = { nav.navigate(RouteOrderTrackingScreen)}
+//                onOrderStatusClick = {},
+//                onFoodClick = { productId -> },
+//                onAddFoodClick = {}
+            )
+        }
 
-                onOrderStatusClick = {},
-
-                onFoodClick = { productId -> },
-
-                onAddFoodClick = {}
+        composable <RouteOrderTrackingScreen> {
+            OrderTrackingScreen(
+                appViewModel = appViewModel,
+                onHomeClick = onVendorHomeClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick,
+                onVendorToggle = onVendorToggle,
             )
         }
     }

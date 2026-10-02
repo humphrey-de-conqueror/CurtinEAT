@@ -71,10 +71,6 @@ fun MainDrawer(
                 onSettingClick = { closeDrawer() },
                 onLogInClick = {
                     closeDrawer()
-                    onLoginClick()
-                }
-                onLogInClick = {
-                    closeDrawer()
                     onLogInClick()
                 },
                 isVendorMode = isVendorMode,

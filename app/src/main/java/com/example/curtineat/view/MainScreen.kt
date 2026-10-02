@@ -75,7 +75,6 @@ fun AppScaffold(
     onHomeClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onLogInClick: () -> Unit = {},
     onVendorToggle: (Boolean) -> Unit = {},
     title: String = "CurtinEAT",
     showSearch: Boolean = true,
@@ -87,9 +86,8 @@ fun AppScaffold(
         // expect to give onHistoryClick and onSettingClick
         onHomeClick = onHomeClick,
         onWalletClick = onWalletClick,
-        onLoginClick = onLoginClick
-        onHomeClick = onHomeClick,
-        onLogInClick = onLogInClick,
+        onLoginClick = onLoginClick,
+//        onHomeClick = onHomeClick,
         isVendorMode = appViewModel.isVendorMode,
         onVendorToggle = onVendorToggle
     ) { onMenuClick ->
@@ -118,8 +116,7 @@ fun MainScreen(
     onCartButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
-    onLoginClick: () -> Unit
-    onHomeClick: () -> Unit,
+    onLoginClick: () -> Unit,
     onVendorToggle: (Boolean) -> Unit = {}
 ) {
     AppScaffold(

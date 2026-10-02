@@ -55,13 +55,10 @@ import java.io.File
 fun VendorLandingScreen(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
-    onLogInClick: () -> Unit = {},
-    onVendorToggle: (Boolean) -> Unit
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onOrderStatusClick: () -> Unit,
-    onFoodClick: (Int) -> Unit,
-    onAddFoodClick: () -> Unit
+    onVendorToggle: (Boolean) -> Unit,
+    onOrderStatusClick: () -> Unit
 ) {
     // system back returns to customer mode so the toggle never gets out of sync
     BackHandler { onVendorToggle(false) }
@@ -79,54 +76,74 @@ fun VendorLandingScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
-        onLogInClick = onLogInClick,
+        onLoginClick = onLoginClick,
+        onWalletClick = onWalletClick,
         onVendorToggle = onVendorToggle,
         title = "Vendor",
         showSearch = false,
-        showNotifications = false,
-        onWalletClick = onWalletClick,
-        onLoginClick = onLoginClick,
-        showSearch = true,
-        showNotifications = true,
+        showNotifications = false
 
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddFoodClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add food"
-                )
-            }
-        }
+//        floatingActionButton = {
+//            FloatingActionButton(
+//                onClick = onAddFoodClick
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Default.Add,
+//                    contentDescription = "Add food"
+//                )
+//            }
+//        }
     ) { innerPadding ->
         Column(
-
-        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+//            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (appViewModel.myVendorId == null) {
                 CreateStoreForm(onCreate = { appViewModel.createStore(it) })
             } else {
-                StoreDashboard(appViewModel)
+                StoreDashboard(
+                    appViewModel = appViewModel,
+                    onOrderStatusClick = onOrderStatusClick
+                )
             }
         }
     }
 }
 
+//@Composable
+//private fun CreateStoreForm(onCreate: (String) -> Unit) {
+//    var storeName by remember { mutableStateOf("") }
+//
+//            item {
+//                TextNormal(
+//                    text = currentVendor?.vendorName ?: "Vendor",
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 30.sp
+//    Text("Create your store", style = MaterialTheme.typography.titleLarge)
+//    Spacer(Modifier.height(12.dp))
+//
+//    OutlinedTextField(
+//        value = storeName,
+//        onValueChange = { storeName = it },
+//        label = { Text("Store name") },
+//        singleLine = true,
+//        modifier = Modifier.fillMaxWidth()
+//    )
+//    Spacer(Modifier.height(12.dp))
+//
+//    Button(
+//        onClick = { onCreate(storeName.trim()) },
+//        enabled = storeName.isNotBlank(),
+//        modifier = Modifier.fillMaxWidth()
+//    ) { Text("Create Store") }
+//    }
+//}
 @Composable
 private fun CreateStoreForm(onCreate: (String) -> Unit) {
     var storeName by remember { mutableStateOf("") }
 
-            item {
-                TextNormal(
-                    text = currentVendor?.vendorName ?: "Vendor",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
     Text("Create your store", style = MaterialTheme.typography.titleLarge)
     Spacer(Modifier.height(12.dp))
 
@@ -144,11 +161,9 @@ private fun CreateStoreForm(onCreate: (String) -> Unit) {
         enabled = storeName.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     ) { Text("Create Store") }
-    }
 }
-
 @Composable
-private fun StoreDashboard(appViewModel: AppViewModel) {
+private fun StoreDashboard(appViewModel: AppViewModel, onOrderStatusClick: () -> Unit) {
     val myProducts = appViewModel.product.filter {
         it.vendorID == appViewModel.myVendorId
     }
@@ -192,7 +207,6 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Add a product", style = MaterialTheme.typography.titleMedium)
 
-                mySpacer()
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -201,11 +215,12 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
-                PrimaryButton(
-                    text = "Order Status",
-                    onClick = onOrderStatusClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
+//                PrimaryButton(
+//                    text = "Order Status",
+//                    onClick = onOrderStatusClick,
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+
         OutlinedTextField(
             value = price,
             onValueChange = { price = it },
@@ -214,28 +229,28 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
-
-                mySpacer()
-
-                TextNormal(
-                    text = "My Product(s)",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
-                )
-            }
-
-            items(
-                items = vendorProducts,
-                key = { it.productId }
-            ) { product ->
-
-                VendorFoodItem(
-                    product = product,
-                    onClick = {
-                        onFoodClick(product.productId)
-                    }
-                )
-            }
+//
+//                mySpacer()
+//
+//                TextNormal(
+//                    text = "My Product(s)",
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 30.sp
+//                )
+//            }
+//
+//            items(
+//                items = vendorProducts,
+//                key = { it.productId }
+//            ) { product ->
+//
+//                VendorFoodItem(
+//                    product = product,
+//                    onClick = {
+//                        onFoodClick(product.productId)
+//                    }
+//                )
+//            }
         OutlinedButton(
             onClick = {
                 picker.launch(
@@ -254,53 +269,58 @@ private fun AddProductForm(onAdd: (String, Double, String) -> Unit) {
 
         Button(
             onClick = {
+                val uri = imageUri ?: return@Button
+                val priceValue = price.toDoubleOrNull() ?: return@Button
                 val path = copyImageToInternalStorage(context, imageUri!!)
                 onAdd(name.trim(), price.toDouble(), path)
                 name = ""; price = ""; imageUri = null
             },
             enabled = name.isNotBlank() && price.toDoubleOrNull() != null && imageUri != null,
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Add Product")
+        ) {
+            Text("Add Product")
         }
-}
-
-@Composable
-fun VendorFoodItem(
-    product: Product,
-    onClick: () -> Unit
-) {
-    val imageRes = getDrawableId(product.productImage)
-
-    PrimaryCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        contentPadding = PaddingValues(12.dp)
-    ) {
-
-        Image(
-            painter = painterResource(imageRes),
-            contentDescription = product.productName,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp),
-            contentScale = ContentScale.Crop
-        )
-
-        mySpacer()
-
-        TextNormal(
-            text = product.productName,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
-
-        TextNormal(
-            text = "RM %.2f".format(product.productPrice),
-            fontSize = 16.sp
-        )
     }
 }
+
+
+//@Composable
+//fun VendorFoodItem(
+//    product: Product,
+//    onClick: () -> Unit
+//) {
+//    val imageRes = getDrawableId(product.productImage)
+//
+//    PrimaryCard(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clickable(onClick = onClick),
+//        contentPadding = PaddingValues(12.dp)
+//    ) {
+//
+//        Image(
+//            painter = painterResource(imageRes),
+//            contentDescription = product.productName,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(160.dp),
+//            contentScale = ContentScale.Crop
+//        )
+//
+//        mySpacer()
+//
+//        TextNormal(
+//            text = product.productName,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp
+//        )
+//
+//        TextNormal(
+//            text = "RM %.2f".format(product.productPrice),
+//            fontSize = 16.sp
+//        )
+//    }
+//}
 
 
 private fun copyImageToInternalStorage(context: Context, uri: Uri): String {

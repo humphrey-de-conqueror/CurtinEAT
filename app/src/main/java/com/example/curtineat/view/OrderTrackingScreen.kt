@@ -40,22 +40,24 @@ private val orderStages = listOf("Received", "Preparing", "Ready for pick up")
 fun OrderTrackingScreen(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
-    onLogInClick: () -> Unit = {},
+    onLoginClick: () -> Unit,
+    onWalletClick: () -> Unit,
     onVendorToggle: (Boolean) -> Unit = {}
 ) {
     // 0 = Received, 1 = Preparing, 2 = Ready for pick up
     var stage by rememberSaveable { mutableStateOf(0) }
 
     // items being made: group the cart by product and count quantities
-    val lines = appViewModel.cart
-        .groupBy { it.productId }
-        .values
-        .map { group -> group.first() to group.size }
+    val lines = appViewModel.cart.map { it.product to it.quantity }
+//        .groupBy { it.productId }
+//        .values
+//        .map { group -> group.first() to group.size }
 
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
-        onLogInClick = onLogInClick,
+        onLoginClick = onLoginClick,
+        onWalletClick = onWalletClick,
         onVendorToggle = onVendorToggle,
         title = "Order Progress",
         showSearch = false,
