@@ -1,5 +1,6 @@
 package com.example.curtineat.view
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -23,179 +26,104 @@ import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.viewmodel.AppViewModel
-import com.example.curtineat.viewmodel.FirestoreState
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.res.painterResource
-
-
 
 @Composable
 fun FirestoreTestingScreen(
     appViewModel: AppViewModel
 ) {
+    val products by appViewModel.products.collectAsState()
 
     LaunchedEffect(Unit) {
-        appViewModel.loadFirestoreProducts()
+        appViewModel.loadProducts()
     }
 
-    when (
-        val state = appViewModel.firestoreState
-    ) {
+    if (products.isEmpty()) {
 
-        FirestoreState.Idle -> {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            CircularProgressIndicator()
+
+            mySpacer()
+
+            TextNormal(
+                text = "Loading products..."
+            )
         }
 
+    } else {
 
-        FirestoreState.Loading -> {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
 
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                CircularProgressIndicator()
-
-                mySpacer()
+            item {
 
                 TextNormal(
-                    text = "Loading products..."
-                )
-            }
-        }
-
-
-        FirestoreState.Empty -> {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                TextNormal(
-                    text = "No products found"
+                    text = "Firestore Products",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp
                 )
 
                 mySpacer()
 
                 PrimaryButton(
-                    text = "Retry",
+                    text = "Does nothing",
                     onClick = {
-                        appViewModel.loadFirestoreProducts()
+                        // Testing button
                     }
                 )
             }
-        }
 
+            items(
+                items = products,
+                key = { it.productId }
+            ) { product ->
 
-        is FirestoreState.Error -> {
+                val imageRes = getDrawableId(product.productImage)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+                PrimaryCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
 
-                TextNormal(
-                    text = "Unable to load products",
-                    fontWeight = FontWeight.Bold
-                )
+                    Image(
+                        painter = painterResource(imageRes),
+                        contentDescription = product.productName,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        contentScale = ContentScale.Crop
+                    )
 
-                TextNormal(
-                    text = state.message,
-                    fontSize = 14.sp
-                )
-
-                mySpacer()
-
-                PrimaryButton(
-                    text = "Retry",
-                    onClick = {
-                        appViewModel.loadFirestoreProducts()
-                    }
-                )
-            }
-        }
-
-
-        is FirestoreState.Success -> {
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-
-                item {
+                    mySpacer()
 
                     TextNormal(
-                        text = "Firestore Products",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 28.sp
+                        text = product.productName,
+                        fontWeight = FontWeight.Bold
                     )
 
-                    mySpacer()
+                    TextNormal(
+                        text = "Product ID: ${product.productId}",
+                        fontSize = 14.sp
+                    )
 
-                    PrimaryButton(
-                        text = "Does nothing",
-                        onClick = {
-//                            appViewModel.seedFirestore()
-                        }
+                    TextNormal(
+                        text = "Vendor ID: ${product.vendorId}",
+                        fontSize = 14.sp
+                    )
+
+                    TextNormal(
+                        text = "RM %.2f".format(product.productPrice),
+                        fontSize = 16.sp
                     )
                 }
 
-
-                items(
-                    items = state.products,
-                    key = { it.productId }
-                ) { product ->
-
-                    val imageRes = getDrawableId(product.productImage)
-
-                    PrimaryCard(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-
-                        Image(
-                            painter = painterResource(imageRes),
-                            contentDescription = product.productName,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(140.dp),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        mySpacer()
-
-                        TextNormal(
-                            text = product.productName,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        TextNormal(
-                            text = "Product ID: ${product.productId}",
-                            fontSize = 14.sp
-                        )
-
-                        TextNormal(
-                            text = "Vendor ID: ${product.vendorID}",
-                            fontSize = 14.sp
-                        )
-
-                        TextNormal(
-                            text = "RM %.2f".format(product.productPrice),
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    mySpacer()
-                }
+                mySpacer()
             }
         }
     }

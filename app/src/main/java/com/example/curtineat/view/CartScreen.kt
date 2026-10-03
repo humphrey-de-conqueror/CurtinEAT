@@ -16,9 +16,17 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,14 +43,6 @@ import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.ui.theme.mySpacerWidth
 import com.example.curtineat.viewmodel.AppViewModel
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
-import com.example.curtineat.RouteFirestoreTestingScreen
 import kotlinx.coroutines.delay
 
 
@@ -56,7 +56,13 @@ fun CartScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
-    val loggedInCustomerId: Int? = 1 // hardcoded change to null if want
+    val cart by appViewModel.cart.collectAsState()
+    val customers by appViewModel.customers.collectAsState()
+    val vendors by appViewModel.vendors.collectAsState()
+    val checkoutCompleted by appViewModel.checkoutCompleted.collectAsState()
+    val account by appViewModel.account.collectAsState()
+
+    val loggedInCustomerId: String? = account.customerId
 
 //    val loggedInCustomerId = appViewModel.account.customerId
 
@@ -64,24 +70,24 @@ fun CartScreen(
         mutableStateOf(false)
     }
 
-    val currentCustomer = appViewModel.customer.find {
+    val currentCustomer = customers.find {
         it.customerId == loggedInCustomerId
     }
 
     val moneyBalance = currentCustomer?.moneyBalance ?: 0.0
 
-    val vendorId = appViewModel.cart
+    val vendorId = cart
         .firstOrNull()
         ?.product
-        ?.vendorID
+        ?.vendorId
 
-    val cartVendor = appViewModel.vendor.find {
+    val cartVendor = vendors.find {
         it.vendorId == vendorId
     }
 
-    LaunchedEffect(appViewModel.checkoutCompleted) {
+    LaunchedEffect(checkoutCompleted) {
 
-        if (appViewModel.checkoutCompleted) {
+        if (checkoutCompleted) {
 
             delay(1000)
 
@@ -107,11 +113,11 @@ fun CartScreen(
         ) {
 
 
-            if (appViewModel.cart.isEmpty()) {
+            if (cart.isEmpty()) {
 
                 EmptyCart(
                     onBackButtonClick = onBackButtonClick,
-                    checkoutCompleted = appViewModel.checkoutCompleted
+                    checkoutCompleted = checkoutCompleted
                 )
 
             } else {
@@ -151,7 +157,7 @@ fun CartScreen(
                     mySpacer()
 
                     // Cart items
-                    appViewModel.cart.forEach { cartItem ->
+                    cart.forEach { cartItem ->
 
                         CartItemRow(
                             cartItem = cartItem,
@@ -163,7 +169,7 @@ fun CartScreen(
                             onDecrease = {
 
                                 if (
-                                    appViewModel.cart.size == 1 &&
+                                    cart.size == 1 &&
                                     cartItem.quantity == 1
                                 ) {
                                     showEmptyCartDialog = true

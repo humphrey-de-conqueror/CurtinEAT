@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.curtineat.database.AppDatabase
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
@@ -21,22 +20,13 @@ import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
+import kotlin.getValue
 
 
 class MainActivity : ComponentActivity() {
 
     private val vm: AppViewModel by viewModels {
-
-        val database = AppDatabase.buildDatabase(this)
-
-        AppViewModelFactory(
-            database.vendorDao(),
-            database.customerDao(),
-            database.productDao(),
-            database.notificationDao(),
-            database.orderDao(),
-            database.orderItemDao()
-        )
+        AppViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,26 +61,24 @@ object RouteBalanceScreen
 @Serializable
 object RouteVendorLandingScreen
 
-//Firestore
 @Serializable
 object RouteFirestoreTestingScreen
 
 
 @Composable
-fun ScreenNavigation(appViewModel: AppViewModel) {
+fun ScreenNavigation(
+    appViewModel: AppViewModel
+) {
 
     val nav = rememberNavController()
-
 
     val onCartButtonClick: () -> Unit = {
         nav.navigate(RouteCartScreen)
     }
 
-
     val onBackButtonClick: () -> Unit = {
         nav.popBackStack()
     }
-
 
     val onHomeClick: () -> Unit = {
         nav.navigate(RouteMainScreen) {
@@ -98,12 +86,11 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
-
     val onWalletClick: () -> Unit = {
 
         if (
-            appViewModel.account.vendorId != null ||
-            appViewModel.account.customerId != null
+            appViewModel.account.value.vendorId != null ||
+            appViewModel.account.value.customerId != null
         ) {
             nav.navigate(RouteBalanceScreen)
         } else {
@@ -111,16 +98,13 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
-
     val onLoginClick: () -> Unit = {
         nav.navigate(RouteLoginScreen)
     }
 
-
     val onRegistrationClick: () -> Unit = {
         nav.navigate(RouteRegistrationScreen)
     }
-
 
     val onLoginSuccess: (Boolean) -> Unit = { isVendor ->
 
@@ -131,8 +115,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
         }
     }
 
-
-    //Vendor Home Page
     val onVendorHomeClick: () -> Unit = {
         nav.navigate(RouteVendorLandingScreen) {
             launchSingleTop = true
@@ -142,7 +124,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
     val onFirestoreTestClick: () -> Unit = {
         nav.navigate(RouteFirestoreTestingScreen)
     }
-
 
     NavHost(
         navController = nav,
@@ -157,10 +138,9 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
-                onFirestoreTestClick = onFirestoreTestClick //Testing Firestore
+                onFirestoreTestClick = onFirestoreTestClick
             )
         }
-
 
         composable<RouteCartScreen> {
 
@@ -172,7 +152,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
                 onLoginClick = onLoginClick
             )
         }
-
 
         composable<RouteLoginScreen> {
 
@@ -195,7 +174,6 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             )
         }
 
-
         composable<RouteBalanceScreen> {
 
             BalanceScreen(
@@ -204,23 +182,21 @@ fun ScreenNavigation(appViewModel: AppViewModel) {
             )
         }
 
-
         composable<RouteVendorLandingScreen> {
+
             VendorLandingScreen(
                 appViewModel = appViewModel,
                 onHomeClick = onVendorHomeClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
-
                 onOrderStatusClick = {},
-
                 onFoodClick = { productId -> },
-
                 onAddFoodClick = {}
             )
         }
 
         composable<RouteFirestoreTestingScreen> {
+
             FirestoreTestingScreen(
                 appViewModel = appViewModel
             )

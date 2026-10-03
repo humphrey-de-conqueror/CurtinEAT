@@ -2,34 +2,62 @@ package com.example.curtineat.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.curtineat.database.CustomerDao
-import com.example.curtineat.database.NotificationDao
-import com.example.curtineat.database.OrderDao
-import com.example.curtineat.database.OrderItemDao
-import com.example.curtineat.database.ProductDao
-import com.example.curtineat.database.VendorDao
+import com.example.curtineat.data.remote.firebase.source.FirebaseCustomerSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseNotificationSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseOrderSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseProductSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseVendorSource
+import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
+import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
+import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
+import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
+import com.example.curtineat.data.repository.firebase.FirebaseVendorRepository
 
-@Suppress("UNCHECKED_CAST")
-class AppViewModelFactory(
-    private val vendorDao: VendorDao,
-    private val customerDao: CustomerDao,
-    private val productDao: ProductDao,
-    private val notificationDao: NotificationDao,
-    private val orderDao: OrderDao,
-    private val orderItemDao: OrderItemDao
-) : ViewModelProvider.Factory {
+class AppViewModelFactory : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(
         modelClass: Class<T>
     ): T {
 
-        return AppViewModel(
-            vendorDao,
-            customerDao,
-            productDao,
-            notificationDao,
-            orderDao,
-            orderItemDao
-        ) as T
+        if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
+
+            val vendorRepository =
+                FirebaseVendorRepository(
+                    FirebaseVendorSource()
+                )
+
+            val customerRepository =
+                FirebaseCustomerRepository(
+                    FirebaseCustomerSource()
+                )
+
+            val productRepository =
+                FirebaseProductRepository(
+                    FirebaseProductSource()
+                )
+
+            val orderRepository =
+                FirebaseOrderRepository(
+                    FirebaseOrderSource()
+                )
+
+            val notificationRepository =
+                FirebaseNotificationRepository(
+                    FirebaseNotificationSource()
+                )
+
+            @Suppress("UNCHECKED_CAST")
+            return AppViewModel(
+                vendorRepository = vendorRepository,
+                customerRepository = customerRepository,
+                productRepository = productRepository,
+                orderRepository = orderRepository,
+                notificationRepository = notificationRepository
+            ) as T
+        }
+
+        throw IllegalArgumentException(
+            "Unknown ViewModel class: ${modelClass.name}"
+        )
     }
 }

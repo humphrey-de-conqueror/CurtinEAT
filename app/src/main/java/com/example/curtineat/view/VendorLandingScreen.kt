@@ -14,13 +14,15 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.curtineat.database.Product
+import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.TextNormal
@@ -34,18 +36,21 @@ fun VendorLandingScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onOrderStatusClick: () -> Unit,
-    onFoodClick: (Int) -> Unit,
+    onFoodClick: (String) -> Unit,
     onAddFoodClick: () -> Unit
 ) {
-    val loggedInVendorId: Int? = 1
-    // val loggedInVendorId = appViewModel.account.vendorId
+    val account by appViewModel.account.collectAsState()
+    val vendors by appViewModel.vendors.collectAsState()
+    val products by appViewModel.products.collectAsState()
 
-    val currentVendor = appViewModel.vendor.find {
+    val loggedInVendorId: String? = account.vendorId
+
+    val currentVendor = vendors.find {
         it.vendorId == loggedInVendorId
     }
 
-    val vendorProducts = appViewModel.product.filter {
-        it.vendorID == loggedInVendorId
+    val vendorProducts = products.filter {
+        it.vendorId == loggedInVendorId
     }
 
     AppScaffold(
@@ -117,7 +122,7 @@ fun VendorLandingScreen(
 
 @Composable
 fun VendorFoodItem(
-    product: Product,
+    product: FirebaseProductData,
     onClick: () -> Unit
 ) {
     val imageRes = getDrawableId(product.productImage)

@@ -1,6 +1,6 @@
 package com.example.curtineat.model
 
-data class Account (
-    val vendorId: Int? = null,
-    val customerId: Int? = null
+data class Account(
+    val customerId: String? = null,
+    val vendorId: String? = null
 )
