@@ -29,6 +29,11 @@ class AppViewModel(
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository
 ) : ViewModel() {
+    fun reload() {
+        loadVendors()
+        loadProducts()
+        loadNotifications()
+    }
 
     /* ====================
      * Account

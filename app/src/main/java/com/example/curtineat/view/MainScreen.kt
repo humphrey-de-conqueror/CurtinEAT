@@ -398,6 +398,23 @@ fun BodyScreen(
 
         }
 
+        item {
+            // either a swap up action to reload or
+            // a button to reload
+            // intentionally do this
+            // nothing in viewmodel will do auto reload
+            // if need reload, run reload() manually
+            PrimaryButton(
+                text = "Reload",
+                onClick = {
+                    appViewModel.reload()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+
         items(
             items = vendors,
             key = { eachVendor -> eachVendor.vendorId }
