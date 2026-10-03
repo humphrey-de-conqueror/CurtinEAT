@@ -143,9 +143,9 @@ fun FirestoreTestingScreen(
                     mySpacer()
 
                     PrimaryButton(
-                        text = "Seed Firestore",
+                        text = "Does nothing",
                         onClick = {
-                            appViewModel.seedFirestore()
+//                            appViewModel.seedFirestore()
                         }
                     )
                 }

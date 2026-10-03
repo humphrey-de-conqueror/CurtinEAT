@@ -1,5 +1,19 @@
-//package com.example.curtineat.view
-//
+package com.example.curtineat.view
+
+import androidx.compose.runtime.Composable
+import com.example.curtineat.viewmodel.AppViewModel
+
+@Composable
+fun LoginScreen(
+    appViewModel: AppViewModel,
+    onLoginSuccess: (Boolean) -> Unit,
+    onRegistrationClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onBackButtonClick: () -> Unit
+) {}
+
+
+
 //import androidx.compose.foundation.layout.Arrangement
 //import androidx.compose.foundation.layout.Column
 //import androidx.compose.foundation.layout.Row
