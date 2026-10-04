@@ -24,6 +24,7 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.example.curtineat.database.FirestoreRepository
+import android.content.Context
 
 enum class RegisterResult {
     SUCCESS,
@@ -294,16 +295,40 @@ class AppViewModel(
     }
 
     // search method
+//    fun searchProduct2(productName: String) {
+//        val productFound = product.find { eachProduct ->
+//            eachProduct.productName.contains(productName, ignoreCase = true)
+//        }
+//
+//        if (productFound != null) {
+//            searchVendorId = productFound.vendorID
+//        } else {
+//            searchVendorId = null
+//        }
+//    }
+
     fun searchProduct(productName: String) {
-        val productFound = product.find { eachProduct ->
-            eachProduct.productName.contains(productName, ignoreCase = true)
+
+        val productsToSearch = when (
+            val state = firestoreState
+        ) {
+            is FirestoreState.Success -> {
+                state.products
+            }
+
+            else -> {
+                product
+            }
         }
 
-        if (productFound != null) {
-            searchVendorId = productFound.vendorID
-        } else {
-            searchVendorId = null
+        val productFound = productsToSearch.find { eachProduct ->
+            eachProduct.productName.contains(
+                productName,
+                ignoreCase = true
+            )
         }
+
+        searchVendorId = productFound?.vendorID
     }
 
     //for checking out & create order & order item
@@ -485,10 +510,15 @@ class AppViewModel(
 
 
     //temporary seeding
-    fun seedFirestore() = viewModelScope.launch {
+    fun seedFirestore(
+        context: Context
+    ) = viewModelScope.launch {
 
         try {
-            firestoreRepository.seedFirestoreData()
+
+            firestoreRepository.seedFirestoreData(
+                context
+            )
 
             Log.d(
                 "FIRESTORE_SEED",

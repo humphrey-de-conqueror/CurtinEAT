@@ -67,6 +67,7 @@ import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
+import com.example.curtineat.viewmodel.FirestoreState
 
 
 @Composable
@@ -342,6 +343,77 @@ fun CartButton(
 
 @Composable
 fun BodyScreen(
+    innerPadding: PaddingValues,
+    appViewModel: AppViewModel,
+    onFirestoreTestClick: () -> Unit
+) {
+    val listState = rememberLazyListState()
+
+    // Load products from Firestore when MainScreen opens
+    LaunchedEffect(Unit) {
+        appViewModel.loadFirestoreProducts()
+    }
+
+    // Get Firestore products
+    val firestoreProducts = when (
+        val state = appViewModel.firestoreState
+    ) {
+        is FirestoreState.Success -> {
+            state.products
+        }
+
+        else -> {
+            emptyList()
+        }
+    }
+
+    // Search scrolling
+    LaunchedEffect(
+        appViewModel.searchVendorId,
+        appViewModel.vendor
+    ) {
+        val searchVendorId = appViewModel.searchVendorId
+
+        if (searchVendorId != null) {
+
+            val index = appViewModel.vendor.indexOfFirst {
+                it.vendorId == searchVendorId
+            }
+
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+            }
+        }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.padding(innerPadding)
+    ) {
+
+        items(
+            items = appViewModel.vendor,
+            key = { eachVendor ->
+                eachVendor.vendorId
+            }
+        ) { eachVendor ->
+
+            // PRODUCT NOW COMES FROM FIRESTORE
+            val vendorProducts = firestoreProducts.filter {
+                it.vendorID == eachVendor.vendorId
+            }
+
+            RestaurantCard(
+                appViewModel = appViewModel,
+                vendor = eachVendor,
+                products = vendorProducts
+            )
+        }
+    }
+}
+
+@Composable
+fun BodyScreen2(
     innerPadding: PaddingValues,
     appViewModel: AppViewModel,
     onFirestoreTestClick: () -> Unit //Testing Firestore

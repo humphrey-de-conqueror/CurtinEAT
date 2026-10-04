@@ -3,6 +3,13 @@ package com.example.curtineat.database
 import com.example.daodao.Vendor
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
+import com.example.curtineat.R
+import java.io.ByteArrayOutputStream
+
 
 class FirestoreRepository {
 
@@ -29,7 +36,9 @@ class FirestoreRepository {
     // SEED FIRESTORE
     // =========================
 
-    suspend fun seedFirestoreData() {
+    suspend fun seedFirestoreData(
+        context: Context
+    ) {
 
         val batch = db.batch()
 
@@ -122,7 +131,10 @@ class FirestoreRepository {
                 vendorID = 1,
                 productName = "Nasi Lemak",
                 productPrice = 5.50,
-                productImage = "nasi_lemak"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.nasi_lemak
+                )
             ),
 
             Product(
@@ -130,7 +142,10 @@ class FirestoreRepository {
                 vendorID = 1,
                 productName = "Mee Goreng",
                 productPrice = 6.00,
-                productImage = "mee_goreng"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.mee_goreng
+                )
             ),
 
             Product(
@@ -138,7 +153,10 @@ class FirestoreRepository {
                 vendorID = 2,
                 productName = "Cheeseburger",
                 productPrice = 12.90,
-                productImage = "cheeseburger"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.cheeseburger
+                )
             ),
 
             Product(
@@ -146,7 +164,10 @@ class FirestoreRepository {
                 vendorID = 2,
                 productName = "Chicken Wings",
                 productPrice = 9.90,
-                productImage = "chicken_wings"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.chicken_wings
+                )
             ),
 
             Product(
@@ -154,7 +175,10 @@ class FirestoreRepository {
                 vendorID = 3,
                 productName = "Salmon Sushi",
                 productPrice = 18.00,
-                productImage = "salmon_sushi"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.salmon_sushi
+                )
             ),
 
             Product(
@@ -162,7 +186,10 @@ class FirestoreRepository {
                 vendorID = 3,
                 productName = "Miso Soup",
                 productPrice = 4.50,
-                productImage = "miso_soup"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.miso_soup
+                )
             ),
 
             Product(
@@ -170,7 +197,10 @@ class FirestoreRepository {
                 vendorID = 4,
                 productName = "Beef Taco",
                 productPrice = 8.90,
-                productImage = "beef_taco"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.beef_taco
+                )
             ),
 
             Product(
@@ -178,7 +208,10 @@ class FirestoreRepository {
                 vendorID = 5,
                 productName = "Margherita Pizza",
                 productPrice = 22.00,
-                productImage = "margherita"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.margherita
+                )
             ),
 
             Product(
@@ -186,7 +219,10 @@ class FirestoreRepository {
                 vendorID = 5,
                 productName = "Garlic Bread",
                 productPrice = 5.00,
-                productImage = "garlic_bread"
+                productImage = drawableToBase64(
+                    context,
+                    R.drawable.garlic_bread
+                )
             )
         )
 
@@ -331,5 +367,43 @@ class FirestoreRepository {
             .document(productId.toString())
             .delete()
             .await()
+    }
+
+    private fun drawableToBase64(
+        context: Context,
+        drawableId: Int
+    ): String {
+
+        val originalBitmap =
+            BitmapFactory.decodeResource(
+                context.resources,
+                drawableId
+            )
+
+        // Make image smaller so Firestore document is not huge
+        val resizedBitmap =
+            Bitmap.createScaledBitmap(
+                originalBitmap,
+                400,
+                400,
+                true
+            )
+
+        val outputStream =
+            ByteArrayOutputStream()
+
+        resizedBitmap.compress(
+            Bitmap.CompressFormat.JPEG,
+            60,
+            outputStream
+        )
+
+        val imageBytes =
+            outputStream.toByteArray()
+
+        return "base64:" + Base64.encodeToString(
+            imageBytes,
+            Base64.NO_WRAP
+        )
     }
 }
