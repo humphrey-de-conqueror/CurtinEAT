@@ -67,6 +67,10 @@ dependencies {
     // Kotlin Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Retrofit / Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+
     // Room / SQLite
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

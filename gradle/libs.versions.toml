@@ -14,6 +14,7 @@ kotlinxSerialization = "1.9.0"
 room = "2.8.4"
 ksp = "2.3.6"
 material3 = "1.4.0"
+retrofit = "3.0.0"
 
 [libraries]
 
@@ -43,6 +44,10 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # Kotlin Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Retrofit / Networking
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
 
 # Room / SQLite
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

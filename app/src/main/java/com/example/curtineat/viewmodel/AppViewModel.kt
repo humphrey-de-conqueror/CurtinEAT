@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.curtineat.model.CartItem
 import com.example.curtineat.model.Account
+import com.example.curtineat.data.repository.api.ImageRepository
 
 
 class AppViewModel(
@@ -27,7 +28,8 @@ class AppViewModel(
     private val customerRepository: FirebaseCustomerRepository,
     private val productRepository: FirebaseProductRepository,
     private val orderRepository: FirebaseOrderRepository,
-    private val notificationRepository: FirebaseNotificationRepository
+    private val notificationRepository: FirebaseNotificationRepository,
+    private val imageRepository: ImageRepository
 ) : ViewModel() {
     fun reload() {
         loadVendors()
@@ -83,6 +85,38 @@ class AppViewModel(
 
     val orders: StateFlow<List<FirebaseOrderData>> =
         _orders.asStateFlow()
+
+    /* ====================
+     * Image
+     * ==================== */
+
+    fun uploadImage(
+        image: okhttp3.MultipartBody.Part,
+        onResult: (String?) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                val imageId =
+                    imageRepository.uploadImage(image)
+
+                onResult(imageId)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to upload image",
+                    e
+                )
+
+                onResult(null)
+            }
+        }
+    }
+
 
     /* ====================
      * Notifications
