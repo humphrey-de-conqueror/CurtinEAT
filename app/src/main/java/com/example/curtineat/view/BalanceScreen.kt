@@ -28,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,29 +72,33 @@ fun BalanceScreen(
         mutableStateOf<String?>(null)
     }
 
-    LaunchedEffect(appViewModel.account) {
+    val account by appViewModel.account.collectAsState()
 
-        val vendorId = appViewModel.account.vendorId
-        val customerId = appViewModel.account.customerId
+    LaunchedEffect(account) {
+
+        val vendorId = account.vendorId
+        val customerId = account.customerId
 
         if (vendorId != null) {
 
-            val vendor = appViewModel.getVendorById(vendorId)
+            appViewModel.getVendorById(vendorId) { vendor ->
 
-            if (vendor != null) {
-                balance = vendor.moneyBalance
-                accountName = vendor.vendorName
-                isVendor = true
+                if (vendor != null) {
+                    balance = vendor.moneyBalance
+                    accountName = vendor.vendorName
+                    isVendor = true
+                }
             }
 
         } else if (customerId != null) {
 
-            val customer = appViewModel.getCustomerById(customerId)
+            appViewModel.getCustomerById(customerId) { customer ->
 
-            if (customer != null) {
-                balance = customer.moneyBalance
-                accountName = customer.customerName
-                isVendor = false
+                if (customer != null) {
+                    balance = customer.moneyBalance
+                    accountName = customer.customerName
+                    isVendor = false
+                }
             }
         }
     }
@@ -380,7 +385,7 @@ fun BalanceScreen(
                                             showTopUpSheet = false
 
                                             appViewModel.getCurrentBalance { newBalance ->
-                                                balance = newBalance
+                                                balance = newBalance ?: 0.0
                                             }
                                         }
 

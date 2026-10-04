@@ -1,792 +1,1267 @@
 package com.example.curtineat.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.curtineat.database.Customer
-import com.example.curtineat.database.CustomerDao
-import com.example.curtineat.database.Notification
-import com.example.curtineat.database.NotificationDao
-import com.example.curtineat.database.Order
-import com.example.curtineat.database.OrderDao
-import com.example.curtineat.database.OrderItem
-import com.example.curtineat.database.OrderItemDao
-import com.example.curtineat.database.Product
-import com.example.curtineat.database.ProductDao
-import com.example.curtineat.database.VendorDao
-import com.example.curtineat.model.Account
-import com.example.curtineat.model.CartItem
-import com.example.daodao.Vendor
+import com.example.curtineat.data.remote.firebase.model.FirebaseCustomerData
+import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
+import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
+import com.example.curtineat.data.remote.firebase.model.FirebaseOrderProductData
+import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
+import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
+import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
+import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
+import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
+import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
+import com.example.curtineat.data.repository.firebase.FirebaseVendorRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import android.util.Log
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
-import com.example.curtineat.database.FirestoreRepository
-import android.content.Context
-
-enum class RegisterResult {
-    SUCCESS,
-    INVALID_EMAIL,
-    EMAIL_EXISTS,
-    ERROR
-}
-enum class TopUpResult {
-    SUCCESS,
-    INVALID_AMOUNT,
-    ERROR
-}
+import com.example.curtineat.model.CartItem
+import com.example.curtineat.model.Account
 
 
 class AppViewModel(
-    private var vendorDao: VendorDao,
-    private var customerDao: CustomerDao,
-    private var productDao: ProductDao,
-    private var notificationDao: NotificationDao,
-    private var orderDao: OrderDao,
-    private var orderItemDao: OrderItemDao
-): ViewModel() {
-
-    private val firestoreRepository = FirestoreRepository()
-    var firestoreState by mutableStateOf<FirestoreState>(
-        FirestoreState.Idle
-    )
-        private set
-
-    var account by mutableStateOf(Account())
-        private set
-
-    var searchVendorId by mutableStateOf<Int?>(null)
-        private set
-
-    var cart by mutableStateOf(listOf<CartItem>())
-        private set
-
-    var vendor by mutableStateOf(listOf<Vendor>())
-        private set
-
-    var customer by mutableStateOf(listOf<Customer>())
-        private set
-
-    var product by mutableStateOf(listOf<Product>())
-        private set
-
-    var notification by mutableStateOf(listOf<Notification>())
-        private set
-
-    var order by mutableStateOf(listOf<Order>())
-        private set
-
-    var orderItem by mutableStateOf(listOf<OrderItem>())
-        private set
-
-    var checkoutCompleted by mutableStateOf(false)
-        private set
-
-    fun clearCheckoutCompleted() {
-        checkoutCompleted = false
+    private val vendorRepository: FirebaseVendorRepository,
+    private val customerRepository: FirebaseCustomerRepository,
+    private val productRepository: FirebaseProductRepository,
+    private val orderRepository: FirebaseOrderRepository,
+    private val notificationRepository: FirebaseNotificationRepository
+) : ViewModel() {
+    fun reload() {
+        loadVendors()
+        loadProducts()
+        loadNotifications()
     }
 
+    /* ====================
+     * Account
+     * ==================== */
 
-    init {
+    private val _account = MutableStateFlow(Account())
+
+    val account: StateFlow<Account> =
+        _account.asStateFlow()
+
+    /* ====================
+     * Vendors
+     * ==================== */
+
+    private val _vendors =
+        MutableStateFlow<List<FirebaseVendorData>>(emptyList())
+
+    val vendors: StateFlow<List<FirebaseVendorData>> =
+        _vendors.asStateFlow()
+
+    /* ====================
+     * Customers
+     * ==================== */
+
+    private val _customers =
+        MutableStateFlow<List<FirebaseCustomerData>>(emptyList())
+
+    val customers: StateFlow<List<FirebaseCustomerData>> =
+        _customers.asStateFlow()
+
+    /* ====================
+     * Products
+     * ==================== */
+
+    private val _products =
+        MutableStateFlow<List<FirebaseProductData>>(emptyList())
+
+    val products: StateFlow<List<FirebaseProductData>> =
+        _products.asStateFlow()
+
+    /* ====================
+     * Orders
+     * ==================== */
+
+    private val _orders =
+        MutableStateFlow<List<FirebaseOrderData>>(emptyList())
+
+    val orders: StateFlow<List<FirebaseOrderData>> =
+        _orders.asStateFlow()
+
+    /* ====================
+     * Notifications
+     * ==================== */
+
+    private val _notifications =
+        MutableStateFlow<List<FirebaseNotificationData>>(emptyList())
+
+    val notifications: StateFlow<List<FirebaseNotificationData>> =
+        _notifications.asStateFlow()
+
+    /* ====================
+     * Cart
+     * ==================== */
+
+    private val _cart =
+        MutableStateFlow<List<CartItem>>(emptyList())
+
+    val cart: StateFlow<List<CartItem>> =
+        _cart.asStateFlow()
+
+    /* ====================
+     * Search
+     * ==================== */
+
+    private val _searchVendorId =
+        MutableStateFlow<String?>(null)
+
+    val searchVendorId: StateFlow<String?> =
+        _searchVendorId.asStateFlow()
+
+    /* ====================
+     * Checkout
+     * ==================== */
+
+    private val _checkoutCompleted =
+        MutableStateFlow(false)
+
+    val checkoutCompleted: StateFlow<Boolean> =
+        _checkoutCompleted.asStateFlow()
+
+    /* ====================
+     * Vendor
+     * ==================== */
+
+    fun loadVendors() {
+
         viewModelScope.launch {
 
-            if (
-                vendorDao.getAllVendor().isEmpty()              ||
-                customerDao.getAllCustomer().isEmpty()          ||
-                productDao.getAllProduct().isEmpty()            ||
-                notificationDao.getAllNotification().isEmpty()
-//              no need to seed order
-//              no need to seed order item
-            ) {
-                seedData()
-            }
+            try {
+                _vendors.value =
+                    vendorRepository.getAllVendors()
 
-            refresh()
-        }
-    }
+            } catch (e: Exception) {
 
-    fun refresh() = viewModelScope.launch {
-        vendor          = vendorDao.getAllVendor()
-        customer        = customerDao.getAllCustomer()
-        product         = productDao.getAllProduct()
-        notification    = notificationDao.getAllNotification()
-        order           = orderDao.getAllOrder()
-        orderItem       = orderItemDao.getAllOrderItem()
-    }
-
-    suspend fun clearAll() {
-        vendorDao.deleteAllVendor()
-        customerDao.deleteAllCustomer()
-        productDao.deleteAllProduct()
-        notificationDao.deleteAllNotification()
-        orderDao.deleteAllOrder()
-        orderItemDao.deleteAllOrderItem()
-    }
-
-    // vendor dao
-    fun insertVendor(vendor: Vendor) = viewModelScope.launch {
-        vendorDao.insertVendor(vendor)
-        refresh()
-    }
-
-    fun updateVendor(vendor: Vendor) = viewModelScope.launch {
-        vendorDao.updateVendor(vendor)
-        refresh()
-    }
-
-    fun deleteVendor(vendor: Vendor) = viewModelScope.launch {
-        vendorDao.deleteVendor(vendor)
-        refresh()
-    }
-
-    suspend fun getVendorById(vendorId: Int): Vendor? {
-        return vendorDao.getVendorById(vendorId)
-    }
-
-
-    // customer dao
-    fun insertCustomer(customer: Customer) = viewModelScope.launch {
-        customerDao.insertCustomer(customer)
-        refresh()
-    }
-
-    fun updateCustomer(customer: Customer) = viewModelScope.launch {
-        customerDao.updateCustomer(customer)
-        refresh()
-    }
-
-    fun deleteCustomer(customer: Customer) = viewModelScope.launch {
-        customerDao.deleteCustomer(customer)
-        refresh()
-    }
-
-    suspend fun getCustomerById(customerId: Int): Customer? {
-        return customerDao.getCustomerById(customerId)
-    }
-
-    // product dao
-    fun insertProduct(product: Product) = viewModelScope.launch {
-        productDao.insertProduct(product)
-        refresh()
-    }
-
-    fun updateProduct(product: Product) = viewModelScope.launch {
-        productDao.updateProduct(product)
-        refresh()
-    }
-
-    fun deleteProduct(product: Product) = viewModelScope.launch {
-        productDao.deleteProduct(product)
-        refresh()
-    }
-
-    // notification dao
-    fun insertNotification(notification: Notification) = viewModelScope.launch {
-        notificationDao.insertNotification(notification)
-        refresh()
-    }
-
-    fun updateNotification(notification: Notification) = viewModelScope.launch {
-        notificationDao.updateNotification(notification)
-        refresh()
-    }
-
-    fun deleteNotification(notification: Notification) = viewModelScope.launch {
-        notificationDao.deleteNotification(notification)
-        refresh()
-    }
-
-    // order dao
-    fun insertOrder(order: Order) = viewModelScope.launch {
-        orderDao.insertOrder(order)
-        refresh()
-    }
-
-    fun updateOrder(order: Order) = viewModelScope.launch {
-        orderDao.updateOrder(order)
-        refresh()
-    }
-
-    fun deleteOrder(order: Order) = viewModelScope.launch {
-        orderDao.deleteOrder(order)
-        refresh()
-    }
-
-    // order item dao
-    fun insertOrderItem(orderItem: OrderItem) = viewModelScope.launch {
-        orderItemDao.insertOrderItem(orderItem)
-        refresh()
-    }
-
-    fun updateOrderItem(orderItem: OrderItem) = viewModelScope.launch {
-        orderItemDao.updateOrderItem(orderItem)
-        refresh()
-    }
-
-    fun deleteOrderItem(orderItem: OrderItem) = viewModelScope.launch {
-        orderItemDao.deleteOrderItem(orderItem)
-        refresh()
-    }
-
-    fun addToCart(product: Product) {
-
-        checkoutCompleted = false
-
-        // if cart already has another vendor, clear it
-        if (cart.isNotEmpty()) {
-            val currentVendorId = cart.first().product.vendorID
-
-            if (currentVendorId != product.vendorID) {
-                cart = emptyList()
-            }
-        }
-
-        val existingItem = cart.find {
-            it.product.productId == product.productId
-        }
-
-        if (existingItem != null) {
-            cart = cart.map {
-                if (it.product.productId == product.productId) {
-                    it.copy(quantity = it.quantity + 1)
-                } else {
-                    it
-                }
-            }
-        } else {
-            cart = cart + CartItem(product)
-        }
-    }
-
-    fun cartTotalPrice(): Double {
-        return cart.sumOf { cartItem ->
-            cartItem.product.productPrice * cartItem.quantity
-        }
-    }
-
-    fun increaseQuantity(productId: Int) {
-        cart = cart.map { cartItem ->
-            if (cartItem.product.productId == productId) {
-                cartItem.copy(quantity = cartItem.quantity + 1)
-            } else {
-                cartItem
-            }
-        }
-    }
-
-    fun decreaseQuantity(productId: Int) {
-        cart = cart.mapNotNull { cartItem ->
-            if (cartItem.product.productId == productId) {
-                if (cartItem.quantity > 1) {
-                    cartItem.copy(quantity = cartItem.quantity - 1)
-                } else {
-                    null
-                }
-            } else {
-                cartItem
-            }
-        }
-    }
-
-    fun clearCart() {
-        cart = emptyList()
-    }
-
-    // search method
-//    fun searchProduct2(productName: String) {
-//        val productFound = product.find { eachProduct ->
-//            eachProduct.productName.contains(productName, ignoreCase = true)
-//        }
-//
-//        if (productFound != null) {
-//            searchVendorId = productFound.vendorID
-//        } else {
-//            searchVendorId = null
-//        }
-//    }
-
-    fun searchProduct(productName: String) {
-
-        val productsToSearch = when (
-            val state = firestoreState
-        ) {
-            is FirestoreState.Success -> {
-                state.products
-            }
-
-            else -> {
-                product
-            }
-        }
-
-        val productFound = productsToSearch.find { eachProduct ->
-            eachProduct.productName.contains(
-                productName,
-                ignoreCase = true
-            )
-        }
-
-        searchVendorId = productFound?.vendorID
-    }
-
-    //for checking out & create order & order item
-    fun checkout(customerId: Int) = viewModelScope.launch {
-
-        if (cart.isEmpty()) {
-            return@launch
-        }
-
-        val vendorId = cart.first().product.vendorID
-        val totalPrice = cartTotalPrice()
-
-        val currentCustomer = customerDao.getCustomerById(customerId)
-        val currentVendor = vendorDao.getVendorById(vendorId)
-
-        if (currentCustomer == null || currentVendor == null) {
-            Log.d("CHECKOUT", "Checkout failed: customer or vendor not found")
-            return@launch
-        }
-
-        if (currentCustomer.moneyBalance < totalPrice) {
-            Log.d("CHECKOUT", "Checkout failed: insufficient balance")
-            return@launch
-        }
-
-        // 1. Create order
-        val newOrder = Order(
-            customerId = customerId,
-            vendorId = vendorId,
-            totalPrice = totalPrice
-        )
-
-        val generatedOrderId = orderDao.insertOrder(newOrder)
-
-        val message = StringBuilder()
-
-        message.appendLine("========== CHECKOUT SUCCESS ==========")
-        message.appendLine("Order ID: $generatedOrderId")
-        message.appendLine("Customer ID: $customerId")
-        message.appendLine("Vendor ID: $vendorId")
-        message.appendLine("Total: RM %.2f".format(totalPrice))
-        message.appendLine()
-        message.appendLine("ORDER ITEMS")
-
-        // 2. Create order items
-        cart.forEachIndexed { index, cartItem ->
-
-            val newOrderItem = OrderItem(
-                orderId = generatedOrderId.toInt(),
-                productId = cartItem.product.productId,
-                quantity = cartItem.quantity
-            )
-
-            val generatedOrderItemId =
-                orderItemDao.insertOrderItem(newOrderItem)
-
-            val subtotal =
-                cartItem.product.productPrice * cartItem.quantity
-
-            message.appendLine("------------------------------")
-            message.appendLine("Item ${index + 1}")
-            message.appendLine("Order Item ID: $generatedOrderItemId")
-            message.appendLine("Order ID: $generatedOrderId")
-            message.appendLine("Product ID: ${cartItem.product.productId}")
-            message.appendLine("Product: ${cartItem.product.productName}")
-            message.appendLine("Quantity: ${cartItem.quantity}")
-            message.appendLine(
-                "Unit Price: RM %.2f".format(
-                    cartItem.product.productPrice
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load vendors",
+                    e
                 )
-            )
-            message.appendLine(
-                "Subtotal: RM %.2f".format(subtotal)
-            )
-        }
-
-        // 3. Deduct customer money
-        val updatedCustomer = currentCustomer.copy(
-            moneyBalance = currentCustomer.moneyBalance - totalPrice
-        )
-
-        customerDao.updateCustomer(updatedCustomer)
-
-        // 4. Add money to vendor
-        val updatedVendor = currentVendor.copy(
-            moneyBalance = currentVendor.moneyBalance + totalPrice
-        )
-
-        vendorDao.updateVendor(updatedVendor)
-
-        message.appendLine()
-        message.appendLine("PAYMENT")
-        message.appendLine(
-            "Customer before: RM %.2f".format(
-                currentCustomer.moneyBalance
-            )
-        )
-        message.appendLine(
-            "Customer after: RM %.2f".format(
-                updatedCustomer.moneyBalance
-            )
-        )
-        message.appendLine(
-            "Vendor before: RM %.2f".format(
-                currentVendor.moneyBalance
-            )
-        )
-        message.appendLine(
-            "Vendor after: RM %.2f".format(
-                updatedVendor.moneyBalance
-            )
-        )
-        message.appendLine("======================================")
-
-        Log.d("CHECKOUT", message.toString())
-
-
-        // 5. Clear cart
-        cart = emptyList()
-
-        // 6. Refresh states
-        refresh()
-
-        // Tell CartScreen checkout finished
-        checkoutCompleted = true
-
-    }
-
-
-    //TO Test FIRESTORE
-    fun testFirebase() = viewModelScope.launch {
-        try {
-            val document = FirebaseFirestore
-                .getInstance()
-                .collection("testData")
-                .document("test1")
-                .get()
-                .await()
-
-            val message = document.getString("message")
-
-            Log.d("FIREBASE_TEST", "Message: $message")
-
-        } catch (e: Exception) {
-            Log.e("FIREBASE_TEST", "Error: ${e.message}")
+            }
         }
     }
 
-    fun loadFirestoreProducts() = viewModelScope.launch {
+    fun getVendorById(
+        vendorId: String,
+        onResult: (FirebaseVendorData?) -> Unit
+    ) {
 
-        firestoreState = FirestoreState.Loading
+        viewModelScope.launch {
 
-        try {
+            try {
+                onResult(
+                    vendorRepository.getVendorById(vendorId)
+                )
 
-            val remoteProducts =
-                firestoreRepository.getProducts()
+            } catch (e: Exception) {
 
-            if (remoteProducts.isEmpty()) {
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get vendor",
+                    e
+                )
 
-                firestoreState =
-                    FirestoreState.Empty
+                onResult(null)
+            }
+        }
+    }
 
-            } else {
+    fun addVendor(
+        vendor: FirebaseVendorData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
 
-                firestoreState =
-                    FirestoreState.Success(
-                        remoteProducts
+        viewModelScope.launch {
+
+            try {
+                vendorRepository.addVendor(vendor)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to add vendor",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateVendor(
+        vendor: FirebaseVendorData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                vendorRepository.updateVendor(vendor)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update vendor",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteVendor(
+        vendorId: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                vendorRepository.deleteVendor(vendorId)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to delete vendor",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    /* ====================
+     * Customer
+     * ==================== */
+
+    fun loadCustomers() {
+
+        viewModelScope.launch {
+
+            try {
+                _customers.value =
+                    customerRepository.getAllCustomers()
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load customers",
+                    e
+                )
+            }
+        }
+    }
+
+    fun getCustomerById(
+        customerId: String,
+        onResult: (FirebaseCustomerData?) -> Unit
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                onResult(
+                    customerRepository.getCustomerById(customerId)
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get customer",
+                    e
+                )
+
+                onResult(null)
+            }
+        }
+    }
+
+    fun addCustomer(
+        customer: FirebaseCustomerData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                customerRepository.addCustomer(customer)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to add customer",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateCustomer(
+        customer: FirebaseCustomerData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                customerRepository.updateCustomer(customer)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update customer",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteCustomer(
+        customerId: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                customerRepository.deleteCustomer(customerId)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to delete customer",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    /* ====================
+     * Product
+     * ==================== */
+
+    fun loadProducts() {
+
+        viewModelScope.launch {
+
+            try {
+                _products.value =
+                    productRepository.getAllProducts()
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load products",
+                    e
+                )
+            }
+        }
+    }
+
+    fun loadProductsByVendor(
+        vendorId: String
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                _products.value =
+                    productRepository.getProductsByVendorId(
+                        vendorId
                     )
-            }
 
-        } catch (e: Exception) {
+            } catch (e: Exception) {
 
-            firestoreState =
-                FirestoreState.Error(
-                    e.message ?: "Unable to load products"
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load vendor products",
+                    e
                 )
+            }
         }
     }
 
+    fun getProductById(
+        productId: String,
+        onResult: (FirebaseProductData?) -> Unit
+    ) {
 
-    //temporary seeding
-    fun seedFirestore(
-        context: Context
-    ) = viewModelScope.launch {
+        viewModelScope.launch {
 
-        try {
+            try {
+                onResult(
+                    productRepository.getProductById(productId)
+                )
 
-            firestoreRepository.seedFirestoreData(
-                context
-            )
+            } catch (e: Exception) {
 
-            Log.d(
-                "FIRESTORE_SEED",
-                "Firestore seed successful"
-            )
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get product",
+                    e
+                )
 
-        } catch (e: Exception) {
-
-            Log.e(
-                "FIRESTORE_SEED",
-                "Seed failed: ${e.message}"
-            )
+                onResult(null)
+            }
         }
     }
-    
-    
 
-//    ================================
-//          login method
-//    ================================
+    fun addProduct(
+        product: FirebaseProductData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                productRepository.addProduct(product)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to add product",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateProduct(
+        product: FirebaseProductData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                productRepository.updateProduct(product)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update product",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteProduct(
+        productId: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                productRepository.deleteProduct(productId)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to delete product",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    /* ====================
+     * Orders
+     * ==================== */
+
+    fun loadOrders() {
+
+        viewModelScope.launch {
+
+            try {
+                _orders.value =
+                    orderRepository.getAllOrders()
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load orders",
+                    e
+                )
+            }
+        }
+    }
+
+    fun loadCustomerOrders(
+        customerId: String
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                _orders.value =
+                    orderRepository.getOrdersByCustomerId(
+                        customerId
+                    )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load customer orders",
+                    e
+                )
+            }
+        }
+    }
+
+    fun loadVendorOrders(
+        vendorId: String
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                _orders.value =
+                    orderRepository.getOrdersByVendorId(
+                        vendorId
+                    )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load vendor orders",
+                    e
+                )
+            }
+        }
+    }
+
+    fun getOrderById(
+        orderId: String,
+        onResult: (FirebaseOrderData?) -> Unit
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                onResult(
+                    orderRepository.getOrderById(orderId)
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get order",
+                    e
+                )
+
+                onResult(null)
+            }
+        }
+    }
+
+    fun addOrder(
+        order: FirebaseOrderData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                orderRepository.addOrder(order)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to add order",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateOrder(
+        order: FirebaseOrderData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                orderRepository.updateOrder(order)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update order",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteOrder(
+        orderId: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                orderRepository.deleteOrder(orderId)
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to delete order",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    /* ====================
+     * Notifications
+     * ==================== */
+
+    fun loadNotifications() {
+
+        viewModelScope.launch {
+
+            try {
+                _notifications.value =
+                    notificationRepository.getAllNotifications()
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load notifications",
+                    e
+                )
+            }
+        }
+    }
+
+    fun loadNotificationsForRecipient(
+        recipientId: String
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                _notifications.value =
+                    notificationRepository
+                        .getNotificationsByRecipientId(
+                            recipientId
+                        )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load recipient notifications",
+                    e
+                )
+            }
+        }
+    }
+
+    fun getNotificationById(
+        notificationId: String,
+        onResult: (FirebaseNotificationData?) -> Unit
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                onResult(
+                    notificationRepository
+                        .getNotificationById(notificationId)
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get notification",
+                    e
+                )
+
+                onResult(null)
+            }
+        }
+    }
+
+    fun addNotification(
+        notification: FirebaseNotificationData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                notificationRepository
+                    .addNotification(notification)
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to add notification",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateNotification(
+        notification: FirebaseNotificationData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                notificationRepository
+                    .updateNotification(notification)
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update notification",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteNotification(
+        notificationId: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                notificationRepository
+                    .deleteNotification(notificationId)
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to delete notification",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    /* ====================
+     * Authentication
+     * ==================== */
 
     fun login(
         email: String,
         password: String,
         isVendor: Boolean,
-        onResult: (Boolean) -> Unit
-    ) = viewModelScope.launch {
+        onResult: (Boolean) -> Unit = {}
+    ) {
+        println(
+            "TODO: Firebase Authentication login " +
+                    "for ${if (isVendor) "vendor" else "customer"}"
+        )
 
-        val cleanEmail = email.trim()
-
-        try {
-
-            if (isVendor) {
-
-                val vendorFound = vendorDao.login(
-                    email = cleanEmail,
-                    password = password
-                )
-
-                if (vendorFound != null) {
-
-                    account = account.copy(
-                        vendorId = vendorFound.vendorId,
-                        customerId = null
-                    )
-
-                    onResult(true)
-
-                } else {
-                    onResult(false)
-                }
-
-            } else {
-
-                val customerFound = customerDao.login(
-                    email = cleanEmail,
-                    password = password
-                )
-
-                if (customerFound != null) {
-
-                    account = account.copy(
-                        vendorId = null,
-                        customerId = customerFound.customerId
-                    )
-
-                    onResult(true)
-
-                } else {
-                    onResult(false)
-                }
-            }
-
-        } catch (e: Exception) {
-            onResult(false)
-        }
+        onResult(false)
     }
 
     fun register(
         email: String,
         password: String,
         isVendor: Boolean,
-        onResult: (RegisterResult) -> Unit
-    ) = viewModelScope.launch {
+        onResult: (RegisterResult) -> Unit = {}
+    ) {
+        println(
+            "TODO: Firebase Authentication registration " +
+                    "for ${if (isVendor) "vendor" else "customer"}"
+        )
 
-        val cleanEmail = email.trim()
-
-        if (!isValidEmail(cleanEmail)) {
-            onResult(RegisterResult.INVALID_EMAIL)
-            return@launch
-        }
-
-        try {
-
-            if (isVendor) {
-
-                if (vendorDao.vendorEmailExists(cleanEmail)) {
-                    onResult(RegisterResult.EMAIL_EXISTS)
-                    return@launch
-                }
-
-                val newVendor = Vendor(
-                    vendorEmail = cleanEmail,
-                    vendorPassword = password
-                )
-
-                val generatedVendorId =
-                    vendorDao.insertVendor(newVendor).toInt()
-
-                account = account.copy(
-                    vendorId = generatedVendorId,
-                    customerId = null
-                )
-
-            } else {
-
-                if (customerDao.customerEmailExists(cleanEmail)) {
-                    onResult(RegisterResult.EMAIL_EXISTS)
-                    return@launch
-                }
-
-                val newCustomer = Customer(
-                    customerEmail = cleanEmail,
-                    customerPassword = password
-                )
-
-                val generatedCustomerId =
-                    customerDao.insertCustomer(newCustomer).toInt()
-
-                account = account.copy(
-                    vendorId = null,
-                    customerId = generatedCustomerId
-                )
-            }
-
-            refresh()
-
-            onResult(RegisterResult.SUCCESS)
-
-        } catch (e: Exception) {
-            onResult(RegisterResult.ERROR)
-        }
+        onResult(RegisterResult.ERROR)
     }
 
-    fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS
-            .matcher(email)
-            .matches()
+    fun logout() {
+        println("TODO: Firebase Authentication logout")
+
+        clearAccount()
+        clearCart()
     }
 
-    // ================
-    // meney money honk
-    // ==================
+    /* ====================
+     * Account
+     * ==================== */
+
+    fun setCustomerAccount(
+        customerId: String
+    ) {
+        _account.value =
+            Account(
+                customerId = customerId
+            )
+    }
+
+    fun setVendorAccount(
+        vendorId: String
+    ) {
+        _account.value =
+            Account(
+                vendorId = vendorId
+            )
+    }
+
+    fun clearAccount() {
+        _account.value = Account()
+    }
+
+    /* ====================
+     * Wallet
+     * ==================== */
+
     fun getCurrentBalance(
-        onResult: (Double) -> Unit
-    ) = viewModelScope.launch {
+        onResult: (Double?) -> Unit
+    ) {
 
-        val vendorId = account.vendorId
-        val customerId = account.customerId
+        viewModelScope.launch {
 
-        if (vendorId != null) {
+            try {
 
-            val vendor = vendorDao.getVendorById(vendorId)
+                val currentAccount = _account.value
 
-            if (vendor != null) {
-                onResult(vendor.moneyBalance)
-            }
+                if (currentAccount.customerId != null) {
 
-        } else if (customerId != null) {
+                    val customer =
+                        customerRepository.getCustomerById(
+                            currentAccount.customerId
+                        )
 
-            val customer = customerDao.getCustomerById(customerId)
+                    onResult(
+                        customer?.moneyBalance
+                    )
 
-            if (customer != null) {
-                onResult(customer.moneyBalance)
+                    return@launch
+                }
+
+                if (currentAccount.vendorId != null) {
+
+                    val vendor =
+                        vendorRepository.getVendorById(
+                            currentAccount.vendorId
+                        )
+
+                    onResult(
+                        vendor?.moneyBalance
+                    )
+
+                    return@launch
+                }
+
+                onResult(null)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to get current balance",
+                    e
+                )
+
+                onResult(null)
             }
         }
     }
+
     fun topUp(
         amount: Double,
-        onResult: (TopUpResult) -> Unit
-    ) = viewModelScope.launch {
+        onResult: (TopUpResult) -> Unit = {}
+    ) {
 
         if (amount <= 0.0) {
-            onResult(TopUpResult.INVALID_AMOUNT)
-            return@launch
+            onResult(
+                TopUpResult.INVALID_AMOUNT
+            )
+
+            return
         }
 
-        try {
+        println(
+            "TODO: Implement payment processing " +
+                    "for top-up of $amount"
+        )
 
-            // Placeholder for bank / third-party payment API
-            val paymentSuccessful = true
+        onResult(
+            TopUpResult.ERROR
+        )
+    }
 
-            if (!paymentSuccessful) {
-                onResult(TopUpResult.ERROR)
-                return@launch
+    /* ====================
+     * Cart
+     * ==================== */
+
+    fun addToCart(
+        product: FirebaseProductData
+    ) {
+
+        val currentCart =
+            _cart.value.toMutableList()
+
+        if (
+            currentCart.isNotEmpty() &&
+            currentCart.first().product.vendorId !=
+            product.vendorId
+        ) {
+            currentCart.clear()
+        }
+
+        val existingIndex =
+            currentCart.indexOfFirst {
+                it.product.productId ==
+                        product.productId
             }
 
-            val vendorId = account.vendorId
-            val customerId = account.customerId
+        if (existingIndex >= 0) {
 
-            if (vendorId != null) {
+            val existingItem =
+                currentCart[existingIndex]
 
-                val vendor = vendorDao.getVendorById(vendorId)
-
-                if (vendor == null) {
-                    onResult(TopUpResult.ERROR)
-                    return@launch
-                }
-
-                vendorDao.updateVendor(
-                    vendor.copy(
-                        moneyBalance = vendor.moneyBalance + amount
-                    )
+            currentCart[existingIndex] =
+                existingItem.copy(
+                    quantity =
+                        existingItem.quantity + 1
                 )
 
-            } else if (customerId != null) {
+        } else {
 
-                val customer = customerDao.getCustomerById(customerId)
-
-                if (customer == null) {
-                    onResult(TopUpResult.ERROR)
-                    return@launch
-                }
-
-                customerDao.updateCustomer(
-                    customer.copy(
-                        moneyBalance = customer.moneyBalance + amount
-                    )
+            currentCart.add(
+                CartItem(
+                    product = product,
+                    quantity = 1
                 )
+            )
+        }
 
-            } else {
+        _cart.value = currentCart
+    }
 
-                onResult(TopUpResult.ERROR)
-                return@launch
+    fun increaseQuantity(
+        productId: String
+    ) {
+
+        _cart.value =
+            _cart.value.map { item ->
+
+                if (
+                    item.product.productId ==
+                    productId
+                ) {
+                    item.copy(
+                        quantity =
+                            item.quantity + 1
+                    )
+                } else {
+                    item
+                }
             }
+    }
 
-            refresh()
+    fun decreaseQuantity(
+        productId: String
+    ) {
 
-            onResult(TopUpResult.SUCCESS)
+        _cart.value =
+            _cart.value.mapNotNull { item ->
 
-        } catch (e: Exception) {
-            onResult(TopUpResult.ERROR)
+                if (
+                    item.product.productId !=
+                    productId
+                ) {
+                    item
+
+                } else if (
+                    item.quantity > 1
+                ) {
+                    item.copy(
+                        quantity =
+                            item.quantity - 1
+                    )
+
+                } else {
+                    null
+                }
+            }
+    }
+
+    fun clearCart() {
+        _cart.value = emptyList()
+    }
+
+    fun cartTotalPrice(): Double {
+
+        return _cart.value.sumOf { item ->
+            item.product.productPrice *
+                    item.quantity
         }
     }
 
-    // please remove this seed data in production
-    suspend fun seedData() {
-        vendorDao.insertVendor(Vendor(vendorName = "Mama's Kitchen", rating = 4.5, category = "Local Food", distance = 0.3, vendorPassword = "a", vendorEmail = "abc"))
-        vendorDao.insertVendor(Vendor(vendorName = "Burger Bros", rating = 4.2, category = "Western", distance = 0.8, vendorPassword = "b", vendorEmail = "burgerbros@gmail.com"))
-        vendorDao.insertVendor(Vendor(vendorName = "Sushi Zen", rating = 4.8, category = "Japanese", distance = 1.2, vendorPassword = "c", vendorEmail = "sushizen@gmail.com"))
-        vendorDao.insertVendor(Vendor(vendorName = "Taco Fiesta", rating = 3.9, category = "Mexican", distance = 2.0, vendorPassword = "d", vendorEmail = "tacofiesta@gmail.com"))
-        vendorDao.insertVendor(Vendor(vendorName = "Pizza Palace", rating = 4.1, category = "Western", distance = 1.5, vendorPassword = "e", vendorEmail = "pizzapalace@gmail.com"))
+    /* ====================
+     * Search
+     * ==================== */
 
-        customerDao.insertCustomer(Customer(customerName = "Customer satu", customerEmail = "b", customerPassword = "c", moneyBalance = 100.00))
+    fun searchProduct(
+        productName: String
+    ) {
 
-        productDao.insertProduct(Product(vendorID = 1, productName = "Nasi Lemak", productPrice = 5.50, productImage = "nasi_lemak"))
-        productDao.insertProduct(Product(vendorID = 1, productName = "Mee Goreng", productPrice = 6.00, productImage = "mee_goreng"))
-        productDao.insertProduct(Product(vendorID = 2, productName = "Cheeseburger", productPrice = 12.90, productImage = "cheeseburger"))
-        productDao.insertProduct(Product(vendorID = 2, productName = "Chicken Wings", productPrice = 9.90, productImage = "chicken_wings"))
-        productDao.insertProduct(Product(vendorID = 3, productName = "Salmon Sushi", productPrice = 18.00, productImage = "salmon_sushi"))
-        productDao.insertProduct(Product(vendorID = 3, productName = "Miso Soup", productPrice = 4.50, productImage = "miso_soup"))
-        productDao.insertProduct(Product(vendorID = 4, productName = "Beef Taco", productPrice = 8.90, productImage = "beef_taco"))
-        productDao.insertProduct(Product(vendorID = 5, productName = "Margherita Pizza", productPrice = 22.00, productImage = "margherita"))
-        productDao.insertProduct(Product(vendorID = 5, productName = "Garlic Bread", productPrice = 5.00, productImage = "garlic_bread"))
+        val result =
+            _products.value.firstOrNull { product ->
 
-        notificationDao.insertNotification(Notification(message = "order submitted, pending for vendor verification", time = "12 p.m."))
-        notificationDao.insertNotification(Notification(message = "vendor accept your order, please wait", time = "11 p.m."))
-        notificationDao.insertNotification(Notification(message = "food prepared, please pick up or i buang your food", time = "10 p.m."))
-        notificationDao.insertNotification(Notification(message = "vendor blocklist you ", time = "14 p.m."))
+                product.productName.equals(
+                    productName,
+                    ignoreCase = true
+                )
+            }
+
+        _searchVendorId.value =
+            result?.vendorId
+    }
+
+    fun clearSearch() {
+        _searchVendorId.value = null
+    }
+
+    /* ====================
+     * Checkout
+     * ==================== */
+
+    fun checkout(
+        customerId: String,
+        onResult: (Boolean, String) -> Unit =
+            { _, _ -> }
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                if (_cart.value.isEmpty()) {
+
+                    onResult(
+                        false,
+                        "Cart is empty."
+                    )
+
+                    return@launch
+                }
+
+                val vendorId =
+                    _cart.value
+                        .first()
+                        .product
+                        .vendorId
+
+                val totalPrice =
+                    cartTotalPrice()
+
+                val customer =
+                    customerRepository
+                        .getCustomerById(
+                            customerId
+                        )
+
+                if (customer == null) {
+
+                    onResult(
+                        false,
+                        "Customer not found."
+                    )
+
+                    return@launch
+                }
+
+                val vendor =
+                    vendorRepository
+                        .getVendorById(
+                            vendorId
+                        )
+
+                if (vendor == null) {
+
+                    onResult(
+                        false,
+                        "Vendor not found."
+                    )
+
+                    return@launch
+                }
+
+                if (
+                    customer.moneyBalance <
+                    totalPrice
+                ) {
+
+                    onResult(
+                        false,
+                        "Insufficient balance."
+                    )
+
+                    return@launch
+                }
+
+                val orderProducts =
+                    _cart.value.map { item ->
+
+                        FirebaseOrderProductData(
+                            productId =
+                                item.product.productId,
+
+                            productName =
+                                item.product.productName,
+
+                            productPrice =
+                                item.product.productPrice,
+
+                            quantity =
+                                item.quantity
+                        )
+                    }
+
+                val order =
+                    FirebaseOrderData(
+                        customerId =
+                            customerId,
+
+                        vendorId =
+                            vendorId,
+
+                        totalPrice =
+                            totalPrice,
+
+                        status =
+                            "PENDING",
+
+                        products =
+                            orderProducts
+                    )
+
+                orderRepository.addOrder(order)
+
+                customerRepository.updateCustomer(
+                    customer.copy(
+                        moneyBalance =
+                            customer.moneyBalance -
+                                    totalPrice
+                    )
+                )
+
+                vendorRepository.updateVendor(
+                    vendor.copy(
+                        moneyBalance =
+                            vendor.moneyBalance +
+                                    totalPrice
+                    )
+                )
+
+                _cart.value = emptyList()
+
+                _checkoutCompleted.value =
+                    true
+
+                onResult(
+                    true,
+                    "Checkout successful."
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Checkout failed",
+                    e
+                )
+
+                onResult(
+                    false,
+                    e.message ?: "Checkout failed."
+                )
+            }
+        }
+    }
+
+    fun clearCheckoutCompleted() {
+        _checkoutCompleted.value = false
     }
 }

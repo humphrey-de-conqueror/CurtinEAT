@@ -36,9 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.viewmodel.AppViewModel
-import com.example.curtineat.database.Product
+import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 import androidx.compose.foundation.lazy.items
-import com.example.daodao.Vendor
+import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -55,6 +55,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -67,7 +68,6 @@ import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
-import com.example.curtineat.viewmodel.FirestoreState
 
 
 @Composable
@@ -116,6 +116,8 @@ fun MainScreen(
     onLoginClick: () -> Unit,
     onFirestoreTestClick: () -> Unit //testing Firebase
 ) {
+    val cart by appViewModel.cart.collectAsState()
+
     AppScaffold(
         // expect onHistory and onSetting
         appViewModel = appViewModel,
@@ -127,7 +129,7 @@ fun MainScreen(
         floatingActionButton = {
             CartButton(
                 onCartButtonClick = onCartButtonClick,
-                totalQuantity = appViewModel.cart.sumOf { it.quantity }
+                totalQuantity = cart.sumOf { it.quantity }
             )
         }
     ) { innerPadding ->
@@ -188,6 +190,8 @@ fun TopBarScreen(
     var searching by remember { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
     var notificationsOpen by remember { mutableStateOf(false) }
+
+    val notifications by appViewModel.notifications.collectAsState()
 
     val notificationSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false //allows partial to expanded behavior
@@ -292,10 +296,10 @@ fun TopBarScreen(
 
             ) {
                 items(
-                    items = appViewModel.notification,
+                    items = notifications,
                     key = { eachNotification -> eachNotification.notificationId}
                 ) { eachNotification ->
-                    Text(text = eachNotification.message ?: "dump dump empty message")
+                    Text(text = eachNotification.message)
                 }
             }
         }
@@ -345,89 +349,20 @@ fun CartButton(
 fun BodyScreen(
     innerPadding: PaddingValues,
     appViewModel: AppViewModel,
-    onFirestoreTestClick: () -> Unit
+    onFirestoreTestClick: () -> Unit //Testing Firebase
 ) {
     val listState = rememberLazyListState()
 
-    // Load products from Firestore when MainScreen opens
-    LaunchedEffect(Unit) {
-        appViewModel.loadFirestoreProducts()
-    }
-
-    // Get Firestore products
-    val firestoreProducts = when (
-        val state = appViewModel.firestoreState
-    ) {
-        is FirestoreState.Success -> {
-            state.products
-        }
-
-        else -> {
-            emptyList()
-        }
-    }
-
-    // Search scrolling
-    LaunchedEffect(
-        appViewModel.searchVendorId,
-        appViewModel.vendor
-    ) {
-        val searchVendorId = appViewModel.searchVendorId
-
-        if (searchVendorId != null) {
-
-            val index = appViewModel.vendor.indexOfFirst {
-                it.vendorId == searchVendorId
-            }
-
-            if (index >= 0) {
-                listState.animateScrollToItem(index)
-            }
-        }
-    }
-
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.padding(innerPadding)
-    ) {
-
-        items(
-            items = appViewModel.vendor,
-            key = { eachVendor ->
-                eachVendor.vendorId
-            }
-        ) { eachVendor ->
-
-            // PRODUCT NOW COMES FROM FIRESTORE
-            val vendorProducts = firestoreProducts.filter {
-                it.vendorID == eachVendor.vendorId
-            }
-
-            RestaurantCard(
-                appViewModel = appViewModel,
-                vendor = eachVendor,
-                products = vendorProducts
-            )
-        }
-    }
-}
-
-@Composable
-fun BodyScreen2(
-    innerPadding: PaddingValues,
-    appViewModel: AppViewModel,
-    onFirestoreTestClick: () -> Unit //Testing Firestore
-) {
-    val listState = rememberLazyListState()
+    val vendors by appViewModel.vendors.collectAsState()
+    val products by appViewModel.products.collectAsState()
+    val searchVendorId by appViewModel.searchVendorId.collectAsState()
 
     LaunchedEffect(
-        appViewModel.searchVendorId,
-        appViewModel.vendor
+        searchVendorId,
+        vendors
     ) {
-        val searchVendorId = appViewModel.searchVendorId
-
         if (searchVendorId != null) {
-            val index = appViewModel.vendor.indexOfFirst {
+            val index = vendors.indexOfFirst {
                 it.vendorId == searchVendorId
             }
 
@@ -463,12 +398,29 @@ fun BodyScreen2(
 
         }
 
+        item {
+            // either a swap up action to reload or
+            // a button to reload
+            // intentionally do this
+            // nothing in viewmodel will do auto reload
+            // if need reload, run reload() manually
+            PrimaryButton(
+                text = "Reload",
+                onClick = {
+                    appViewModel.reload()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+
         items(
-            items = appViewModel.vendor,
+            items = vendors,
             key = { eachVendor -> eachVendor.vendorId }
         ) { eachVendor ->
-            val vendorProducts = appViewModel.product.filter {
-                it.vendorID == eachVendor.vendorId
+            val vendorProducts = products.filter {
+                it.vendorId == eachVendor.vendorId
             }
             RestaurantCard(appViewModel = appViewModel, eachVendor, vendorProducts)
         }
@@ -479,8 +431,8 @@ fun BodyScreen2(
 @Composable
 fun RestaurantCard(
     appViewModel: AppViewModel,
-    vendor: Vendor,
-    products: List<Product>
+    vendor: FirebaseVendorData,
+    products: List<FirebaseProductData>
 ) {
     PrimaryCard(
         modifier = Modifier
@@ -559,7 +511,7 @@ fun getDrawableId(imageName: String): Int {
 @Composable
 fun FoodItem(
     appViewModel: AppViewModel,
-    product: Product
+    product: FirebaseProductData
 ) {
     val imageRes = getDrawableId(product.productImage)
 

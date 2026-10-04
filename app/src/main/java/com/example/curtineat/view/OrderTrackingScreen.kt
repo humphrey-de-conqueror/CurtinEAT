@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,7 +48,7 @@ fun OrderTrackingScreen(
     var stage by rememberSaveable { mutableStateOf(0) }
 
     // items being made: group the cart by product and count quantities
-    val lines = appViewModel.cart
+    val lines by appViewModel.cart.collectAsState()
 
     AppScaffold(
         appViewModel = appViewModel,
