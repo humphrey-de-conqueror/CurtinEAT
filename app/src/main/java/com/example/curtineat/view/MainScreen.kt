@@ -117,6 +117,14 @@ fun MainScreen(
     onFirestoreTestClick: () -> Unit //testing Firebase
 ) {
     val cart by appViewModel.cart.collectAsState()
+    //Testing for notification
+    val account by appViewModel.account.collectAsState()
+
+    LaunchedEffect(account.customerId) {
+        account.customerId?.let { customerId ->
+            appViewModel.loadNotificationsForRecipient(customerId)
+        }
+    }
 
     AppScaffold(
         // expect onHistory and onSetting

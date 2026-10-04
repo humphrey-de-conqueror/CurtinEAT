@@ -6,6 +6,6 @@ data class FirebaseNotificationData(
 	val recipientType: String = "", // vendor or customer , maybe can use enum
 	val message: String = "",
 	val orderId: String = "",
-	val timestamp: Long = 0L,
+	val timestamp: Long = 0L, //change to timestamp maybe
 	val isRead: Boolean = false
 )

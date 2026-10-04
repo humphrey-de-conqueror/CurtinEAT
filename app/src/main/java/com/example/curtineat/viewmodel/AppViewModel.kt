@@ -29,10 +29,22 @@ class AppViewModel(
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository
 ) : ViewModel() {
-    fun reload() {
+    fun reload2() {
         loadVendors()
         loadProducts()
         loadNotifications()
+    }
+
+    //Testing for notification
+    fun reload() {
+        loadVendors()
+        loadProducts()
+
+        val customerId = _account.value.customerId
+
+        if (customerId != null) {
+            loadNotificationsForRecipient(customerId)
+        }
     }
 
     /* ====================

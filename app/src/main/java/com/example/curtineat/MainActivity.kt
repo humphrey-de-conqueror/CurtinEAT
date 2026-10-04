@@ -32,6 +32,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        //Testing for notification
+        // TEMPORARY TEST LOGIN
+        vm.setCustomerAccount("customer_test_1")
+
         enableEdgeToEdge()
 
         setContent {
