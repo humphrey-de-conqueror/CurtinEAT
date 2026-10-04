@@ -28,9 +28,9 @@ class FirebaseProductRepository(
 
 	suspend fun addProduct(
 		product: FirebaseProductData
-	) {
+	): String {
 
-		source.addProduct(product)
+		return source.addProduct(product)
 	}
 
 	suspend fun updateProduct(

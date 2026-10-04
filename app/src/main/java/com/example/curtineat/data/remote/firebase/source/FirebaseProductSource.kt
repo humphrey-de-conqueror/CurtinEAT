@@ -72,7 +72,8 @@ class FirebaseProductSource {
 
 	suspend fun addProduct(
 		product: FirebaseProductData
-	) {
+	): String {
+
 		val document = productCollection.document()
 
 		document
@@ -85,6 +86,8 @@ class FirebaseProductSource {
 				)
 			)
 			.await()
+
+		return document.id
 	}
 
 	suspend fun updateProduct(
