@@ -3,6 +3,10 @@ package com.example.curtineat.data.remote.firebase.source
 import com.example.curtineat.data.remote.firebase.FirebaseProvider
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.Timestamp
+import android.util.Log
+import com.google.firebase.firestore.ListenerRegistration
+import com.example.curtineat.data.remote.firebase.model.RecipientType
 
 class FirebaseNotificationSource {
 
@@ -10,6 +14,7 @@ class FirebaseNotificationSource {
 
 	private val notificationCollection =
 		firestore.collection("notifications")
+
 
 	suspend fun getAllNotifications(): List<FirebaseNotificationData> {
 
@@ -62,11 +67,11 @@ class FirebaseNotificationSource {
 			.set(
 				mapOf(
 					"recipientId" to notification.recipientId,
-					"recipientType" to notification.recipientType,
+					"recipientType" to notification.recipientType.name,
 					"message" to notification.message,
 					"orderId" to notification.orderId,
 					"timestamp" to notification.timestamp,
-					"isRead" to notification.isRead
+					"isRead" to notification.isRead,
 				)
 			)
 			.await()
@@ -81,14 +86,43 @@ class FirebaseNotificationSource {
 			.set(
 				mapOf(
 					"recipientId" to notification.recipientId,
-					"recipientType" to notification.recipientType,
+					"recipientType" to notification.recipientType.name,
 					"message" to notification.message,
 					"orderId" to notification.orderId,
 					"timestamp" to notification.timestamp,
-					"isRead" to notification.isRead
+					"isRead" to notification.isRead,
 				)
 			)
 			.await()
+	}
+
+	fun listenToNotificationsByRecipientId(
+		recipientId: String,
+		onUpdate: (List<FirebaseNotificationData>) -> Unit
+	): ListenerRegistration {
+
+		return notificationCollection
+			.whereEqualTo("recipientId", recipientId)
+			.addSnapshotListener { snapshot, error ->
+
+				if (error != null) {
+
+					Log.e(
+						"NOTIFICATION_LISTENER",
+						"Realtime notification error",
+						error
+					)
+
+					return@addSnapshotListener
+				}
+
+				val notifications =
+					snapshot?.documents?.map { document ->
+						document.toFirebaseNotification()
+					} ?: emptyList()
+
+				onUpdate(notifications)
+			}
 	}
 
 	suspend fun deleteNotification(
@@ -107,11 +141,13 @@ class FirebaseNotificationSource {
 		return FirebaseNotificationData(
 			notificationId = id,
 			recipientId = getString("recipientId") ?: "",
-			recipientType = getString("recipientType") ?: "",
+			recipientType = runCatching {
+				RecipientType.valueOf(getString("recipientType")?.uppercase() ?: "")
+			}.getOrDefault(RecipientType.UNKNOWN),
 			message = getString("message") ?: "",
 			orderId = getString("orderId") ?: "",
-			timestamp = getLong("timestamp") ?: 0L,
-			isRead = getBoolean("isRead") ?: false
+			timestamp = getTimestamp("timestamp") ?: Timestamp.now(),
+			isRead = getBoolean("isRead") ?: false,
 		)
 	}
 }

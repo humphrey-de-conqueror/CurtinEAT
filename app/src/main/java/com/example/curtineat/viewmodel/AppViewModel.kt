@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 import com.example.curtineat.model.CartItem
 import com.example.curtineat.model.Account
 import com.example.curtineat.data.repository.api.ImageRepository
-
+import com.google.firebase.firestore.ListenerRegistration
+import okhttp3.MultipartBody
 
 class AppViewModel(
     private val vendorRepository: FirebaseVendorRepository,
@@ -30,11 +31,24 @@ class AppViewModel(
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository,
     private val imageRepository: ImageRepository
+
 ) : ViewModel() {
+//    fun reload2() {
+//        loadVendors()
+//        loadProducts()
+//        loadNotifications()
+//    }
+
+    //Testing for notification
     fun reload() {
         loadVendors()
         loadProducts()
-        loadNotifications()
+
+        val customerId = _account.value.customerId
+
+        if (customerId != null) {
+            loadNotificationsForRecipient(customerId)
+        }
     }
 
     /* ====================
@@ -91,9 +105,9 @@ class AppViewModel(
      * ==================== */
 
     fun uploadImage(
-        image: okhttp3.MultipartBody.Part,
+        image: MultipartBody.Part,
         onResult: (String?) -> Unit = {}
-    ) {
+    ){
 
         viewModelScope.launch {
 
@@ -125,8 +139,35 @@ class AppViewModel(
     private val _notifications =
         MutableStateFlow<List<FirebaseNotificationData>>(emptyList())
 
+    private var notificationListener: ListenerRegistration? = null
+
     val notifications: StateFlow<List<FirebaseNotificationData>> =
         _notifications.asStateFlow()
+
+    fun startNotificationListener(
+        recipientId: String
+    ) {
+
+        // Remove previous listener first
+        notificationListener?.remove()
+
+        notificationListener =
+            notificationRepository
+                .listenToNotificationsByRecipientId(
+                    recipientId = recipientId
+                ) { notifications ->
+
+                    _notifications.value =
+                        notifications.sortedByDescending {
+                            it.timestamp
+                        }
+
+                    Log.d(
+                        "NOTIFICATION_LISTENER",
+                        "Realtime update: ${notifications.size} notifications"
+                    )
+                }
+    }
 
     /* ====================
      * Cart
@@ -814,8 +855,23 @@ class AppViewModel(
         viewModelScope.launch {
 
             try {
+
                 notificationRepository
                     .updateNotification(notification)
+
+                // Update UI immediately
+                _notifications.value =
+                    _notifications.value.map { existing ->
+
+                        if (
+                            existing.notificationId ==
+                            notification.notificationId
+                        ) {
+                            notification
+                        } else {
+                            existing
+                        }
+                    }
 
                 onResult(true)
 
@@ -1297,5 +1353,10 @@ class AppViewModel(
 
     fun clearCheckoutCompleted() {
         _checkoutCompleted.value = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        notificationListener?.remove()
     }
 }

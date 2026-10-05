@@ -85,6 +85,9 @@ dependencies {
     // to use .await() with Firebase
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
 
+    // OkHttp - needed for MultipartBody.Part
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     // Testing
     testImplementation(libs.junit)
 
