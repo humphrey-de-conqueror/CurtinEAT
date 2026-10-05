@@ -58,7 +58,7 @@ fun VendorLandingScreen(
     val vendorProducts = products.filter {
         it.vendorId == loggedInVendorId
     }
-    val isHomeLoading by appViewModel.isHomeLoading.collectAsState()
+
     LaunchedEffect(Unit) {
         appViewModel.loadHomeData()
     }
@@ -82,67 +82,53 @@ fun VendorLandingScreen(
             }
         }
     ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
-        if (isHomeLoading) {
+            item {
+                TextNormal(
+                    text = currentVendor?.vendorName ?: "Vendor",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp
+                )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+                mySpacer()
+
+                PrimaryButton(
+                    text = "Order Status",
+                    onClick = onOrderStatusClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                mySpacer()
+
+                TextNormal(
+                    text = "My Product(s)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp
+                )
             }
 
-        } else {
+            items(
+                items = vendorProducts,
+                key = { it.productId }
+            ) { product ->
 
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                item {
-                    TextNormal(
-                        text = currentVendor?.vendorName ?: "Vendor",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp
-                    )
-
-                    mySpacer()
-
-                    PrimaryButton(
-                        text = "Order Status",
-                        onClick = onOrderStatusClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    mySpacer()
-
-                    TextNormal(
-                        text = "My Product(s)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp
-                    )
-                }
-
-                items(
-                    items = vendorProducts,
-                    key = { it.productId }
-                ) { product ->
-
-                    VendorFoodItem(
-                        product = product,
-                        onClick = {
-                            onFoodClick(product.productId)
-                        }
-                    )
-                }
-
-
+                VendorFoodItem(
+                    product = product,
+                    onClick = {
+                        onFoodClick(product.productId)
+                    }
+                )
             }
+
+
         }
+
 
 //        LazyColumn(
 //            modifier = Modifier

@@ -93,17 +93,17 @@ class AppViewModel(
 
     //Home/Main screen
 
-    private val _isHomeLoading =
+    private val _isLoading =
         MutableStateFlow(true)
 
-    val isHomeLoading: StateFlow<Boolean> =
-        _isHomeLoading.asStateFlow()
+    val isLoading: StateFlow<Boolean> =
+        _isLoading.asStateFlow()
 
     fun loadHomeData() {
 
         viewModelScope.launch {
 
-            _isHomeLoading.value = true
+            _isLoading.value = true
 
             try {
 
@@ -123,7 +123,7 @@ class AppViewModel(
 
             } finally {
 
-                _isHomeLoading.value = false
+                _isLoading.value = false
             }
         }
     }
@@ -145,7 +145,7 @@ class AppViewModel(
     fun uploadImage(
         image: MultipartBody.Part,
         onResult: (String?) -> Unit = {}
-    ){
+    ) {
 
         viewModelScope.launch {
 
@@ -182,11 +182,18 @@ class AppViewModel(
     val notifications: StateFlow<List<FirebaseNotificationData>> =
         _notifications.asStateFlow()
 
+    private val _isNotificationLoading =
+        MutableStateFlow(false)
+
+    val isNotificationLoading: StateFlow<Boolean> =
+        _isNotificationLoading.asStateFlow()
+
     fun startNotificationListener(
         recipientId: String
     ) {
 
-        // Remove previous listener first
+        _isNotificationLoading.value = true
+
         notificationListener?.remove()
 
         notificationListener =
@@ -200,10 +207,7 @@ class AppViewModel(
                             it.timestamp
                         }
 
-                    Log.d(
-                        "NOTIFICATION_LISTENER",
-                        "Realtime update: ${notifications.size} notifications"
-                    )
+                    _isNotificationLoading.value = false
                 }
     }
 
@@ -1242,6 +1246,7 @@ class AppViewModel(
     ) {
 
         viewModelScope.launch {
+            _isLoading.value = true
 
             try {
 
@@ -1356,6 +1361,8 @@ class AppViewModel(
                     false,
                     e.message ?: "Checkout failed."
                 )
+            } finally {
+                _isLoading.value = false
             }
         }
     }

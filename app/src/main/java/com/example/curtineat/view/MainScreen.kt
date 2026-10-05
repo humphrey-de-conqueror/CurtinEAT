@@ -77,19 +77,19 @@ import com.example.curtineat.ui.theme.mySpacer
 
 @Composable
 fun AppScaffold(
-    // expect onHistoryClick and onSettingClick
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-//    onVendorToggle: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
+
+    val isLoading by appViewModel.isLoading.collectAsState()
+
     MainDrawer(
-        // expect to give onHistoryClick and onSettingClick
         onHomeClick = onHomeClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
@@ -106,7 +106,29 @@ fun AppScaffold(
             },
             floatingActionButton = floatingActionButton
         ) { innerPadding ->
-            content(innerPadding)
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+                content(innerPadding)
+
+                if (isLoading) {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .background(
+                                MaterialTheme.colorScheme.background
+                                    .copy(alpha = 0.85f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
         }
     }
 }
@@ -124,7 +146,6 @@ fun MainScreen(
     val cart by appViewModel.cart.collectAsState()
     //Testing for notification
     val account by appViewModel.account.collectAsState()
-    val isHomeLoading by appViewModel.isHomeLoading.collectAsState()
 
     LaunchedEffect(account.customerId) {
 
@@ -155,25 +176,11 @@ fun MainScreen(
         }
     ) { innerPadding ->
 
-        if (isHomeLoading) {
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-
-        } else {
-
-            BodyScreen(
-                innerPadding = innerPadding,
-                appViewModel = appViewModel,
-                onFirestoreTestClick = onFirestoreTestClick
-            )
-        }
+        BodyScreen(
+            innerPadding = innerPadding,
+            appViewModel = appViewModel,
+            onFirestoreTestClick = onFirestoreTestClick
+        )
 
     }
 }
@@ -268,9 +275,20 @@ fun TopBarScreen(
 
     val notifications by appViewModel.notifications.collectAsState()
 
-    val notificationSheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false //allows partial to expanded behavior
-    )
+    var notificationDrawerLoading by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(notificationDrawerLoading) {
+
+        if (notificationDrawerLoading) {
+
+            kotlinx.coroutines.delay(500)
+
+            notificationDrawerLoading = false
+        }
+    }
+
 
     TopAppBar(
         title = {
@@ -340,16 +358,34 @@ fun TopBarScreen(
             }
 
             // NOTIFICATION
+//            if (showNotifications) {
+//                IconButton(
+//                    onClick = {
+//                        notificationsOpen = true
+//                    }
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Notifications,
+//                        contentDescription = "Notifications"
+//                    )
+//                }
+//            }
+
             if (showNotifications) {
-                IconButton(
-                    onClick = {
-                        notificationsOpen = true
+
+                Box {
+
+                    IconButton(
+                        onClick = {
+                            notificationDrawerLoading = true
+                            notificationsOpen = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications"
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications"
-                    )
                 }
             }
 
@@ -397,51 +433,109 @@ fun TopBarScreen(
                     .fillMaxHeight(0.85f)
             ) {
 
-                groupedNotifications.forEach { (dateLabel, notificationList) ->
+                if (notificationDrawerLoading) {
 
-                    // DATE
+                    item {
+
+                        LoadingDots()
+                    }
+
+                } else if (notifications.isEmpty()) {
+
                     item {
 
                         TextNormal(
-                            text = dateLabel,
+                            text = "No notifications",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(
-                                    top = 16.dp,
-                                    bottom = 8.dp
-                                ),
+                                .padding(32.dp),
                             textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
                     }
 
-                    // NOTIFICATIONS UNDER THAT DATE
-                    items(
-                        items = notificationList,
-                        key = {
-                            it.notificationId
+                } else {
+
+                    groupedNotifications.forEach { (dateLabel, notificationList) ->
+
+                        // DATE
+                        item {
+
+                            TextNormal(
+                                text = dateLabel,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        top = 16.dp,
+                                        bottom = 8.dp
+                                    ),
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
                         }
-                    ) { notification ->
 
-                        NotificationItem(
-                            message = notification.message,
-                            time = formatNotificationTime(
-                                notification.timestamp.toDate()
-                            ),
-                            isRead = notification.isRead
-                        )
+                        // NOTIFICATIONS UNDER THAT DATE
+                        items(
+                            items = notificationList,
+                            key = {
+                                it.notificationId
+                            }
+                        ) { notification ->
 
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
+                            NotificationItem(
+                                message = notification.message,
+                                time = formatNotificationTime(
+                                    notification.timestamp.toDate()
+                                ),
+                                isRead = notification.isRead
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(8.dp)
+                            )
+                        }
                     }
                 }
+
+
             }
         }
     }
 }
 
+@Composable
+fun LoadingDots() {
+
+    var dots by remember {
+        mutableStateOf(".")
+    }
+
+    LaunchedEffect(Unit) {
+
+        while (true) {
+
+            kotlinx.coroutines.delay(350)
+
+            dots =
+                when (dots) {
+                    "." -> ".."
+                    ".." -> "..."
+                    else -> "."
+                }
+        }
+    }
+
+    TextNormal(
+        text = dots,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold,
+        fontSize = 26.sp
+    )
+}
 
 //Notification helper
 fun getNotificationDateLabel(
