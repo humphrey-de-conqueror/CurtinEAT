@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
-
+import androidx.compose.ui.text.style.TextAlign
 
 
 // To use/Overwrite
@@ -76,8 +76,8 @@ fun TextNormal(
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     fontWeight: FontWeight? = null,
     maxLines: Int = Int.MAX_VALUE,
-    fontSize: TextUnit = 20.sp
-
+    fontSize: TextUnit = 20.sp,
+    textAlign: TextAlign? = null
 ) {
     Text(
         text = text,
@@ -87,6 +87,7 @@ fun TextNormal(
         fontWeight = fontWeight,
         maxLines = maxLines,
         fontSize = fontSize,
+        textAlign = textAlign
     )
 }
 

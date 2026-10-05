@@ -2,6 +2,7 @@ package com.example.curtineat.data.repository.firebase
 
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 import com.example.curtineat.data.remote.firebase.source.FirebaseNotificationSource
+import com.google.firebase.firestore.ListenerRegistration
 
 class FirebaseNotificationRepository(
 	private val source: FirebaseNotificationSource
@@ -38,6 +39,17 @@ class FirebaseNotificationRepository(
 	) {
 
 		source.updateNotification(notification)
+	}
+
+	fun listenToNotificationsByRecipientId(
+		recipientId: String,
+		onUpdate: (List<FirebaseNotificationData>) -> Unit
+	): ListenerRegistration {
+
+		return source.listenToNotificationsByRecipientId(
+			recipientId = recipientId,
+			onUpdate = onUpdate
+		)
 	}
 
 	suspend fun deleteNotification(

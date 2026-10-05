@@ -53,7 +53,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -62,6 +64,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import com.example.curtineat.R
 import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.PrimaryCard
@@ -121,8 +124,12 @@ fun MainScreen(
     val account by appViewModel.account.collectAsState()
 
     LaunchedEffect(account.customerId) {
+
         account.customerId?.let { customerId ->
-            appViewModel.loadNotificationsForRecipient(customerId)
+
+            appViewModel.startNotificationListener(
+                customerId
+            )
         }
     }
 
@@ -158,31 +165,74 @@ fun MainScreen(
 fun NotificationItem(
     message: String,
     time: String,
+    isRead: Boolean,
+    isClickable: Boolean = false,
     onClick: () -> Unit = {}
 ) {
+
     SecondaryCard(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
+        onClick = {
+            if (isClickable) {
+                onClick()
+            }
+        },
+        containerColor =
+            if (!isRead)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surface,
         contentPadding = PaddingValues(
             horizontal = 12.dp,
             vertical = 16.dp
         )
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
+
+            if (!isRead) {
+
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            CircleShape
+                        )
+                )
+
+                Spacer(
+                    modifier = Modifier.width(10.dp)
+                )
+            }
+
             TextNormal(
                 text = message,
                 modifier = Modifier.weight(1f),
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                fontWeight =
+                    if (!isRead)
+                        FontWeight.Bold
+                    else
+                        FontWeight.Normal
             )
 
             TextNormal(
                 text = time,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 12.dp)
+                fontSize = 12.sp
             )
+
+            if (isClickable) {
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Open order",
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
         }
     }
 }
@@ -290,30 +340,150 @@ fun TopBarScreen(
         }
     )
     if (notificationsOpen) {
+
+        val sortedNotifications =
+            notifications.sortedByDescending {
+                it.timestamp.toDate()
+            }
+
+        val groupedNotifications =
+            sortedNotifications.groupBy {
+                getNotificationDateLabel(
+                    it.timestamp.toDate()
+                )
+            }
+
         ModalBottomSheet(
             onDismissRequest = {
+
                 notificationsOpen = false
-            },
-            sheetState = notificationSheetState
-        ) {
+
+                notifications
+                    .filter { notification ->
+                        !notification.isRead
+                    }
+                    .forEach { notification ->
+
+                        appViewModel.updateNotification(
+                            notification.copy(
+                                isRead = true
+                            )
+                        )
+                    }
+            }
+            ){
+
             LazyColumn(
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
-                    .fillMaxHeight(0.85f) //swipe up to 85% screen
-
+                    .fillMaxHeight(0.85f)
             ) {
-                items(
-                    items = notifications,
-                    key = { eachNotification -> eachNotification.notificationId}
-                ) { eachNotification ->
-                    Text(text = eachNotification.message)
+
+                groupedNotifications.forEach { (dateLabel, notificationList) ->
+
+                    // DATE
+                    item {
+
+                        TextNormal(
+                            text = dateLabel,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    top = 16.dp,
+                                    bottom = 8.dp
+                                ),
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+
+                    // NOTIFICATIONS UNDER THAT DATE
+                    items(
+                        items = notificationList,
+                        key = {
+                            it.notificationId
+                        }
+                    ) { notification ->
+
+                        NotificationItem(
+                            message = notification.message,
+                            time = formatNotificationTime(
+                                notification.timestamp.toDate()
+                            ),
+                            isRead = notification.isRead
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(8.dp)
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+
+//Notification helper
+fun getNotificationDateLabel(
+    date: java.util.Date
+): String {
+
+    val today = java.util.Calendar.getInstance()
+
+    val notificationDate =
+        java.util.Calendar.getInstance().apply {
+            time = date
+        }
+
+    // TODAY
+    if (
+        today.get(java.util.Calendar.YEAR) ==
+        notificationDate.get(java.util.Calendar.YEAR) &&
+
+        today.get(java.util.Calendar.DAY_OF_YEAR) ==
+        notificationDate.get(java.util.Calendar.DAY_OF_YEAR)
+    ) {
+        return "Today"
+    }
+
+    // YESTERDAY
+    val yesterday =
+        java.util.Calendar.getInstance().apply {
+            add(
+                java.util.Calendar.DAY_OF_YEAR,
+                -1
+            )
+        }
+
+    if (
+        yesterday.get(java.util.Calendar.YEAR) ==
+        notificationDate.get(java.util.Calendar.YEAR) &&
+
+        yesterday.get(java.util.Calendar.DAY_OF_YEAR) ==
+        notificationDate.get(java.util.Calendar.DAY_OF_YEAR)
+    ) {
+        return "Yesterday"
+    }
+
+    // OTHER DATES
+    return java.text.SimpleDateFormat(
+        "d MMMM yyyy",
+        java.util.Locale.getDefault()
+    ).format(date)
+}
+
+fun formatNotificationTime(
+    date: java.util.Date
+): String {
+
+    return java.text.SimpleDateFormat(
+        "h:mm a",
+        java.util.Locale.getDefault()
+    ).format(date)
+}
 
 @Composable
 fun CartButton(

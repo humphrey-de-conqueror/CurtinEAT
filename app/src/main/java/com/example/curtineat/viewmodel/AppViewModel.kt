@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.curtineat.model.CartItem
 import com.example.curtineat.model.Account
+import com.google.firebase.firestore.ListenerRegistration
 
 
 class AppViewModel(
@@ -28,6 +29,7 @@ class AppViewModel(
     private val productRepository: FirebaseProductRepository,
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository
+
 ) : ViewModel() {
     fun reload2() {
         loadVendors()
@@ -103,8 +105,35 @@ class AppViewModel(
     private val _notifications =
         MutableStateFlow<List<FirebaseNotificationData>>(emptyList())
 
+    private var notificationListener: ListenerRegistration? = null
+
     val notifications: StateFlow<List<FirebaseNotificationData>> =
         _notifications.asStateFlow()
+
+    fun startNotificationListener(
+        recipientId: String
+    ) {
+
+        // Remove previous listener first
+        notificationListener?.remove()
+
+        notificationListener =
+            notificationRepository
+                .listenToNotificationsByRecipientId(
+                    recipientId = recipientId
+                ) { notifications ->
+
+                    _notifications.value =
+                        notifications.sortedByDescending {
+                            it.timestamp
+                        }
+
+                    Log.d(
+                        "NOTIFICATION_LISTENER",
+                        "Realtime update: ${notifications.size} notifications"
+                    )
+                }
+    }
 
     /* ====================
      * Cart
@@ -792,8 +821,23 @@ class AppViewModel(
         viewModelScope.launch {
 
             try {
+
                 notificationRepository
                     .updateNotification(notification)
+
+                // Update UI immediately
+                _notifications.value =
+                    _notifications.value.map { existing ->
+
+                        if (
+                            existing.notificationId ==
+                            notification.notificationId
+                        ) {
+                            notification
+                        } else {
+                            existing
+                        }
+                    }
 
                 onResult(true)
 
@@ -1275,5 +1319,10 @@ class AppViewModel(
 
     fun clearCheckoutCompleted() {
         _checkoutCompleted.value = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        notificationListener?.remove()
     }
 }
