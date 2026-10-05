@@ -23,6 +23,11 @@ import com.example.curtineat.model.Account
 import com.example.curtineat.data.repository.api.ImageRepository
 import com.google.firebase.firestore.ListenerRegistration
 import okhttp3.MultipartBody
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
+
 
 class AppViewModel(
     private val vendorRepository: FirebaseVendorRepository,
@@ -960,7 +965,7 @@ class AppViewModel(
      * Authentication
      * ==================== */
 
-    fun login(
+    fun login2(
         email: String,
         password: String,
         isVendor: Boolean,
@@ -973,6 +978,308 @@ class AppViewModel(
 
         onResult(false)
     }
+
+    fun signInWithGoogle(
+        idToken: String,
+        isVendor: Boolean,
+        onResult: (
+            success: Boolean,
+            isVendor: Boolean,
+            message: String
+        ) -> Unit
+    ) {
+
+        viewModelScope.launch {
+
+            _isLoading.value = true
+
+            try {
+
+                val credential =
+                    GoogleAuthProvider.getCredential(
+                        idToken,
+                        null
+                    )
+
+                val authResult =
+                    firebaseAuth
+                        .signInWithCredential(credential)
+                        .await()
+
+                val firebaseUser = authResult.user
+
+                if (firebaseUser == null) {
+
+                    clearAccount()
+
+                    onResult(
+                        false,
+                        isVendor,
+                        "Google sign in failed."
+                    )
+
+                    return@launch
+                }
+
+                val uid = firebaseUser.uid
+
+                if (isVendor) {
+
+                    val vendor =
+                        vendorRepository.getVendorById(uid)
+
+                    if (vendor == null) {
+
+                        firebaseAuth.signOut()
+                        clearAccount()
+
+                        onResult(
+                            false,
+                            true,
+                            "No vendor account found. Please register as a vendor first."
+                        )
+
+                        return@launch
+                    }
+
+                    setVendorAccount(uid)
+
+                    onResult(
+                        true,
+                        true,
+                        "Vendor login successful."
+                    )
+
+                } else {
+
+                    val customer =
+                        customerRepository.getCustomerById(uid)
+
+                    if (customer == null) {
+
+                        firebaseAuth.signOut()
+                        clearAccount()
+
+                        onResult(
+                            false,
+                            false,
+                            "No customer account found. Please register as a customer first."
+                        )
+
+                        return@launch
+                    }
+
+                    setCustomerAccount(uid)
+
+                    onResult(
+                        true,
+                        false,
+                        "Customer login successful."
+                    )
+                }
+
+                val isVendor =
+                    setAccountFromFirebaseUser(
+                        firebaseUser
+                    )
+
+                onResult(
+                    true,
+                    isVendor,
+                    "Login successful."
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "GOOGLE_LOGIN",
+                    "Google login failed",
+                    e
+                )
+
+                clearAccount()
+
+                onResult(
+                    false,
+                    false,
+                    e.message ?: "Google sign in failed."
+                )
+
+            } finally {
+
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private suspend fun setAccountFromFirebaseUser(
+        firebaseUser: FirebaseUser
+    ): Boolean {
+
+        val uid = firebaseUser.uid
+
+        val email =
+            firebaseUser.email ?: ""
+
+        /*
+         * FIRST:
+         * Check whether this Firebase UID is already
+         * directly being used as a vendor/customer ID.
+         */
+
+        val vendorById =
+            vendorRepository.getVendorById(uid)
+
+        if (vendorById != null) {
+
+            _account.value =
+                Account(
+                    customerId = null,
+                    vendorId = vendorById.vendorId
+                )
+
+            return true
+        }
+
+        val customerById =
+            customerRepository.getCustomerById(uid)
+
+        if (customerById != null) {
+
+            _account.value =
+                Account(
+                    customerId = customerById.customerId,
+                    vendorId = null
+                )
+
+            return false
+        }
+
+
+        /*
+         * SECOND:
+         * Support your existing Firestore data where
+         * document ID may not equal Firebase UID.
+         *
+         * Match the Google email with vendor/customer email.
+         */
+
+        val vendor =
+            vendorRepository
+                .getAllVendors()
+                .firstOrNull {
+                    it.vendorEmail.equals(
+                        email,
+                        ignoreCase = true
+                    )
+                }
+
+        if (vendor != null) {
+
+            _account.value =
+                Account(
+                    customerId = null,
+                    vendorId = vendor.vendorId
+                )
+
+            return true
+        }
+
+
+        val customer =
+            customerRepository
+                .getAllCustomers()
+                .firstOrNull {
+                    it.customerEmail.equals(
+                        email,
+                        ignoreCase = true
+                    )
+                }
+
+        if (customer != null) {
+
+            _account.value =
+                Account(
+                    customerId = customer.customerId,
+                    vendorId = null
+                )
+
+            return false
+        }
+
+
+        /*
+         * THIRD:
+         * Google account does not exist in CurtinEAT yet.
+         *
+         * Create it as a CUSTOMER.
+         */
+
+        val newCustomer =
+            FirebaseCustomerData(
+                customerId = uid,
+                customerName =
+                    firebaseUser.displayName ?: "Customer",
+                customerEmail = email,
+                moneyBalance = 0.0
+            )
+
+        customerRepository.addCustomer(
+            newCustomer
+        )
+
+        _account.value =
+            Account(
+                customerId = uid,
+                vendorId = null
+            )
+
+        return false
+    }
+
+    fun restoreLoggedInAccount(
+        onResult: (Boolean?) -> Unit = {}
+    ) {
+
+        val firebaseUser =
+            firebaseAuth.currentUser
+
+        if (firebaseUser == null) {
+
+            clearAccount()
+
+            onResult(null)
+
+            return
+        }
+
+
+        viewModelScope.launch {
+
+            try {
+
+                val isVendor =
+                    setAccountFromFirebaseUser(
+                        firebaseUser
+                    )
+
+                onResult(isVendor)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AUTH_RESTORE",
+                    "Failed to restore logged in account",
+                    e
+                )
+
+                clearAccount()
+
+                onResult(null)
+            }
+        }
+    }
+
 
     fun register(
         email: String,
@@ -989,11 +1296,22 @@ class AppViewModel(
     }
 
     fun logout() {
-        println("TODO: Firebase Authentication logout")
+
+        firebaseAuth.signOut()
+
+        notificationListener?.remove()
+        notificationListener = null
+
+        _notifications.value =
+            emptyList()
 
         clearAccount()
+
         clearCart()
     }
+
+    private val firebaseAuth =
+        FirebaseAuth.getInstance()
 
     /* ====================
      * Account

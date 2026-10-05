@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -31,10 +32,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        //Testing for notification
-        // TEMPORARY TEST LOGIN
-        vm.setCustomerAccount("customer_test_1")
 
         enableEdgeToEdge()
 
@@ -75,6 +72,21 @@ fun ScreenNavigation(
 ) {
 
     val nav = rememberNavController()
+
+    LaunchedEffect(Unit) {
+
+        appViewModel.restoreLoggedInAccount { isVendor ->
+
+            if (isVendor == true) {
+
+                nav.navigate(
+                    RouteVendorLandingScreen
+                ) {
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     val onCartButtonClick: () -> Unit = {
         nav.navigate(RouteCartScreen)
@@ -131,7 +143,7 @@ fun ScreenNavigation(
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination =  RouteMainScreen
     ) {
 
         composable<RouteMainScreen> {
