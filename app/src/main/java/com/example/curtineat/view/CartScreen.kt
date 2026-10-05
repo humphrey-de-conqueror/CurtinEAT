@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,8 +75,6 @@ fun CartScreen(
     val currentCustomer = customers.find {
         it.customerId == loggedInCustomerId
     }
-
-    val moneyBalance = currentCustomer?.moneyBalance ?: 0.0
 
     val vendorId = cart
         .firstOrNull()
@@ -149,8 +149,6 @@ fun CartScreen(
                     CartHeader(
                         vendorName = cartVendor?.vendorName ?: "",
                         distance = cartVendor?.distance ?: 0.0,
-                        //testing
-                        moneyBalance = cartVendor?.moneyBalance ?: 0.0,
                         onBackButtonClick = onBackButtonClick
                     )
 
@@ -186,41 +184,24 @@ fun CartScreen(
 
                     // Payment summary
                     CartPaymentSummary(
-                        moneyBalance = moneyBalance,
-                        totalPrice = appViewModel.cartTotalPrice(),
-                        onWalletClick = {
-                            if (loggedInCustomerId == null) {
-                                onLoginClick()
-                            } else {
-                                onWalletClick()
-                            }
-                        }
+                        totalPrice = appViewModel.cartTotalPrice()
                     )
 
                     mySpacer()
 
                     PrimaryButton(
-                        text = "Checkout",
+                        text = "Place Order",
                         onClick = {
 
-                            when {
+                            if (loggedInCustomerId == null) {
 
-                                // Not logged in
-                                loggedInCustomerId == null -> {
-                                    onLoginClick()
-                                }
+                                onLoginClick()
 
-                                // Not enough money
-                                moneyBalance < appViewModel.cartTotalPrice() -> {
-                                    onWalletClick()
-                                }
+                            } else {
 
-                                // Enough money
-                                else -> {
-                                    appViewModel.checkout(
-                                        customerId = loggedInCustomerId,
-                                    )
-                                }
+                                appViewModel.checkout(
+                                    customerId = loggedInCustomerId
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -322,10 +303,11 @@ fun EmptyCart(
 fun CartHeader(
     vendorName: String,
     distance: Double,
-    moneyBalance: Double, //Testing
     onBackButtonClick: () -> Unit
 ) {
     Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -333,7 +315,9 @@ fun CartHeader(
             onClick = onBackButtonClick
         )
 
-        Column {
+        Column(
+            modifier = Modifier.padding(start = 0.dp)
+        ) {
             TextNormal(
                 text = vendorName,
                 fontWeight = FontWeight.Bold,
@@ -342,12 +326,6 @@ fun CartHeader(
 
             TextNormal(
                 text = "$distance km away",
-                fontSize = 14.sp
-            )
-
-            //testing
-            TextNormal(
-                text = "Vendor Balance: RM %.2f".format(moneyBalance),
                 fontSize = 14.sp
             )
         }
@@ -443,16 +421,31 @@ fun CartItemRow(
 // ---------------- PAYMENT SUMMARY ----------------
 @Composable
 fun CartPaymentSummary(
-    moneyBalance: Double,
-    totalPrice: Double,
-    onWalletClick: () -> Unit
+    totalPrice: Double
 ) {
 
-    SecondaryCard(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(12.dp),
-        onClick = onWalletClick
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
+
+        TextNormal(
+            text = "Payment",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
+        )
+
+        Spacer(
+            modifier = Modifier.height(6.dp)
+        )
+
+        TextNormal(
+            text = "Pay physically at the store when collecting your order.",
+            fontSize = 14.sp
+        )
+
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -460,53 +453,17 @@ fun CartPaymentSummary(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            TextNormal(
+                text = "Total",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
 
-                Icon(
-                    imageVector = Icons.Default.AccountBalanceWallet,
-                    contentDescription = "Wallet",
-                    modifier = Modifier.size(22.dp)
-                )
-
-                mySpacerWidth()
-
-                Column {
-                    TextNormal(
-                        text = "Wallet Balance",
-                        fontSize = 14.sp
-                    )
-
-                    TextNormal(
-                        text = "RM %.2f".format(moneyBalance),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
-            }
-
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Open wallet"
+            TextNormal(
+                text = "RM %.2f".format(totalPrice),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
             )
         }
-    }
-
-    mySpacer()
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        TextNormal(
-            text = "Total",
-            fontWeight = FontWeight.Bold
-        )
-
-        TextNormal(
-            text = "RM %.2f".format(totalPrice),
-            fontWeight = FontWeight.Bold
-        )
     }
 }

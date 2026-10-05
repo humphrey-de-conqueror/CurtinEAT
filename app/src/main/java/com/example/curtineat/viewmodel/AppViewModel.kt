@@ -1296,19 +1296,6 @@ class AppViewModel(
                     return@launch
                 }
 
-                if (
-                    customer.moneyBalance <
-                    totalPrice
-                ) {
-
-                    onResult(
-                        false,
-                        "Insufficient balance."
-                    )
-
-                    return@launch
-                }
-
                 val orderProducts =
                     _cart.value.map { item ->
 
@@ -1346,22 +1333,6 @@ class AppViewModel(
                     )
 
                 orderRepository.addOrder(order)
-
-                customerRepository.updateCustomer(
-                    customer.copy(
-                        moneyBalance =
-                            customer.moneyBalance -
-                                    totalPrice
-                    )
-                )
-
-                vendorRepository.updateVendor(
-                    vendor.copy(
-                        moneyBalance =
-                            vendor.moneyBalance +
-                                    totalPrice
-                    )
-                )
 
                 _cart.value = emptyList()
 
