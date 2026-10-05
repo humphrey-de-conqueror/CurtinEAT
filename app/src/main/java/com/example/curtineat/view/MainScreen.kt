@@ -43,6 +43,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -122,6 +124,7 @@ fun MainScreen(
     val cart by appViewModel.cart.collectAsState()
     //Testing for notification
     val account by appViewModel.account.collectAsState()
+    val isHomeLoading by appViewModel.isHomeLoading.collectAsState()
 
     LaunchedEffect(account.customerId) {
 
@@ -131,6 +134,9 @@ fun MainScreen(
                 customerId
             )
         }
+    }
+    LaunchedEffect(Unit) {
+        appViewModel.loadHomeData()
     }
 
     AppScaffold(
@@ -149,14 +155,25 @@ fun MainScreen(
         }
     ) { innerPadding ->
 
-        BodyScreen(
-            innerPadding = innerPadding,
-            appViewModel = appViewModel,
-            onFirestoreTestClick = onFirestoreTestClick //Testing Firebase
-            // removed
-//            vendors = appViewModel.vendor,
-//            products = appViewModel.product
-        )
+        if (isHomeLoading) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+
+        } else {
+
+            BodyScreen(
+                innerPadding = innerPadding,
+                appViewModel = appViewModel,
+                onFirestoreTestClick = onFirestoreTestClick
+            )
+        }
 
     }
 }
@@ -584,9 +601,7 @@ fun BodyScreen(
             // if need reload, run reload() manually
             PrimaryButton(
                 text = "Reload",
-                onClick = {
-                    appViewModel.reload()
-                },
+                onClick = { appViewModel.loadHomeData() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)

@@ -41,8 +41,9 @@ class AppViewModel(
 
     //Testing for notification
     fun reload() {
-        loadVendors()
-        loadProducts()
+//        loadVendors()
+//        loadProducts()
+        loadHomeData()
 
         val customerId = _account.value.customerId
 
@@ -89,6 +90,43 @@ class AppViewModel(
 
     val products: StateFlow<List<FirebaseProductData>> =
         _products.asStateFlow()
+
+    //Home/Main screen
+
+    private val _isHomeLoading =
+        MutableStateFlow(true)
+
+    val isHomeLoading: StateFlow<Boolean> =
+        _isHomeLoading.asStateFlow()
+
+    fun loadHomeData() {
+
+        viewModelScope.launch {
+
+            _isHomeLoading.value = true
+
+            try {
+
+                _vendors.value =
+                    vendorRepository.getAllVendors()
+
+                _products.value =
+                    productRepository.getAllProducts()
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to load home data",
+                    e
+                )
+
+            } finally {
+
+                _isHomeLoading.value = false
+            }
+        }
+    }
 
     /* ====================
      * Orders

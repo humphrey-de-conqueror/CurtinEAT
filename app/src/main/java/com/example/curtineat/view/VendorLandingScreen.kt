@@ -1,9 +1,12 @@
 package com.example.curtineat.view
 
+import android.R.attr.vendor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,11 +14,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -43,7 +49,7 @@ fun VendorLandingScreen(
     val vendors by appViewModel.vendors.collectAsState()
     val products by appViewModel.products.collectAsState()
 
-    val loggedInVendorId: String? = account.vendorId
+    val loggedInVendorId: String? = "seed-vendor-001" //account.vendorId
 
     val currentVendor = vendors.find {
         it.vendorId == loggedInVendorId
@@ -51,6 +57,10 @@ fun VendorLandingScreen(
 
     val vendorProducts = products.filter {
         it.vendorId == loggedInVendorId
+    }
+    val isHomeLoading by appViewModel.isHomeLoading.collectAsState()
+    LaunchedEffect(Unit) {
+        appViewModel.loadHomeData()
     }
 
     AppScaffold(
@@ -73,50 +83,111 @@ fun VendorLandingScreen(
         }
     ) { innerPadding ->
 
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        if (isHomeLoading) {
 
-            item {
-                TextNormal(
-                    text = currentVendor?.vendorName ?: "Vendor",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
-                )
-
-                mySpacer()
-
-                PrimaryButton(
-                    text = "Order Status",
-                    onClick = onOrderStatusClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                mySpacer()
-
-                TextNormal(
-                    text = "My Product(s)",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
 
-            items(
-                items = vendorProducts,
-                key = { it.productId }
-            ) { product ->
+        } else {
 
-                VendorFoodItem(
-                    product = product,
-                    onClick = {
-                        onFoodClick(product.productId)
-                    }
-                )
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                item {
+                    TextNormal(
+                        text = currentVendor?.vendorName ?: "Vendor",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 30.sp
+                    )
+
+                    mySpacer()
+
+                    PrimaryButton(
+                        text = "Order Status",
+                        onClick = onOrderStatusClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    mySpacer()
+
+                    TextNormal(
+                        text = "My Product(s)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 30.sp
+                    )
+                }
+
+                items(
+                    items = vendorProducts,
+                    key = { it.productId }
+                ) { product ->
+
+                    VendorFoodItem(
+                        product = product,
+                        onClick = {
+                            onFoodClick(product.productId)
+                        }
+                    )
+                }
+
+
             }
         }
+
+//        LazyColumn(
+//            modifier = Modifier
+//                .padding(innerPadding)
+//                .padding(16.dp),
+//            verticalArrangement = Arrangement.spacedBy(12.dp)
+//        ) {
+//
+//            item {
+//                TextNormal(
+//                    text = currentVendor?.vendorName ?: "Vendor",
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 30.sp
+//                )
+//
+//                mySpacer()
+//
+//                PrimaryButton(
+//                    text = "Order Status",
+//                    onClick = onOrderStatusClick,
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+//
+//                mySpacer()
+//
+//                TextNormal(
+//                    text = "My Product(s)",
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 30.sp
+//                )
+//            }
+//
+//            items(
+//                items = vendorProducts,
+//                key = { it.productId }
+//            ) { product ->
+//
+//                VendorFoodItem(
+//                    product = product,
+//                    onClick = {
+//                        onFoodClick(product.productId)
+//                    }
+//                )
+//            }
+//        }
     }
 }
 

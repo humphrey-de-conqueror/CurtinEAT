@@ -131,7 +131,7 @@ fun ScreenNavigation(
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination = RouteVendorLandingScreen
     ) {
 
         composable<RouteMainScreen> {
