@@ -552,6 +552,22 @@ class AppViewModel(
         }
     }
 
+//    fun addProduct(
+//        product: FirebaseProductData,
+//        onResult: (Boolean) -> Unit = {}
+//    ) {
+//        viewModelScope.launch {
+//            try {
+//                productRepository.addProduct(product)
+//                _products.value = _products.value + product   // show it right away
+//                onResult(true)
+//            } catch (e: Exception) {
+//                Log.e("AppViewModel", "Failed to add product", e)
+//                onResult(false)
+//            }
+//        }
+//    }
+
     fun addProduct(
         product: FirebaseProductData,
         onResult: (Boolean) -> Unit = {}

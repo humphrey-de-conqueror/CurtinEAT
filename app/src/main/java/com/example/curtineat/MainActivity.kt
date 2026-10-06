@@ -131,7 +131,7 @@ fun ScreenNavigation(
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination = RouteVendorLandingScreen
     ) {
 
         composable<RouteMainScreen> {
@@ -194,8 +194,8 @@ fun ScreenNavigation(
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onOrderStatusClick = {},
-                onFoodClick = { productId -> },
-                onAddFoodClick = {}
+                onFoodClick = { productId -> }
+//                onAddFoodClick = {}
             )
         }
 
