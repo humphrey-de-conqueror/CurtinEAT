@@ -6,5 +6,6 @@ data class FirebaseProductData(
 	val vendorId: String            = "",
 	val productName: String         = "",
 	val productPrice: Double        = 0.0,
-	val productImage: String        = ""
+	val productImage: String        = "",
+//	val isAvailable: Boolean = true
 )

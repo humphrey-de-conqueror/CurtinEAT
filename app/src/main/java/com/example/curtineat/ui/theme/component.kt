@@ -153,10 +153,12 @@ fun SecondaryCard(
     shape: Shape = RoundedCornerShape(14.dp),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onClick: () -> Unit = {},
+    enabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier,
         shape = shape,
         colors = CardDefaults.cardColors(

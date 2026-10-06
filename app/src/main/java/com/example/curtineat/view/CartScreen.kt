@@ -91,6 +91,8 @@ fun CartScreen(
 
             delay(1000)
 
+            appViewModel.clearCheckoutCompleted()
+
             onBackButtonClick()
         }
     }

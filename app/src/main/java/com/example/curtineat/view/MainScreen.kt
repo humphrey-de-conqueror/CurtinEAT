@@ -62,6 +62,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -733,6 +734,21 @@ fun RestaurantCard(
             fontSize = 24.sp
         )
 
+//        TextNormal(
+//            text = if (vendor.isOpen) {
+//                "Open"
+//            } else {
+//                "Closed"
+//            },
+//            color = if (vendor.isOpen) {
+//                MaterialTheme.colorScheme.primary
+//            } else {
+//                MaterialTheme.colorScheme.error
+//            },
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 14.sp
+//        )
+
         mySpacer()
 
         Row(
@@ -769,14 +785,27 @@ fun RestaurantCard(
             modifier = Modifier.height(12.dp)
         )
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(products) { product ->
-                FoodItem(
-                    appViewModel = appViewModel,
-                    product = product
-                )
+        if (products.isEmpty()) {
+
+            TextNormal(
+                text = "No products available",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp
+            )
+
+        } else {
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(products) { product ->
+
+                    FoodItem(
+                        appViewModel = appViewModel,
+                        product = product,
+//                        enabled = vendor.isOpen
+                    )
+                }
             }
         }
     }
@@ -798,39 +827,81 @@ fun getDrawableId(imageName: String): Int {
 @Composable
 fun FoodItem(
     appViewModel: AppViewModel,
-    product: FirebaseProductData
+    product: FirebaseProductData,
+    enabled: Boolean = true
 ) {
     val imageRes = getDrawableId(product.productImage)
+
+//    val canOrder = enabled && product.isAvailable
 
     SecondaryCard(
         onClick = {
             appViewModel.addToCart(product)
         },
-
+//        enabled = canOrder,
         modifier = Modifier.width(150.dp)
     ) {
-        Image(
-            painter = painterResource(imageRes),
-            contentDescription = product.productName,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            contentScale = ContentScale.Crop
-        )
 
-        Column(
-            modifier = Modifier.padding(8.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            TextNormal(
-                text = "RM %.2f".format(product.productPrice),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
 
-            TextNormal(
-                text = product.productName,
-                fontSize = 14.sp
-            )
+            Column {
+
+                Image(
+                    painter = painterResource(imageRes),
+                    contentDescription = product.productName,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+                Column(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+
+                    TextNormal(
+                        text = "RM %.2f".format(
+                            product.productPrice
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+
+                    TextNormal(
+                        text = product.productName,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+//            if (!canOrder) {
+//
+//                Box(
+//                    modifier = Modifier
+//                        .matchParentSize()
+//                        .background(
+//                            Color.White.copy(
+//                                alpha = 0.70f
+//                            )
+//                        ),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//
+//                    TextNormal(
+//                        text =
+//                            if (!product.isAvailable) {
+//                                "Sold out"
+//                            } else {
+//                                "Store closed"
+//                            },
+//                        color = Color.DarkGray,
+//                        fontWeight = FontWeight.Bold,
+//                        fontSize = 18.sp
+//                    )
+//                }
+//            }
         }
     }
 }

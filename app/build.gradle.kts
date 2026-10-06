@@ -88,6 +88,9 @@ dependencies {
     // OkHttp - needed for MultipartBody.Part
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    //Authentication
+    implementation("com.google.firebase:firebase-auth")
+
     // Testing
     testImplementation(libs.junit)
 

@@ -62,6 +62,13 @@ fun RegistrationScreen(
     var message by rememberSaveable {
         mutableStateOf<String?>(null)
     }
+    var name by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var category by rememberSaveable {
+        mutableStateOf("")
+    }
 
     Box(
         modifier = Modifier
@@ -136,6 +143,49 @@ fun RegistrationScreen(
                 )
 
                 OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        message = null
+                    },
+                    label = {
+                        Text(
+                            if (isVendor) {
+                                "Vendor Name"
+                            } else {
+                                "Name"
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
+                if (isVendor) {
+
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {
+                            category = it
+                            message = null
+                        },
+                        label = {
+                            Text("Category")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(12.dp)
+                    )
+                }
+
+                OutlinedTextField(
                     value = email,
                     onValueChange = {
                         email = it
@@ -188,6 +238,16 @@ fun RegistrationScreen(
                 Button(
                     onClick = {
 
+                        if (name.isBlank()) {
+                            message = "Name cannot be empty"
+                            return@Button
+                        }
+
+                        if (isVendor && category.isBlank()) {
+                            message = "Category cannot be empty"
+                            return@Button
+                        }
+
                         if (password != confirmPassword) {
                             message = "Passwords do not match"
                             return@Button
@@ -198,11 +258,18 @@ fun RegistrationScreen(
                             return@Button
                         }
 
+                        if (password.length < 6) {
+                            message = "Password must be at least 6 characters long"
+                            return@Button
+                        }
+
                         appViewModel.register(
                             email = email,
                             password = password,
+                            name = name,
+                            category = category,
                             isVendor = isVendor
-                        ) { result ->
+                        ){ result ->
 
                             when (result) {
 

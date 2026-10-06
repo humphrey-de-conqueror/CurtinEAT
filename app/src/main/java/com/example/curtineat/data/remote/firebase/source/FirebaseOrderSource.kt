@@ -86,7 +86,8 @@ class FirebaseOrderSource {
 							"productPrice" to product.productPrice,
 							"quantity" to product.quantity
 						)
-					}
+					},
+					"timestamp" to order.timestamp
 				)
 			)
 			.await()
@@ -111,7 +112,8 @@ class FirebaseOrderSource {
 							"productPrice" to product.productPrice,
 							"quantity" to product.quantity
 						)
-					}
+					},
+					"timestamp" to order.timestamp
 				)
 			)
 			.await()
@@ -162,7 +164,9 @@ class FirebaseOrderSource {
 			vendorId = getString("vendorId") ?: "",
 			totalPrice = getDouble("totalPrice") ?: 0.0,
 			status = getString("status") ?: "",
-			products = products
+			products = products,
+			timestamp = getTimestamp("timestamp")
+				?: com.google.firebase.Timestamp.now()
 		)
 	}
 }

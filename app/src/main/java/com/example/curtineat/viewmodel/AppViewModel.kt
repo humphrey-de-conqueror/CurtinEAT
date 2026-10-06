@@ -23,6 +23,12 @@ import com.example.curtineat.model.Account
 import com.example.curtineat.data.repository.api.ImageRepository
 import com.google.firebase.firestore.ListenerRegistration
 import okhttp3.MultipartBody
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import kotlinx.coroutines.tasks.await
+
 
 class AppViewModel(
     private val vendorRepository: FirebaseVendorRepository,
@@ -960,7 +966,9 @@ class AppViewModel(
      * Authentication
      * ==================== */
 
-    fun login(
+    private val firebaseAuth = FirebaseAuth.getInstance()
+
+    fun login2(
         email: String,
         password: String,
         isVendor: Boolean,
@@ -974,7 +982,96 @@ class AppViewModel(
         onResult(false)
     }
 
-    fun register(
+    fun login(
+        email: String,
+        password: String,
+        isVendor: Boolean,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                // 1. Firebase Authentication
+                firebaseAuth
+                    .signInWithEmailAndPassword(
+                        email.trim(),
+                        password
+                    )
+                    .await()
+
+                // 2. Check selected CurtinEAT role
+                if (isVendor) {
+
+                    val vendor =
+                        vendorRepository
+                            .getAllVendors()
+                            .firstOrNull {
+                                it.vendorEmail.equals(
+                                    email.trim(),
+                                    ignoreCase = true
+                                )
+                            }
+
+                    if (vendor == null) {
+
+                        firebaseAuth.signOut()
+                        clearAccount()
+
+                        onResult(false)
+                        return@launch
+                    }
+
+                    setVendorAccount(
+                        vendor.vendorId
+                    )
+
+                } else {
+
+                    val customer =
+                        customerRepository
+                            .getAllCustomers()
+                            .firstOrNull {
+                                it.customerEmail.equals(
+                                    email.trim(),
+                                    ignoreCase = true
+                                )
+                            }
+
+                    if (customer == null) {
+
+                        firebaseAuth.signOut()
+                        clearAccount()
+
+                        onResult(false)
+                        return@launch
+                    }
+
+                    setCustomerAccount(
+                        customer.customerId
+                    )
+                }
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "LOGIN",
+                    "Firebase login failed",
+                    e
+                )
+
+                firebaseAuth.signOut()
+                clearAccount()
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun register2(
         email: String,
         password: String,
         isVendor: Boolean,
@@ -988,8 +1085,114 @@ class AppViewModel(
         onResult(RegisterResult.ERROR)
     }
 
+    fun register(
+        email: String,
+        password: String,
+        name: String,
+        category: String,
+        isVendor: Boolean,
+        onResult: (RegisterResult) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                val authResult =
+                    firebaseAuth
+                        .createUserWithEmailAndPassword(
+                            email.trim(),
+                            password
+                        )
+                        .await()
+
+                val firebaseUser =
+                    authResult.user
+
+                if (firebaseUser == null) {
+
+                    onResult(RegisterResult.ERROR)
+                    return@launch
+                }
+
+                val uid =
+                    firebaseUser.uid
+
+                if (isVendor) {
+
+                    val vendor =
+                        FirebaseVendorData(
+                            vendorId = uid,
+                            vendorName = name.trim(),
+                            vendorEmail = email.trim(),
+                            rating = 0.0,
+                            category = category.trim(),
+                            distance = 0.0,
+                            moneyBalance = 0.0
+                        )
+
+                    vendorRepository.addVendor(vendor)
+
+                    setVendorAccount(uid)
+
+                } else {
+
+                    val customer =
+                        FirebaseCustomerData(
+                            customerId = uid,
+                            customerName = name.trim(),
+                            customerEmail = email.trim(),
+                            moneyBalance = 0.0
+                        )
+
+                    customerRepository.addCustomer(customer)
+
+                    setCustomerAccount(uid)
+                }
+
+                onResult(
+                    RegisterResult.SUCCESS
+                )
+
+            } catch (
+                e: FirebaseAuthUserCollisionException
+            ) {
+
+                onResult(
+                    RegisterResult.EMAIL_EXISTS
+                )
+
+            } catch (
+                e: FirebaseAuthInvalidCredentialsException
+            ) {
+
+                onResult(
+                    RegisterResult.INVALID_EMAIL
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "REGISTER",
+                    "Registration failed",
+                    e
+                )
+
+                onResult(
+                    RegisterResult.ERROR
+                )
+            }
+        }
+    }
+
     fun logout() {
-        println("TODO: Firebase Authentication logout")
+
+        firebaseAuth.signOut()
+
+        notificationListener?.remove()
+        notificationListener = null
+
+        _notifications.value = emptyList()
 
         clearAccount()
         clearCart()

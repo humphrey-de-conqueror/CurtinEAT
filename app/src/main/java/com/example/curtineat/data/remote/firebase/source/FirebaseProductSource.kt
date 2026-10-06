@@ -23,7 +23,8 @@ class FirebaseProductSource {
 				vendorId = document.getString("vendorId") ?: "",
 				productName = document.getString("productName") ?: "",
 				productPrice = document.getDouble("productPrice") ?: 0.0,
-				productImage = document.getString("productImage") ?: ""
+				productImage = document.getString("productImage") ?: "",
+//				isAvailable = document.getBoolean("isAvailable") ?: true
 			)
 		}
 	}
@@ -46,7 +47,8 @@ class FirebaseProductSource {
 			vendorId = document.getString("vendorId") ?: "",
 			productName = document.getString("productName") ?: "",
 			productPrice = document.getDouble("productPrice") ?: 0.0,
-			productImage = document.getString("productImage") ?: ""
+			productImage = document.getString("productImage") ?: "",
+//			isAvailable = document.getBoolean("isAvailable") ?: true
 		)
 	}
 
@@ -65,7 +67,8 @@ class FirebaseProductSource {
 				vendorId = document.getString("vendorId") ?: "",
 				productName = document.getString("productName") ?: "",
 				productPrice = document.getDouble("productPrice") ?: 0.0,
-				productImage = document.getString("productImage") ?: ""
+				productImage = document.getString("productImage") ?: "",
+//				isAvailable = document.getBoolean("isAvailable") ?: true
 			)
 		}
 	}
@@ -82,7 +85,8 @@ class FirebaseProductSource {
 					"vendorId" to product.vendorId,
 					"productName" to product.productName,
 					"productPrice" to product.productPrice,
-					"productImage" to product.productImage
+					"productImage" to product.productImage,
+//					"isAvailable" to product.isAvailable
 				)
 			)
 			.await()
@@ -101,7 +105,8 @@ class FirebaseProductSource {
 					"vendorId" to product.vendorId,
 					"productName" to product.productName,
 					"productPrice" to product.productPrice,
-					"productImage" to product.productImage
+					"productImage" to product.productImage,
+//					"isAvailable" to product.isAvailable
 				)
 			)
 			.await()

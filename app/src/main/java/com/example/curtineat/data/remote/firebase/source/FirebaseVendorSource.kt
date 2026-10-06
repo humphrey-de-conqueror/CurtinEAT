@@ -25,7 +25,9 @@ class FirebaseVendorSource {
 				rating = document.getDouble("rating") ?: 0.0,
 				category = document.getString("category") ?: "",
 				distance = document.getDouble("distance") ?: 0.0,
-				moneyBalance = document.getDouble("moneyBalance") ?: 0.0
+				moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
+//				isOpen = document.getBoolean("isOpen") ?:true,
+
 			)
 		}
 	}
@@ -50,7 +52,8 @@ class FirebaseVendorSource {
 			rating = document.getDouble("rating") ?: 0.0,
 			category = document.getString("category") ?: "",
 			distance = document.getDouble("distance") ?: 0.0,
-			moneyBalance = document.getDouble("moneyBalance") ?: 0.0
+			moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
+//			isOpen = document.getBoolean("isOpen") ?:true,
 		)
 	}
 
@@ -59,14 +62,16 @@ class FirebaseVendorSource {
 	) {
 
 		vendorCollection
-			.add(
+			.document(vendor.vendorId)
+			.set(
 				mapOf(
 					"vendorName" to vendor.vendorName,
 					"vendorEmail" to vendor.vendorEmail,
 					"rating" to vendor.rating,
 					"category" to vendor.category,
 					"distance" to vendor.distance,
-					"moneyBalance" to vendor.moneyBalance
+					"moneyBalance" to vendor.moneyBalance,
+//					"isOpen" to vendor.isOpen
 				)
 			)
 			.await()
@@ -85,7 +90,8 @@ class FirebaseVendorSource {
 					"rating" to vendor.rating,
 					"category" to vendor.category,
 					"distance" to vendor.distance,
-					"moneyBalance" to vendor.moneyBalance
+					"moneyBalance" to vendor.moneyBalance,
+//					"isOpen" to vendor.isOpen
 				)
 			)
 			.await()

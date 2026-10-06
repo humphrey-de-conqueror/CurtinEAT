@@ -49,7 +49,7 @@ fun VendorLandingScreen(
     val vendors by appViewModel.vendors.collectAsState()
     val products by appViewModel.products.collectAsState()
 
-    val loggedInVendorId: String? = "seed-vendor-001" //account.vendorId
+    val loggedInVendorId: String? = account.vendorId
 
     val currentVendor = vendors.find {
         it.vendorId == loggedInVendorId
