@@ -343,6 +343,31 @@ class AppViewModel(
         }
     }
 
+    fun updateVendorProfile(
+        vendorId: String,
+        vendorName: String,
+        category: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                vendorRepository.updateVendorProfile(
+                    vendorId,
+                    vendorName,
+                    category
+                )
+                onResult(true)
+            } catch (e: Exception) {
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update vendor profile",
+                    e
+                )
+                onResult(false)
+            }
+        }
+    }
+
     fun deleteVendor(
         vendorId: String,
         onResult: (Boolean) -> Unit = {}

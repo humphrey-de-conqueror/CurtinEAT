@@ -97,6 +97,24 @@ class FirebaseVendorSource {
 			.await()
 	}
 
+	// almost same as updateVendor but accept vendor name and category only, future add pic
+	suspend fun updateVendorProfile(
+		vendorId: String,
+		vendorName: String,
+		category: String
+	) {
+
+		vendorCollection
+			.document(vendorId)
+			.update(
+				mapOf(
+					"vendorName" to vendorName,
+					"category" to category
+				)
+			)
+			.await()
+	}
+
 	suspend fun deleteVendor(
 		vendorId: String
 	) {

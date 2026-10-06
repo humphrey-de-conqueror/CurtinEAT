@@ -33,6 +33,18 @@ class FirebaseVendorRepository(
 		source.updateVendor(vendor)
 	}
 
+	suspend fun updateVendorProfile(
+		vendorId: String,
+		vendorName: String,
+		category: String
+	) {
+		source.updateVendorProfile(
+			vendorId,
+			vendorName,
+			category
+		)
+	}
+
 	suspend fun deleteVendor(
 		vendorId: String
 	) {

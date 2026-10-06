@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime)
 
     // Android
     implementation(libs.androidx.core.ktx)

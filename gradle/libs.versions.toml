@@ -15,6 +15,7 @@ room = "2.8.4"
 ksp = "2.3.6"
 material3 = "1.4.0"
 retrofit = "3.0.0"
+runtime = "1.12.1"
 
 [libraries]
 
@@ -59,6 +60,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 
 [plugins]

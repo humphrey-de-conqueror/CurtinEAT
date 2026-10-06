@@ -17,6 +17,7 @@ import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
+import com.example.curtineat.view.VendorProfileScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.AppViewModelFactory
 import kotlinx.serialization.Serializable
@@ -60,6 +61,9 @@ object RouteBalanceScreen
 
 @Serializable
 object RouteVendorLandingScreen
+
+@Serializable
+object RouteVendorProfileScreen
 
 @Serializable
 object RouteFirestoreTestingScreen
@@ -192,6 +196,12 @@ fun ScreenNavigation(
                 onOrderStatusClick = {},
                 onFoodClick = { productId -> },
                 onAddFoodClick = {}
+            )
+        }
+
+        composable<RouteVendorProfileScreen> {
+            VendorProfileScreen(
+                viewModel = appViewModel
             )
         }
 
