@@ -201,7 +201,9 @@ fun ScreenNavigation(
 
         composable<RouteVendorProfileScreen> {
             VendorProfileScreen(
-                viewModel = appViewModel
+                viewModel = appViewModel,
+                onLoginClick = onLoginClick,
+                onHomeClick = onHomeClick
             )
         }
 

@@ -36,12 +36,14 @@ class FirebaseVendorRepository(
 	suspend fun updateVendorProfile(
 		vendorId: String,
 		vendorName: String,
-		category: String
+		category: String,
+		vendorImage: String
 	) {
 		source.updateVendorProfile(
 			vendorId,
 			vendorName,
-			category
+			category,
+			vendorImage
 		)
 	}
 

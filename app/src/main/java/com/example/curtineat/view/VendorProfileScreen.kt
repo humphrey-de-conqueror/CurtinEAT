@@ -1,13 +1,21 @@
 package com.example.curtineat.view
 
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,10 +26,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
 import com.example.curtineat.viewmodel.AppViewModel
 import com.google.firebase.auth.FirebaseAuth
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 
 private val vendorCategories = listOf(
 	"Western",
@@ -34,6 +48,9 @@ private val vendorCategories = listOf(
 	"Beverage",
 	"Other"
 )
+
+private const val IMAGE_BASE_URL =
+	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
 
 @Composable
 fun VendorProfileScreen(
@@ -58,6 +75,10 @@ fun VendorProfileScreen(
 		mutableStateOf("")
 	}
 
+	var vendorImage by remember {
+		mutableStateOf("")
+	}
+
 	var categoryExpanded by remember {
 		mutableStateOf(false)
 	}
@@ -70,11 +91,43 @@ fun VendorProfileScreen(
 		mutableStateOf(false)
 	}
 
+	var uploadingImage by remember {
+		mutableStateOf(false)
+	}
+
+	val context =
+		LocalContext.current
+
 	val currentUser =
 		FirebaseAuth.getInstance().currentUser
 
 	val vendorId =
 		currentUser?.uid
+
+	val imagePicker =
+		rememberLauncherForActivityResult(
+			contract = ActivityResultContracts.GetContent()
+		) { uri: Uri? ->
+
+			if (uri == null) {
+				return@rememberLauncherForActivityResult
+			}
+
+			uploadVendorImage(
+				context = context,
+				uri = uri,
+				viewModel = viewModel
+			) { imageId ->
+
+				if (imageId != null) {
+					vendorImage = imageId
+				}
+
+				uploadingImage = false
+			}
+
+			uploadingImage = true
+		}
 
 	LaunchedEffect(vendorId) {
 
@@ -93,6 +146,7 @@ fun VendorProfileScreen(
 			if (result != null) {
 				vendorName = result.vendorName
 				category = result.category
+				vendorImage = result.vendorImage
 			}
 
 			loading = false
@@ -146,10 +200,47 @@ fun VendorProfileScreen(
 
 						vendorName = currentVendor.vendorName
 						category = currentVendor.category
+						vendorImage = currentVendor.vendorImage
 					}
 				) {
 					Text("Edit")
 				}
+			}
+		}
+
+		if (vendorImage.isBlank()) {
+
+			Icon(
+				imageVector = Icons.Default.AccountCircle,
+				contentDescription = "Default vendor profile picture",
+				modifier = Modifier.size(120.dp)
+			)
+
+		} else {
+
+			AsyncImage(
+				model = IMAGE_BASE_URL + vendorImage,
+				contentDescription = "Vendor profile picture",
+				modifier = Modifier.size(120.dp)
+			)
+		}
+
+		if (editMode) {
+
+			OutlinedButton(
+				onClick = {
+					imagePicker.launch("image/*")
+				},
+				enabled = !uploadingImage,
+				modifier = Modifier.fillMaxWidth()
+			) {
+				Text(
+					if (uploadingImage) {
+						"Uploading..."
+					} else {
+						"Change Profile Picture"
+					}
+				)
 			}
 		}
 
@@ -296,6 +387,7 @@ fun VendorProfileScreen(
 					onClick = {
 						vendorName = currentVendor.vendorName
 						category = currentVendor.category
+						vendorImage = currentVendor.vendorImage
 						editMode = false
 					},
 					modifier = Modifier.weight(1f)
@@ -311,7 +403,8 @@ fun VendorProfileScreen(
 						viewModel.updateVendorProfile(
 							vendorId = currentVendor.vendorId,
 							vendorName = vendorName.trim(),
-							category = category
+							category = category,
+							vendorImage = vendorImage
 						) { success ->
 
 							if (success) {
@@ -319,7 +412,8 @@ fun VendorProfileScreen(
 								vendor =
 									currentVendor.copy(
 										vendorName = vendorName.trim(),
-										category = category
+										category = category,
+										vendorImage = vendorImage
 									)
 
 								editMode = false
@@ -329,6 +423,7 @@ fun VendorProfileScreen(
 						}
 					},
 					enabled = !saving &&
+						!uploadingImage &&
 						vendorName.isNotBlank() &&
 						category.isNotBlank(),
 					modifier = Modifier.weight(1f)
@@ -342,9 +437,8 @@ fun VendorProfileScreen(
 					)
 				}
 			}
-		}
 
-		if (!editMode) {
+		} else {
 
 			Button(
 				onClick = {
@@ -362,5 +456,58 @@ fun VendorProfileScreen(
 				Text("Logout")
 			}
 		}
+	}
+}
+
+private fun uploadVendorImage(
+	context: Context,
+	uri: Uri,
+	viewModel: AppViewModel,
+	onResult: (String?) -> Unit
+) {
+
+	try {
+
+		val inputStream =
+			context.contentResolver.openInputStream(uri)
+				?: throw Exception("Unable to open image")
+
+		val file =
+			File.createTempFile(
+				"vendor_image",
+				".jpg",
+				context.cacheDir
+			)
+
+		inputStream.use { input ->
+			file.outputStream().use { output ->
+				input.copyTo(output)
+			}
+		}
+
+		val requestBody =
+			file.asRequestBody(
+				"image/*".toMediaType()
+			)
+
+		val multipartBody =
+			MultipartBody.Part.createFormData(
+				"image",
+				file.name,
+				requestBody
+			)
+
+		viewModel.uploadImage(
+			multipartBody
+		) { imageId ->
+
+			file.delete()
+
+			onResult(imageId)
+		}
+
+	} catch (e: Exception) {
+
+		onResult(null)
 	}
 }

@@ -347,6 +347,7 @@ class AppViewModel(
         vendorId: String,
         vendorName: String,
         category: String,
+        vendorImage: String,
         onResult: (Boolean) -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -354,15 +355,19 @@ class AppViewModel(
                 vendorRepository.updateVendorProfile(
                     vendorId,
                     vendorName,
-                    category
+                    category,
+                    vendorImage
                 )
+
                 onResult(true)
+
             } catch (e: Exception) {
                 Log.e(
                     "AppViewModel",
                     "Failed to update vendor profile",
                     e
                 )
+
                 onResult(false)
             }
         }
