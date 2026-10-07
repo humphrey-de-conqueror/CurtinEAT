@@ -20,9 +20,14 @@ class FirebaseCustomerSource {
 		return snapshot.documents.map { document ->
 			FirebaseCustomerData(
 				customerId = document.id,
-				customerName = document.getString("customerName") ?: "",
-				customerEmail = document.getString("customerEmail") ?: "",
-				moneyBalance = document.getDouble("moneyBalance") ?: 0.0
+				customerName =
+					document.getString("customerName") ?: "",
+				customerEmail =
+					document.getString("customerEmail") ?: "",
+				moneyBalance =
+					document.getDouble("moneyBalance") ?: 0.0,
+				customerImage =
+					document.getString("customerImage") ?: ""
 			)
 		}
 	}
@@ -42,9 +47,14 @@ class FirebaseCustomerSource {
 
 		return FirebaseCustomerData(
 			customerId = document.id,
-			customerName = document.getString("customerName") ?: "",
-			customerEmail = document.getString("customerEmail") ?: "",
-			moneyBalance = document.getDouble("moneyBalance") ?: 0.0
+			customerName =
+				document.getString("customerName") ?: "",
+			customerEmail =
+				document.getString("customerEmail") ?: "",
+			moneyBalance =
+				document.getDouble("moneyBalance") ?: 0.0,
+			customerImage =
+				document.getString("customerImage") ?: ""
 		)
 	}
 
@@ -58,7 +68,8 @@ class FirebaseCustomerSource {
 				mapOf(
 					"customerName" to customer.customerName,
 					"customerEmail" to customer.customerEmail,
-					"moneyBalance" to customer.moneyBalance
+					"moneyBalance" to customer.moneyBalance,
+					"customerImage" to customer.customerImage
 				)
 			)
 			.await()
@@ -74,7 +85,25 @@ class FirebaseCustomerSource {
 				mapOf(
 					"customerName" to customer.customerName,
 					"customerEmail" to customer.customerEmail,
-					"moneyBalance" to customer.moneyBalance
+					"moneyBalance" to customer.moneyBalance,
+					"customerImage" to customer.customerImage
+				)
+			)
+			.await()
+	}
+
+	suspend fun updateCustomerProfile(
+		customerId: String,
+		customerName: String,
+		customerImage: String
+	) {
+
+		customerCollection
+			.document(customerId)
+			.update(
+				mapOf(
+					"customerName" to customerName,
+					"customerImage" to customerImage
 				)
 			)
 			.await()

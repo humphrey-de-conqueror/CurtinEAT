@@ -45,6 +45,7 @@ import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.ui.theme.mySpacerWidth
 import com.example.curtineat.viewmodel.AppViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 
@@ -55,6 +56,7 @@ fun CartScreen(
     appViewModel: AppViewModel,
     onBackButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
@@ -62,11 +64,10 @@ fun CartScreen(
     val customers by appViewModel.customers.collectAsState()
     val vendors by appViewModel.vendors.collectAsState()
     val checkoutCompleted by appViewModel.checkoutCompleted.collectAsState()
-    val account by appViewModel.account.collectAsState()
+    val currentUser = FirebaseAuth.getInstance().currentUser
 
-    val loggedInCustomerId: String? = account.customerId
-
-//    val loggedInCustomerId = appViewModel.account.customerId
+    val loggedInCustomerId =
+        currentUser?.uid
 
     var showEmptyCartDialog by remember {
         mutableStateOf(false)
@@ -101,6 +102,7 @@ fun CartScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = false,

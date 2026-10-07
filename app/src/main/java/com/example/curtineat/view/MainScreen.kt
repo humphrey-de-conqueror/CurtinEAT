@@ -74,12 +74,14 @@ import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
 fun AppScaffold(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     showSearch: Boolean = true,
@@ -92,6 +94,7 @@ fun AppScaffold(
 
     MainDrawer(
         onHomeClick = onHomeClick,
+        onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
     ) { onMenuClick ->
@@ -139,21 +142,26 @@ fun MainScreen(
     //expect onHistory and onSetting
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
     onLoginClick: () -> Unit,
     onFirestoreTestClick: () -> Unit //testing Firebase
 ) {
     val cart by appViewModel.cart.collectAsState()
-    //Testing for notification
-    val account by appViewModel.account.collectAsState()
 
-    LaunchedEffect(account.customerId) {
+    val currentUser =
+        FirebaseAuth.getInstance().currentUser
 
-        account.customerId?.let { customerId ->
+    val userId =
+        currentUser?.uid
+
+    LaunchedEffect(userId) {
+
+        if (userId != null) {
 
             appViewModel.startNotificationListener(
-                customerId
+                userId
             )
         }
     }
@@ -165,6 +173,7 @@ fun MainScreen(
         // expect onHistory and onSetting
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = true,

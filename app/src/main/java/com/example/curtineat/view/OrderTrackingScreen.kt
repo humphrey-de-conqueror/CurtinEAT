@@ -41,6 +41,7 @@ private val orderStages = listOf("Received", "Preparing", "Ready for pick up")
 fun OrderTrackingScreen(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLogInClick: () -> Unit = {}
 ) {
@@ -53,6 +54,7 @@ fun OrderTrackingScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLogInClick,
         showSearch = false,

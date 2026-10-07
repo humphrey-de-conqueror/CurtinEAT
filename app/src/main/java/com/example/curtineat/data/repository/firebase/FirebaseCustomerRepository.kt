@@ -33,6 +33,19 @@ class FirebaseCustomerRepository(
 		source.updateCustomer(customer)
 	}
 
+	suspend fun updateCustomerProfile(
+		customerId: String,
+		customerName: String,
+		customerImage: String
+	) {
+
+		source.updateCustomerProfile(
+			customerId = customerId,
+			customerName = customerName,
+			customerImage = customerImage
+		)
+	}
+
 	suspend fun deleteCustomer(
 		customerId: String
 	) {

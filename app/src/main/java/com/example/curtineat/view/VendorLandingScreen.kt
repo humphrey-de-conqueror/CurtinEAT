@@ -34,22 +34,24 @@ import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.viewmodel.AppViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun VendorLandingScreen(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onOrderStatusClick: () -> Unit,
     onFoodClick: (String) -> Unit,
     onAddFoodClick: () -> Unit
 ) {
-    val account by appViewModel.account.collectAsState()
+    val currentUser = FirebaseAuth.getInstance().currentUser
     val vendors by appViewModel.vendors.collectAsState()
     val products by appViewModel.products.collectAsState()
 
-    val loggedInVendorId: String? = account.vendorId
+    val loggedInVendorId = currentUser?.uid
 
     val currentVendor = vendors.find {
         it.vendorId == loggedInVendorId
@@ -66,6 +68,7 @@ fun VendorLandingScreen(
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
+        onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         showSearch = true,
