@@ -376,12 +376,9 @@ fun TopBarScreen(
 //                }
 //            }
 
-            // true while the customer still has a notification they haven't seen.
-            // Notifications are marked read when the notification sheet is dismissed,
-            // so the bell goes back to normal only after that.
+            // if no see then red else default icon
             val hasUnseenNotification = notifications.any { !it.isRead }
 
-            // BELL OPTION A (ACTIVE): swap to a different icon (red ringing bell)
             if (showNotifications) {
 
                 Box {
@@ -408,39 +405,6 @@ fun TopBarScreen(
                     }
                 }
             }
-
-            // BELL OPTION B (COMMENTED OUT): keep the same bell, add a red dot badge.
-            // To use: comment out OPTION A above, uncomment this block, and add
-            // imports androidx.compose.foundation.layout.offset
-            //
-            // if (showNotifications) {
-            //
-            //     Box {
-            //
-            //         IconButton(
-            //             onClick = {
-            //                 notificationDrawerLoading = true
-            //                 notificationsOpen = true
-            //             }
-            //         ) {
-            //             Icon(
-            //                 imageVector = Icons.Default.Notifications,
-            //                 contentDescription = "Notifications"
-            //             )
-            //         }
-            //
-            //         if (hasUnseenNotification) {
-            //             Box(
-            //                 modifier = Modifier
-            //                     .size(10.dp)
-            //                     .align(Alignment.TopEnd)
-            //                     .offset(x = (-10).dp, y = 10.dp)
-            //                     .background(Color.Red, CircleShape)
-            //             )
-            //         }
-            //     }
-            // }
-
 
         }
     )
