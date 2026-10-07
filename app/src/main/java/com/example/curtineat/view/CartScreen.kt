@@ -58,7 +58,8 @@ fun CartScreen(
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit,
 ) {
     val cart by appViewModel.cart.collectAsState()
     val customers by appViewModel.customers.collectAsState()
@@ -105,6 +106,7 @@ fun CartScreen(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true
     ) { innerPadding ->

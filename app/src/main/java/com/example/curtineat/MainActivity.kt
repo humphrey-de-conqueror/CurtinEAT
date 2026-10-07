@@ -17,6 +17,7 @@ import com.example.curtineat.view.CustomerProfileScreen
 import com.example.curtineat.view.FirestoreTestingScreen
 import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
+import com.example.curtineat.view.OrderHistoryScreen
 import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.view.VendorProfileScreen
@@ -78,6 +79,8 @@ object RouteAddProductScreen
 @Serializable
 object RouteFirestoreTestingScreen
 
+@Serializable
+object RouteHistoryScreen
 
 @Composable
 fun ScreenNavigation(
@@ -181,6 +184,12 @@ fun ScreenNavigation(
         nav.navigate(RouteFirestoreTestingScreen)
     }
 
+    val onHistoryClick: () -> Unit = {
+        nav.navigate(RouteHistoryScreen) {
+            launchSingleTop = true
+        }
+    }
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -195,6 +204,7 @@ fun ScreenNavigation(
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick,
                 onFirestoreTestClick = onFirestoreTestClick
             )
         }
@@ -207,7 +217,8 @@ fun ScreenNavigation(
                 onHomeClick = onHomeClick,
                 onProfileClick = onProfileClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick
+                onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick,
             )
         }
 
@@ -249,7 +260,8 @@ fun ScreenNavigation(
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onFoodClick = { _ -> },
-                onAddProductClick = onAddProductClick
+                onAddProductClick = onAddProductClick,
+                onHistoryClick = onHistoryClick
             )
         }
 
@@ -283,6 +295,25 @@ fun ScreenNavigation(
 
             FirestoreTestingScreen(
                 appViewModel = appViewModel
+            )
+        }
+
+        composable <RouteHistoryScreen> {
+            OrderHistoryScreen(
+                appViewModel = appViewModel,
+                onHomeClick = {
+                    appViewModel.checkCurrentUserRole { role ->
+                        if (role == UserRole.VENDOR) {
+                            onVendorHomeClick()
+                        } else {
+                            onHomeClick()
+                        }
+                    }
+                },
+                onProfileClick = onProfileClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick
             )
         }
     }

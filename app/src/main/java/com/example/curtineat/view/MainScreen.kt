@@ -84,6 +84,7 @@ fun AppScaffold(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
@@ -97,6 +98,7 @@ fun AppScaffold(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
     ) { onMenuClick ->
 
         Scaffold(
@@ -139,13 +141,14 @@ fun AppScaffold(
 
 @Composable
 fun MainScreen(
-    //expect onHistory and onSetting
+    //expect onSetting
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
     onProfileClick: () -> Unit,
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
     onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onFirestoreTestClick: () -> Unit //testing Firebase
 ) {
     val cart by appViewModel.cart.collectAsState()
@@ -170,12 +173,12 @@ fun MainScreen(
     }
 
     AppScaffold(
-        // expect onHistory and onSetting
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = true,
         showNotifications = true,
         floatingActionButton = {

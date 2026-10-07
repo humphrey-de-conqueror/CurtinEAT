@@ -43,7 +43,8 @@ fun OrderTrackingScreen(
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
-    onLogInClick: () -> Unit = {}
+    onLogInClick: () -> Unit = {},
+    onHistoryClick: () -> Unit
 ) {
     // 0 = Received, 1 = Preparing, 2 = Ready for pick up
     var stage by rememberSaveable { mutableStateOf(0) }
@@ -57,6 +58,7 @@ fun OrderTrackingScreen(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLogInClick,
+        onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = false
     ) { innerPadding ->

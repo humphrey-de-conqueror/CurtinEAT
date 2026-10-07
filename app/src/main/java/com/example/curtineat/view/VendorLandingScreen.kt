@@ -54,7 +54,8 @@ fun VendorLandingScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onFoodClick: (String) -> Unit,
-    onAddProductClick: () -> Unit
+    onAddProductClick: () -> Unit,
+    onHistoryClick: () -> Unit,
 ) {
 
     val vendors by appViewModel.vendors.collectAsState()
@@ -126,6 +127,7 @@ fun VendorLandingScreen(
         onHomeClick = onHomeClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true,
         onProfileClick = onProfileClick,
