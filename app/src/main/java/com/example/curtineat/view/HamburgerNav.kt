@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -27,6 +28,7 @@ fun MainDrawer(
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
     onLoginClick: () -> Unit,
+    onSimulateVendorUpdateClick: () -> Unit = {}, //mimic vendor updating an order
     content: @Composable (onMenuClick: () -> Unit) -> Unit
 ) {
     val drawerState = rememberDrawerState(
@@ -58,6 +60,10 @@ fun MainDrawer(
                 onLogInClick = {
                     closeDrawer()
                     onLoginClick()
+                },
+                onSimulateVendorUpdateClick = {
+                    closeDrawer()
+                    onSimulateVendorUpdateClick()
                 }
             )
         }
@@ -77,7 +83,8 @@ fun HamburgerNav(
     onWalletClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onSettingClick: () -> Unit,
-    onLogInClick: () -> Unit
+    onLogInClick: () -> Unit,
+    onSimulateVendorUpdateClick: () -> Unit = {}
 ) {
     ModalDrawerSheet {
 
@@ -127,6 +134,16 @@ fun HamburgerNav(
             },
             selected = false,
             onClick = onLogInClick
+        )
+
+        // mimic vvendor update
+        NavigationDrawerItem(
+            label = { Text("Simulate Vendor Update") },
+            icon = {
+                Icon(Icons.Default.Storefront, contentDescription = null)
+            },
+            selected = false,
+            onClick = onSimulateVendorUpdateClick
         )
     }
 }

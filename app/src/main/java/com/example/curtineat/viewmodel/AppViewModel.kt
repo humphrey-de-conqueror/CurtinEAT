@@ -9,6 +9,7 @@ import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
 import com.example.curtineat.data.remote.firebase.model.FirebaseOrderProductData
 import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
+import com.example.curtineat.data.remote.firebase.model.RecipientType
 import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
 import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
 import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import com.example.curtineat.model.CartItem
 import com.example.curtineat.model.Account
 import com.example.curtineat.data.repository.api.ImageRepository
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ListenerRegistration
 import okhttp3.MultipartBody
 
@@ -929,6 +931,34 @@ class AppViewModel(
             }
         }
     }
+
+    // for mimic notif
+    fun simulateVendorOrderUpdate() {
+
+        val customerId = _account.value.customerId
+
+        if (customerId == null) {
+            Log.w(
+                "AppViewModel",
+                "simulateVendorOrderUpdate: no customer logged in"
+            )
+            return
+        }
+
+        addNotification(
+            FirebaseNotificationData(
+                notificationId =
+                    "sim-notification-${System.currentTimeMillis()}",
+                recipientId = customerId,
+                recipientType = RecipientType.CUSTOMER,
+                message = "Your order has been updated by the vendor",
+                orderId = "",
+                timestamp = Timestamp.now(),
+                isRead = false
+            )
+        )
+    }
+
 
     fun deleteNotification(
         notificationId: String,
