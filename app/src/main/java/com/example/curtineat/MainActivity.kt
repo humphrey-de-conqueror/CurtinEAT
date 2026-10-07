@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.ui.theme.CurtinEATTheme
+import com.example.curtineat.view.AddProductScreen
 import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.CustomerProfileScreen
@@ -70,6 +71,9 @@ object RouteVendorProfileScreen
 
 @Serializable
 object RouteCustomerProfileScreen
+
+@Serializable
+object RouteAddProductScreen
 
 @Serializable
 object RouteFirestoreTestingScreen
@@ -169,6 +173,10 @@ fun ScreenNavigation(
         }
     }
 
+    val onAddProductClick: () -> Unit = {
+        nav.navigate(RouteAddProductScreen)
+    }
+
     val onFirestoreTestClick: () -> Unit = {
         nav.navigate(RouteFirestoreTestingScreen)
     }
@@ -241,7 +249,7 @@ fun ScreenNavigation(
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onFoodClick = { _ -> },
-                onAddFoodClick = {}
+                onAddProductClick = onAddProductClick
             )
         }
 
@@ -258,6 +266,16 @@ fun ScreenNavigation(
                 viewModel = appViewModel,
                 onLoginClick = onLoginClick,
                 onHomeClick = onHomeClick
+            )
+        }
+
+        composable<RouteAddProductScreen> {
+
+            AddProductScreen(
+                viewModel = appViewModel,
+                onBackClick = {
+                    nav.popBackStack()
+                }
             )
         }
 

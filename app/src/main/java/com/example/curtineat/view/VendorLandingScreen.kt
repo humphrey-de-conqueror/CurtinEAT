@@ -54,7 +54,7 @@ fun VendorLandingScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onFoodClick: (String) -> Unit,
-    onAddFoodClick: () -> Unit
+    onAddProductClick: () -> Unit
 ) {
 
     val vendors by appViewModel.vendors.collectAsState()
@@ -133,7 +133,7 @@ fun VendorLandingScreen(
         floatingActionButton = {
 
             FloatingActionButton(
-                onClick = onAddFoodClick
+                onClick = onAddProductClick
             ) {
 
                 Icon(
