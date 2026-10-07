@@ -15,8 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -31,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
+import com.example.curtineat.data.remote.firebase.model.FirebaseCustomerData
 import com.example.curtineat.viewmodel.AppViewModel
 import com.google.firebase.auth.FirebaseAuth
 import okhttp3.MediaType.Companion.toMediaType
@@ -39,50 +37,29 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 
-private val vendorCategories = listOf(
-	"Western",
-	"Japanese",
-	"Chinese",
-	"Korean",
-	"Local",
-	"Fast Food",
-	"Dessert",
-	"Beverage",
-	"Other"
-)
-
 private const val IMAGE_BASE_URL =
 	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
 
 @Composable
-fun VendorProfileScreen(
+fun CustomerProfileScreen(
 	viewModel: AppViewModel,
 	onLoginClick: () -> Unit,
 	onHomeClick: () -> Unit
 ) {
-
-	var vendor by remember {
-		mutableStateOf<FirebaseVendorData?>(null)
+	var customer by remember {
+		mutableStateOf<FirebaseCustomerData?>(null)
 	}
 
 	var editMode by remember {
 		mutableStateOf(false)
 	}
 
-	var vendorName by remember {
+	var customerName by remember {
 		mutableStateOf("")
 	}
 
-	var category by remember {
+	var customerImage by remember {
 		mutableStateOf("")
-	}
-
-	var vendorImage by remember {
-		mutableStateOf("")
-	}
-
-	var categoryExpanded by remember {
-		mutableStateOf(false)
 	}
 
 	var loading by remember {
@@ -100,10 +77,17 @@ fun VendorProfileScreen(
 	val context =
 		LocalContext.current
 
+	/*
+	 * Keep this check inside the screen as well.
+	 *
+	 * Navigation should normally prevent an unauthenticated
+	 * user from reaching this screen, but the screen itself
+	 * should not trust navigation as its only protection.
+	 */
 	val currentUser =
 		FirebaseAuth.getInstance().currentUser
 
-	val vendorId =
+	val customerId =
 		currentUser?.uid
 
 	val imagePicker =
@@ -115,14 +99,14 @@ fun VendorProfileScreen(
 				return@rememberLauncherForActivityResult
 			}
 
-			uploadVendorImage(
+			uploadCustomerImage(
 				context = context,
 				uri = uri,
 				viewModel = viewModel
 			) { imageId ->
 
 				if (imageId != null) {
-					vendorImage = imageId
+					customerImage = imageId
 				}
 
 				uploadingImage = false
@@ -131,24 +115,30 @@ fun VendorProfileScreen(
 			uploadingImage = true
 		}
 
-	LaunchedEffect(vendorId) {
+	/*
+	 * Load the customer belonging to the authenticated
+	 * Firebase user.
+	 */
+	LaunchedEffect(customerId) {
 
-		if (vendorId == null) {
+		if (customerId == null) {
 			loading = false
 			onLoginClick()
 			return@LaunchedEffect
 		}
 
-		viewModel.getVendorById(
-			vendorId
+		viewModel.getCustomerById(
+			customerId
 		) { result ->
 
-			vendor = result
+			customer = result
 
 			if (result != null) {
-				vendorName = result.vendorName
-				category = result.category
-				vendorImage = result.vendorImage
+				customerName =
+					result.customerName
+
+				customerImage =
+					result.customerImage
 			}
 
 			loading = false
@@ -163,20 +153,28 @@ fun VendorProfileScreen(
 		return
 	}
 
-	if (vendorId == null) {
+	/*
+	 * Defensive check in case authentication state is
+	 * unavailable after the LaunchedEffect.
+	 */
+	if (customerId == null) {
 		return
 	}
 
-	if (vendor == null) {
+	/*
+	 * Firebase Authentication succeeded, but the corresponding
+	 * customer document does not exist.
+	 */
+	if (customer == null) {
 		Text(
-			text = "Vendor profile not found."
+			text = "Customer profile not found."
 		)
 
 		return
 	}
 
-	val currentVendor =
-		vendor!!
+	val currentCustomer =
+		customer!!
 
 	val scrollState = rememberScrollState()
 
@@ -186,26 +184,32 @@ fun VendorProfileScreen(
 			.verticalScroll(scrollState)
 			.padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp)
-	) {
+	){
 
+		/*
+		 * Header
+		 */
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
 
 			Text(
-				text = "Vendor Profile"
+				text = "Customer Profile"
 			)
 
 			if (!editMode) {
 
 				Button(
 					onClick = {
+
 						editMode = true
 
-						vendorName = currentVendor.vendorName
-						category = currentVendor.category
-						vendorImage = currentVendor.vendorImage
+						customerName =
+							currentCustomer.customerName
+
+						customerImage =
+							currentCustomer.customerImage
 					}
 				) {
 					Text("Edit")
@@ -213,23 +217,36 @@ fun VendorProfileScreen(
 			}
 		}
 
-		if (vendorImage.isBlank()) {
+		/*
+		 * Profile picture
+		 */
+		if (customerImage.isBlank()) {
 
 			Icon(
-				imageVector = Icons.Default.AccountCircle,
-				contentDescription = "Default vendor profile picture",
-				modifier = Modifier.size(120.dp)
+				imageVector =
+					Icons.Default.AccountCircle,
+				contentDescription =
+					"Default customer profile picture",
+				modifier =
+					Modifier.size(120.dp)
 			)
 
 		} else {
 
 			AsyncImage(
-				model = IMAGE_BASE_URL + vendorImage,
-				contentDescription = "Vendor profile picture",
-				modifier = Modifier.size(120.dp)
+				model =
+					IMAGE_BASE_URL +
+						customerImage,
+				contentDescription =
+					"Customer profile picture",
+				modifier =
+					Modifier.size(120.dp)
 			)
 		}
 
+		/*
+		 * Change profile picture
+		 */
 		if (editMode) {
 
 			OutlinedButton(
@@ -239,6 +256,7 @@ fun VendorProfileScreen(
 				enabled = !uploadingImage,
 				modifier = Modifier.fillMaxWidth()
 			) {
+
 				Text(
 					if (uploadingImage) {
 						"Uploading..."
@@ -249,15 +267,18 @@ fun VendorProfileScreen(
 			}
 		}
 
+		/*
+		 * Customer name
+		 */
 		if (editMode) {
 
 			OutlinedTextField(
-				value = vendorName,
+				value = customerName,
 				onValueChange = {
-					vendorName = it
+					customerName = it
 				},
 				label = {
-					Text("Vendor Name")
+					Text("Customer Name")
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
@@ -265,18 +286,27 @@ fun VendorProfileScreen(
 		} else {
 
 			OutlinedTextField(
-				value = currentVendor.vendorName,
+				value =
+					currentCustomer.customerName,
 				onValueChange = {},
 				readOnly = true,
 				label = {
-					Text("Vendor Name")
+					Text("Customer Name")
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
 		}
 
+		/*
+		 * Email is read-only.
+		 *
+		 * This comes from the customer's Firestore data.
+		 * The profile update function deliberately does not
+		 * allow this field to be changed.
+		 */
 		OutlinedTextField(
-			value = currentVendor.vendorEmail,
+			value =
+				currentCustomer.customerEmail,
 			onValueChange = {},
 			readOnly = true,
 			label = {
@@ -285,94 +315,14 @@ fun VendorProfileScreen(
 			modifier = Modifier.fillMaxWidth()
 		)
 
-		if (editMode) {
-
-			Column(
-				modifier = Modifier.fillMaxWidth()
-			) {
-
-				OutlinedTextField(
-					value = category,
-					onValueChange = {},
-					readOnly = true,
-					label = {
-						Text("Category")
-					},
-					modifier = Modifier.fillMaxWidth()
-				)
-
-				DropdownMenu(
-					expanded = categoryExpanded,
-					onDismissRequest = {
-						categoryExpanded = false
-					}
-				) {
-
-					vendorCategories.forEach { item ->
-
-						DropdownMenuItem(
-							text = {
-								Text(item)
-							},
-							onClick = {
-								category = item
-								categoryExpanded = false
-							}
-						)
-					}
-				}
-
-				OutlinedButton(
-					onClick = {
-						categoryExpanded = true
-					},
-					modifier = Modifier.fillMaxWidth()
-				) {
-					Text(
-						if (category.isEmpty()) {
-							"Choose Category"
-						} else {
-							category
-						}
-					)
-				}
-			}
-
-		} else {
-
-			OutlinedTextField(
-				value = currentVendor.category,
-				onValueChange = {},
-				readOnly = true,
-				label = {
-					Text("Category")
-				},
-				modifier = Modifier.fillMaxWidth()
-			)
-		}
-
+		/*
+		 * Balance is read-only.
+		 *
+		 * Customer profile updates cannot modify this field.
+		 */
 		OutlinedTextField(
-			value = currentVendor.rating.toString(),
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Rating")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		OutlinedTextField(
-			value = currentVendor.distance.toString(),
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Distance")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		OutlinedTextField(
-			value = currentVendor.moneyBalance.toString(),
+			value =
+				currentCustomer.moneyBalance.toString(),
 			onValueChange = {},
 			readOnly = true,
 			label = {
@@ -381,22 +331,32 @@ fun VendorProfileScreen(
 			modifier = Modifier.fillMaxWidth()
 		)
 
+		/*
+		 * Save / Cancel
+		 */
 		if (editMode) {
 
 			Row(
 				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.spacedBy(8.dp)
+				horizontalArrangement =
+					Arrangement.spacedBy(8.dp)
 			) {
 
 				OutlinedButton(
 					onClick = {
-						vendorName = currentVendor.vendorName
-						category = currentVendor.category
-						vendorImage = currentVendor.vendorImage
+
+						customerName =
+							currentCustomer.customerName
+
+						customerImage =
+							currentCustomer.customerImage
+
 						editMode = false
 					},
-					modifier = Modifier.weight(1f)
+					modifier =
+						Modifier.weight(1f)
 				) {
+
 					Text("Cancel")
 				}
 
@@ -405,20 +365,26 @@ fun VendorProfileScreen(
 
 						saving = true
 
-						viewModel.updateVendorProfile(
-							vendorId = currentVendor.vendorId,
-							vendorName = vendorName.trim(),
-							category = category,
-							vendorImage = vendorImage
+						viewModel.updateCustomerProfile(
+							customerId =
+								currentCustomer.customerId,
+
+							customerName =
+								customerName.trim(),
+
+							customerImage =
+								customerImage
 						) { success ->
 
 							if (success) {
 
-								vendor =
-									currentVendor.copy(
-										vendorName = vendorName.trim(),
-										category = category,
-										vendorImage = vendorImage
+								customer =
+									currentCustomer.copy(
+										customerName =
+											customerName.trim(),
+
+										customerImage =
+											customerImage
 									)
 
 								editMode = false
@@ -427,12 +393,14 @@ fun VendorProfileScreen(
 							saving = false
 						}
 					},
-					enabled = !saving &&
-						!uploadingImage &&
-						vendorName.isNotBlank() &&
-						category.isNotBlank(),
-					modifier = Modifier.weight(1f)
+					enabled =
+						!saving &&
+							!uploadingImage &&
+							customerName.isNotBlank(),
+					modifier =
+						Modifier.weight(1f)
 				) {
+
 					Text(
 						if (saving) {
 							"Saving..."
@@ -445,6 +413,9 @@ fun VendorProfileScreen(
 
 		} else {
 
+			/*
+			 * Logout
+			 */
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -470,11 +441,12 @@ fun VendorProfileScreen(
 					Text("Logout")
 				}
 			}
+
 		}
 	}
 }
 
-private fun uploadVendorImage(
+private fun uploadCustomerImage(
 	context: Context,
 	uri: Uri,
 	viewModel: AppViewModel,
@@ -484,18 +456,23 @@ private fun uploadVendorImage(
 	try {
 
 		val inputStream =
-			context.contentResolver.openInputStream(uri)
-				?: throw Exception("Unable to open image")
+			context.contentResolver
+				.openInputStream(uri)
+				?: throw Exception(
+					"Unable to open image"
+				)
 
 		val file =
 			File.createTempFile(
-				"vendor_image",
+				"customer_image",
 				".jpg",
 				context.cacheDir
 			)
 
 		inputStream.use { input ->
+
 			file.outputStream().use { output ->
+
 				input.copyTo(output)
 			}
 		}

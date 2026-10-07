@@ -2,6 +2,7 @@ package com.example.curtineat.view
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Settings
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 fun MainDrawer(
     //waiting for onHistoryClick and onSettingClick
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick:() -> Unit,
     onLoginClick: () -> Unit,
     content: @Composable (onMenuClick: () -> Unit) -> Unit
@@ -49,10 +51,17 @@ fun MainDrawer(
                     closeDrawer()
                     onHomeClick()
                 },
+
+                onProfileClick = {
+                    closeDrawer()
+                    onProfileClick()
+                },
+
                 onWalletClick = {
                     closeDrawer()
                     onWalletClick()
                 },
+
                 onHistoryClick = { closeDrawer() },
                 onSettingClick = { closeDrawer() },
                 onLogInClick = {
@@ -74,6 +83,7 @@ fun MainDrawer(
 @Composable
 fun HamburgerNav(
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onSettingClick: () -> Unit,
@@ -94,6 +104,15 @@ fun HamburgerNav(
             },
             selected = false,
             onClick = onHomeClick
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Profile") },
+            icon = {
+                Icon(Icons.Default.AccountCircle, contentDescription = null)
+            },
+            selected = false,
+            onClick = onProfileClick
         )
 
         NavigationDrawerItem(

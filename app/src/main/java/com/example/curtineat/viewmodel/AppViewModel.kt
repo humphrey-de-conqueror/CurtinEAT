@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.curtineat.model.CartItem
-import com.example.curtineat.model.Account
 import com.example.curtineat.data.repository.api.ImageRepository
 import com.google.firebase.firestore.ListenerRegistration
 import okhttp3.MultipartBody
@@ -40,33 +39,18 @@ class AppViewModel(
     private val imageRepository: ImageRepository
 
 ) : ViewModel() {
-//    fun reload2() {
-//        loadVendors()
-//        loadProducts()
-//        loadNotifications()
-//    }
 
     //Testing for notification
     fun reload() {
-//        loadVendors()
-//        loadProducts()
+        loadVendors()
+        loadProducts()
         loadHomeData()
-
-        val customerId = _account.value.customerId
-
-        if (customerId != null) {
-            loadNotificationsForRecipient(customerId)
-        }
     }
 
     /* ====================
-     * Account
+     * Instance (api, firebase)
      * ==================== */
-
-    private val _account = MutableStateFlow(Account())
-
-    val account: StateFlow<Account> =
-        _account.asStateFlow()
+    private val firebaseAuth = FirebaseAuth.getInstance()
 
     /* ====================
      * Vendors
@@ -348,6 +332,7 @@ class AppViewModel(
         vendorId: String,
         vendorName: String,
         category: String,
+        vendorImage: String,
         onResult: (Boolean) -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -355,15 +340,19 @@ class AppViewModel(
                 vendorRepository.updateVendorProfile(
                     vendorId,
                     vendorName,
-                    category
+                    category,
+                    vendorImage
                 )
+
                 onResult(true)
+
             } catch (e: Exception) {
                 Log.e(
                     "AppViewModel",
                     "Failed to update vendor profile",
                     e
                 )
+
                 onResult(false)
             }
         }
@@ -481,6 +470,38 @@ class AppViewModel(
                 Log.e(
                     "AppViewModel",
                     "Failed to update customer",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateCustomerProfile(
+        customerId: String,
+        customerName: String,
+        customerImage: String,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                customerRepository.updateCustomerProfile(
+                    customerId = customerId,
+                    customerName = customerName,
+                    customerImage = customerImage
+                )
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update customer profile",
                     e
                 )
 
@@ -992,124 +1013,88 @@ class AppViewModel(
      * Authentication
      * ==================== */
 
-    private val firebaseAuth = FirebaseAuth.getInstance()
+        fun login(
+            email: String,
+            password: String,
+            isVendor: Boolean,
+            onResult: (Boolean) -> Unit = {}
+        ) {
 
-    fun login2(
-        email: String,
-        password: String,
-        isVendor: Boolean,
-        onResult: (Boolean) -> Unit = {}
-    ) {
-        println(
-            "TODO: Firebase Authentication login " +
-                    "for ${if (isVendor) "vendor" else "customer"}"
-        )
+            viewModelScope.launch {
 
-        onResult(false)
-    }
+                try {
 
-    fun login(
-        email: String,
-        password: String,
-        isVendor: Boolean,
-        onResult: (Boolean) -> Unit = {}
-    ) {
+                    // 1. Sign in with Firebase Authentication
+                    firebaseAuth
+                        .signInWithEmailAndPassword(
+                            email.trim(),
+                            password
+                        )
+                        .await()
 
-        viewModelScope.launch {
+                    // 2. Get the authenticated Firebase user
+                    val currentUser =
+                        firebaseAuth.currentUser
 
-            try {
-
-                // 1. Firebase Authentication
-                firebaseAuth
-                    .signInWithEmailAndPassword(
-                        email.trim(),
-                        password
-                    )
-                    .await()
-
-                // 2. Check selected CurtinEAT role
-                if (isVendor) {
-
-                    val vendor =
-                        vendorRepository
-                            .getAllVendors()
-                            .firstOrNull {
-                                it.vendorEmail.equals(
-                                    email.trim(),
-                                    ignoreCase = true
-                                )
-                            }
-
-                    if (vendor == null) {
-
-                        firebaseAuth.signOut()
-                        clearAccount()
+                    if (currentUser == null) {
 
                         onResult(false)
                         return@launch
                     }
 
-                    setVendorAccount(
-                        vendor.vendorId
-                    )
+                    // 3. Firebase UID is the user's identity
+                    val uid =
+                        currentUser.uid
 
-                } else {
+                    // 4. Check the selected role using the UID
+                    if (isVendor) {
 
-                    val customer =
-                        customerRepository
-                            .getAllCustomers()
-                            .firstOrNull {
-                                it.customerEmail.equals(
-                                    email.trim(),
-                                    ignoreCase = true
-                                )
-                            }
+                        val vendor =
+                            vendorRepository.getVendorById(uid)
 
-                    if (customer == null) {
+                        if (vendor == null) {
 
-                        firebaseAuth.signOut()
-                        clearAccount()
+                            // Authenticated successfully,
+                            // but this UID is not a vendor.
+                            firebaseAuth.signOut()
 
-                        onResult(false)
-                        return@launch
+                            onResult(false)
+                            return@launch
+                        }
+
+                    } else {
+
+                        val customer =
+                            customerRepository.getCustomerById(uid)
+
+                        if (customer == null) {
+
+                            // Authenticated successfully,
+                            // but this UID is not a customer.
+                            firebaseAuth.signOut()
+
+                            onResult(false)
+                            return@launch
+                        }
                     }
 
-                    setCustomerAccount(
-                        customer.customerId
+                    // 5. Authentication + role verification succeeded
+                    onResult(true)
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        "LOGIN",
+                        "Firebase login failed",
+                        e
                     )
+
+                    firebaseAuth.signOut()
+
+                    onResult(false)
                 }
-
-                onResult(true)
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "LOGIN",
-                    "Firebase login failed",
-                    e
-                )
-
-                firebaseAuth.signOut()
-                clearAccount()
-
-                onResult(false)
             }
         }
-    }
-
-    fun register2(
-        email: String,
-        password: String,
-        isVendor: Boolean,
-        onResult: (RegisterResult) -> Unit = {}
-    ) {
-        println(
-            "TODO: Firebase Authentication registration " +
-                    "for ${if (isVendor) "vendor" else "customer"}"
-        )
-
-        onResult(RegisterResult.ERROR)
-    }
 
     fun register(
         email: String,
@@ -1159,8 +1144,6 @@ class AppViewModel(
 
                     vendorRepository.addVendor(vendor)
 
-                    setVendorAccount(uid)
-
                 } else {
 
                     val customer =
@@ -1172,8 +1155,6 @@ class AppViewModel(
                         )
 
                     customerRepository.addCustomer(customer)
-
-                    setCustomerAccount(uid)
                 }
 
                 onResult(
@@ -1228,92 +1209,114 @@ class AppViewModel(
 
         _notifications.value = emptyList()
 
-        clearAccount()
-        clearCart()
+//        clearCart()
     }
 
-    /* ====================
-     * Account
-     * ==================== */
-
-    fun setCustomerAccount(
-        customerId: String
+    fun checkCurrentUserRole(
+        onResult: (UserRole) -> Unit
     ) {
-        _account.value =
-            Account(
-                customerId = customerId
-            )
-    }
+        viewModelScope.launch {
 
-    fun setVendorAccount(
-        vendorId: String
-    ) {
-        _account.value =
-            Account(
-                vendorId = vendorId
-            )
-    }
+            try {
 
-    fun clearAccount() {
-        _account.value = Account()
+                val currentUser =
+                    firebaseAuth.currentUser
+
+                if (currentUser == null) {
+                    onResult(UserRole.NONE)
+                    return@launch
+                }
+
+                val uid =
+                    currentUser.uid
+
+                // Check whether the Firebase UID belongs to a vendor
+                val vendor =
+                    vendorRepository.getVendorById(uid)
+
+                if (vendor != null) {
+                    onResult(UserRole.VENDOR)
+                    return@launch
+                }
+
+                // Check whether the Firebase UID belongs to a customer
+                val customer =
+                    customerRepository.getCustomerById(uid)
+
+                if (customer != null) {
+                    onResult(UserRole.CUSTOMER)
+                    return@launch
+                }
+
+                // Firebase user exists, but no CurtinEAT
+                // vendor/customer document was found.
+                onResult(UserRole.NONE)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to check current user role",
+                    e
+                )
+
+                onResult(UserRole.NONE)
+            }
+        }
     }
 
     /* ====================
      * Wallet
      * ==================== */
 
-    fun getCurrentBalance(
-        onResult: (Double?) -> Unit
-    ) {
+        fun getCurrentBalance(
+            onResult: (Double?) -> Unit
+        ) {
+            viewModelScope.launch {
 
-        viewModelScope.launch {
+                try {
 
-            try {
+                    val currentUser =
+                        firebaseAuth.currentUser
 
-                val currentAccount = _account.value
+                    if (currentUser == null) {
+                        onResult(null)
+                        return@launch
+                    }
 
-                if (currentAccount.customerId != null) {
-
-                    val customer =
-                        customerRepository.getCustomerById(
-                            currentAccount.customerId
-                        )
-
-                    onResult(
-                        customer?.moneyBalance
-                    )
-
-                    return@launch
-                }
-
-                if (currentAccount.vendorId != null) {
+                    val uid =
+                        currentUser.uid
 
                     val vendor =
-                        vendorRepository.getVendorById(
-                            currentAccount.vendorId
-                        )
+                        vendorRepository.getVendorById(uid)
 
-                    onResult(
-                        vendor?.moneyBalance
+                    if (vendor != null) {
+                        onResult(vendor.moneyBalance)
+                        return@launch
+                    }
+
+                    val customer =
+                        customerRepository.getCustomerById(uid)
+
+                    if (customer != null) {
+                        onResult(customer.moneyBalance)
+                        return@launch
+                    }
+
+                    onResult(null)
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        "AppViewModel",
+                        "Failed to get current balance",
+                        e
                     )
 
-                    return@launch
+                    onResult(null)
                 }
-
-                onResult(null)
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "AppViewModel",
-                    "Failed to get current balance",
-                    e
-                )
-
-                onResult(null)
             }
         }
-    }
 
     fun topUp(
         amount: Double,

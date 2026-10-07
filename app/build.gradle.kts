@@ -89,11 +89,14 @@ dependencies {
     // OkHttp - needed for MultipartBody.Part
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    //Authentication
+    // Authentication
     implementation("com.google.firebase:firebase-auth")
 
+    // Coil
+    implementation(libs.coil.compose)
+
     //for display image
-    implementation("io.coil-kt:coil-compose:2.7.0")
+//    implementation("io.coil-kt:coil-compose:2.7.0")
 
     // Testing
     testImplementation(libs.junit)

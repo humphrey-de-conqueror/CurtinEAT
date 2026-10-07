@@ -26,8 +26,8 @@ class FirebaseVendorSource {
 				category = document.getString("category") ?: "",
 				distance = document.getDouble("distance") ?: 0.0,
 				moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
+				vendorImage = document.getString("vendorImage") ?: "",
 //				isOpen = document.getBoolean("isOpen") ?:true,
-
 			)
 		}
 	}
@@ -53,6 +53,7 @@ class FirebaseVendorSource {
 			category = document.getString("category") ?: "",
 			distance = document.getDouble("distance") ?: 0.0,
 			moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
+			vendorImage = document.getString("vendorImage") ?: "",
 //			isOpen = document.getBoolean("isOpen") ?:true,
 		)
 	}
@@ -71,6 +72,7 @@ class FirebaseVendorSource {
 					"category" to vendor.category,
 					"distance" to vendor.distance,
 					"moneyBalance" to vendor.moneyBalance,
+					"vendorImage" to vendor.vendorImage,
 //					"isOpen" to vendor.isOpen
 				)
 			)
@@ -101,7 +103,8 @@ class FirebaseVendorSource {
 	suspend fun updateVendorProfile(
 		vendorId: String,
 		vendorName: String,
-		category: String
+		category: String,
+		vendorImage: String
 	) {
 
 		vendorCollection
@@ -109,7 +112,8 @@ class FirebaseVendorSource {
 			.update(
 				mapOf(
 					"vendorName" to vendorName,
-					"category" to category
+					"category" to category,
+					"vendorImage" to vendorImage
 				)
 			)
 			.await()
