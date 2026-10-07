@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
@@ -176,9 +178,12 @@ fun VendorProfileScreen(
 	val currentVendor =
 		vendor!!
 
+	val scrollState = rememberScrollState()
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
+			.verticalScroll(scrollState)
 			.padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp)
 	) {
@@ -440,18 +445,30 @@ fun VendorProfileScreen(
 
 		} else {
 
-			Button(
-				onClick = {
-
-					viewModel.logout()
-
-					viewModel.clearCart()
-
-					onHomeClick()
-				},
-				modifier = Modifier.fillMaxWidth()
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(16.dp),
+				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
-				Text("Logout")
+				Button(
+					onClick = {
+						onHomeClick()
+					},
+					modifier = Modifier.weight(1f)
+				) {
+					Text("Back")
+				}
+
+				Button(
+					onClick = {
+						viewModel.logout()
+						onHomeClick()
+					},
+					modifier = Modifier.weight(1f)
+				) {
+					Text("Logout")
+				}
 			}
 		}
 	}
