@@ -26,8 +26,11 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import kotlinx.coroutines.tasks.await
 import com.example.curtineat.data.remote.firebase.model.RecipientType
+import com.example.curtineat.data.repository.room.MenuSyncRepository
+import com.example.curtineat.data.repository.room.ProductLocalRepository
+import com.example.curtineat.data.repository.room.VendorLocalRepository
+import com.example.curtineat.data.local.room.mapper.toFirebaseData
 
 
 class AppViewModel(
@@ -36,15 +39,20 @@ class AppViewModel(
     private val productRepository: FirebaseProductRepository,
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+
+    private val vendorLocalRepository: VendorLocalRepository,
+    private val productLocalRepository: ProductLocalRepository,
+    private val menuSyncRepository: MenuSyncRepository
 
 ) : ViewModel() {
 
-    //Testing for notification
+    /* ====================
+     * reload
+     * ==================== */
+
     fun reload() {
-        loadVendors()
-        loadProducts()
-        loadHomeData()
+        syncMenu()
     }
 
     /* ====================
@@ -82,15 +90,47 @@ class AppViewModel(
     val products: StateFlow<List<FirebaseProductData>> =
         _products.asStateFlow()
 
-    //Home/Main screen
+    /* ====================
+     * Constructor
+     * ==================== */
 
-    private val _isLoading =
-        MutableStateFlow(true)
+    init {
+        observeLocalMenu()
+    }
 
-    val isLoading: StateFlow<Boolean> =
-        _isLoading.asStateFlow()
+    /* ====================
+     * room
+     * ==================== */
+    private fun observeLocalMenu() {
 
-    fun loadHomeData() {
+        viewModelScope.launch {
+
+            vendorLocalRepository
+                .getAllVendors()
+                .collect { vendors ->
+
+                    _vendors.value =
+                        vendors.map {
+                            it.toFirebaseData()
+                        }
+                }
+        }
+
+        viewModelScope.launch {
+
+            productLocalRepository
+                .getAllProducts()
+                .collect { products ->
+
+                    _products.value =
+                        products.map {
+                            it.toFirebaseData()
+                        }
+                }
+        }
+    }
+
+    fun syncMenu() {
 
         viewModelScope.launch {
 
@@ -98,17 +138,13 @@ class AppViewModel(
 
             try {
 
-                _vendors.value =
-                    vendorRepository.getAllVendors()
-
-                _products.value =
-                    productRepository.getAllProducts()
+                menuSyncRepository.syncMenu()
 
             } catch (e: Exception) {
 
                 Log.e(
                     "AppViewModel",
-                    "Failed to load home data",
+                    "Failed to sync menu",
                     e
                 )
 
@@ -117,6 +153,20 @@ class AppViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+    /* ====================
+     * Loading animation
+     * ==================== */
+
+    private val _isLoading =
+        MutableStateFlow(true)
+
+    val isLoading: StateFlow<Boolean> =
+        _isLoading.asStateFlow()
+
+    fun loadHomeData() {
+        syncMenu()
     }
 
     /* ====================
@@ -235,25 +285,6 @@ class AppViewModel(
     /* ====================
      * Vendor
      * ==================== */
-
-    fun loadVendors() {
-
-        viewModelScope.launch {
-
-            try {
-                _vendors.value =
-                    vendorRepository.getAllVendors()
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "AppViewModel",
-                    "Failed to load vendors",
-                    e
-                )
-            }
-        }
-    }
 
     fun getVendorById(
         vendorId: String,
@@ -538,45 +569,21 @@ class AppViewModel(
      * Product
      * ==================== */
 
-    fun loadProducts() {
-
-        viewModelScope.launch {
-
-            try {
-                _products.value =
-                    productRepository.getAllProducts()
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "AppViewModel",
-                    "Failed to load products",
-                    e
-                )
-            }
-        }
-    }
-
     fun loadProductsByVendor(
         vendorId: String
     ) {
 
         viewModelScope.launch {
 
-            try {
-                _products.value =
-                    productRepository.getProductsByVendorId(
-                        vendorId
-                    )
+            productLocalRepository
+                .getProductsByVendorId(vendorId)
+                .collect { products ->
 
-            } catch (e: Exception) {
-
-                Log.e(
-                    "AppViewModel",
-                    "Failed to load vendor products",
-                    e
-                )
-            }
+                    _products.value =
+                        products.map {
+                            it.toFirebaseData()
+                        }
+                }
         }
     }
 

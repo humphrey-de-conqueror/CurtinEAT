@@ -1,7 +1,9 @@
 package com.example.curtineat.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.curtineat.data.local.room.RoomProvider
 import com.example.curtineat.data.remote.api.image.ImageApiProvider
 import com.example.curtineat.data.remote.api.image.ImageApiSource
 import com.example.curtineat.data.remote.firebase.source.FirebaseCustomerSource
@@ -15,8 +17,13 @@ import com.example.curtineat.data.repository.firebase.FirebaseNotificationReposi
 import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
 import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
 import com.example.curtineat.data.repository.firebase.FirebaseVendorRepository
+import com.example.curtineat.data.repository.room.MenuSyncRepository
+import com.example.curtineat.data.repository.room.ProductLocalRepository
+import com.example.curtineat.data.repository.room.VendorLocalRepository
 
-class AppViewModelFactory : ViewModelProvider.Factory {
+class AppViewModelFactory(
+    private val context: Context
+) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(
         modelClass: Class<T>
@@ -56,6 +63,33 @@ class AppViewModelFactory : ViewModelProvider.Factory {
                     )
                 )
 
+            /*
+             * ====================
+             * Room
+             * ====================
+             */
+
+            val database =
+                RoomProvider.getDatabase(context)
+
+            val vendorLocalRepository =
+                VendorLocalRepository(
+                    database.vendorDao()
+                )
+
+            val productLocalRepository =
+                ProductLocalRepository(
+                    database.productDao()
+                )
+
+            val menuSyncRepository =
+                MenuSyncRepository(
+                    firebaseVendorRepository = vendorRepository,
+                    firebaseProductRepository = productRepository,
+                    vendorLocalRepository = vendorLocalRepository,
+                    productLocalRepository = productLocalRepository
+                )
+
             @Suppress("UNCHECKED_CAST")
             return AppViewModel(
                 vendorRepository = vendorRepository,
@@ -63,7 +97,15 @@ class AppViewModelFactory : ViewModelProvider.Factory {
                 productRepository = productRepository,
                 orderRepository = orderRepository,
                 notificationRepository = notificationRepository,
-                imageRepository = imageRepository
+                imageRepository = imageRepository,
+
+                /*
+                 * Room dependencies
+                 */
+                vendorLocalRepository = vendorLocalRepository,
+                productLocalRepository = productLocalRepository,
+                menuSyncRepository = menuSyncRepository
+
             ) as T
         }
 
