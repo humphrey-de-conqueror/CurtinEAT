@@ -1596,20 +1596,15 @@ class AppViewModel(
 
                 val order =
                     FirebaseOrderData(
-                        customerId =
-                            customerId,
+                        customerId = customerId,
 
-                        vendorId =
-                            vendorId,
+                        vendorId = vendorId,
 
-                        totalPrice =
-                            totalPrice,
+                        totalPrice = totalPrice,
 
-                        status =
-                            "PENDING",
+                        status = "PENDING",
 
-                        products =
-                            orderProducts
+                        products = orderProducts
                     )
 
                 val newOrderId =
@@ -1619,17 +1614,13 @@ class AppViewModel(
                 notificationRepository
                     .addNotification(
                         FirebaseNotificationData(
-                            recipientId =
-                                vendorId,
+                            recipientId = vendorId,
 
-                            recipientType =
-                                RecipientType.VENDOR,
+                            recipientType = RecipientType.VENDOR,
 
-                            message =
-                                "New order received.",
+                            message = "New order received.",
 
-                            orderId =
-                                newOrderId
+                            orderId = newOrderId
                         )
                     )
 

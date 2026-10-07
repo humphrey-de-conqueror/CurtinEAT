@@ -92,6 +92,15 @@ fun AppScaffold(
 
     val isLoading by appViewModel.isLoading.collectAsState()
 
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+    LaunchedEffect(currentUserId) {
+
+        if (currentUserId != null) {
+            appViewModel.startNotificationListener(currentUserId)
+        }
+    }
+
     MainDrawer(
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
@@ -150,21 +159,21 @@ fun MainScreen(
 ) {
     val cart by appViewModel.cart.collectAsState()
 
-    val currentUser =
-        FirebaseAuth.getInstance().currentUser
-
-    val userId =
-        currentUser?.uid
-
-    LaunchedEffect(userId) {
-
-        if (userId != null) {
-
-            appViewModel.startNotificationListener(
-                userId
-            )
-        }
-    }
+//    val currentUser =
+//        FirebaseAuth.getInstance().currentUser
+//
+//    val userId =
+//        currentUser?.uid
+//
+//    LaunchedEffect(userId) {
+//
+//        if (userId != null) {
+//
+//            appViewModel.startNotificationListener(
+//                userId
+//            )
+//        }
+//    }
     LaunchedEffect(Unit) {
         appViewModel.loadHomeData()
     }
@@ -284,6 +293,7 @@ fun TopBarScreen(
     var notificationsOpen by remember { mutableStateOf(false) }
 
     val notifications by appViewModel.notifications.collectAsState()
+    val unreadCount = notifications.count { !it.isRead }
 
     var notificationDrawerLoading by remember {
         mutableStateOf(false)
@@ -368,19 +378,6 @@ fun TopBarScreen(
             }
 
             // NOTIFICATION
-//            if (showNotifications) {
-//                IconButton(
-//                    onClick = {
-//                        notificationsOpen = true
-//                    }
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Notifications,
-//                        contentDescription = "Notifications"
-//                    )
-//                }
-//            }
-
             if (showNotifications) {
 
                 Box {
@@ -391,10 +388,42 @@ fun TopBarScreen(
                             notificationsOpen = true
                         }
                     ) {
+
                         Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications"
+                            imageVector =
+                                Icons.Default.Notifications,
+                            contentDescription =
+                                "Notifications"
                         )
+                    }
+
+                    if (unreadCount > 0) {
+
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .align(Alignment.TopEnd)
+                                .background(
+                                    color = Color.Red,
+                                    shape = CircleShape
+                                ),
+                            contentAlignment =
+                                Alignment.Center
+                        ) {
+
+                            Text(
+                                text =
+                                    if (unreadCount > 99) {
+                                        "99+"
+                                    } else {
+                                        unreadCount.toString()
+                                    },
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight =
+                                    FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -552,12 +581,11 @@ fun getNotificationDateLabel(
     date: java.util.Date
 ): String {
 
-    val today = java.util.Calendar.getInstance()
+    val timeZone = java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
-    val notificationDate =
-        java.util.Calendar.getInstance().apply {
-            time = date
-        }
+    val today = java.util.Calendar.getInstance(timeZone)
+
+    val notificationDate = java.util.Calendar.getInstance(timeZone).apply { time = date }
 
     // TODAY
     if (
@@ -571,13 +599,12 @@ fun getNotificationDateLabel(
     }
 
     // YESTERDAY
-    val yesterday =
-        java.util.Calendar.getInstance().apply {
-            add(
-                java.util.Calendar.DAY_OF_YEAR,
-                -1
-            )
-        }
+    val yesterday = java.util.Calendar.getInstance(timeZone).apply {
+                add(
+                    java.util.Calendar.DAY_OF_YEAR,
+                    -1
+                )
+            }
 
     if (
         yesterday.get(java.util.Calendar.YEAR) ==
@@ -590,20 +617,30 @@ fun getNotificationDateLabel(
     }
 
     // OTHER DATES
-    return java.text.SimpleDateFormat(
-        "d MMMM yyyy",
-        java.util.Locale.getDefault()
-    ).format(date)
+    val formatter =
+        java.text.SimpleDateFormat(
+            "d MMMM yyyy",
+            java.util.Locale.getDefault()
+        )
+
+    formatter.timeZone = timeZone
+
+    return formatter.format(date)
 }
 
 fun formatNotificationTime(
     date: java.util.Date
 ): String {
 
-    return java.text.SimpleDateFormat(
-        "h:mm a",
-        java.util.Locale.getDefault()
-    ).format(date)
+    val formatter =
+        java.text.SimpleDateFormat(
+            "h:mm a",
+            java.util.Locale.getDefault()
+        )
+
+    formatter.timeZone = java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+
+    return formatter.format(date)
 }
 
 @Composable

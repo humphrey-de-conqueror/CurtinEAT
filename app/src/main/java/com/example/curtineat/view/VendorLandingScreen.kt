@@ -106,17 +106,14 @@ fun VendorLandingScreen(
 
             appViewModel.loadHomeData()
 
-            // Realtime incoming orders
-            appViewModel
-                .startVendorOrderListener(
-                    loggedInVendorId
-                )
+//            // Realtime incoming orders
+            appViewModel.startVendorOrderListener(loggedInVendorId)
 
             // Realtime notification drawer
-            appViewModel
-                .startNotificationListener(
-                    loggedInVendorId
-                )
+//            appViewModel
+//                .startNotificationListener(
+//                    loggedInVendorId
+//                )
         }
     }
 
