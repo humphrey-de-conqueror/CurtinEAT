@@ -24,7 +24,8 @@ class FirebaseProductSource {
 				productName = document.getString("productName") ?: "",
 				productPrice = document.getDouble("productPrice") ?: 0.0,
 				productImage = document.getString("productImage") ?: "",
-//				isAvailable = document.getBoolean("isAvailable") ?: true
+				isAvailable =
+					document.getBoolean("isAvailable") ?: true
 			)
 		}
 	}
@@ -48,7 +49,8 @@ class FirebaseProductSource {
 			productName = document.getString("productName") ?: "",
 			productPrice = document.getDouble("productPrice") ?: 0.0,
 			productImage = document.getString("productImage") ?: "",
-//			isAvailable = document.getBoolean("isAvailable") ?: true
+			isAvailable =
+				document.getBoolean("isAvailable") ?: true
 		)
 	}
 
@@ -68,7 +70,8 @@ class FirebaseProductSource {
 				productName = document.getString("productName") ?: "",
 				productPrice = document.getDouble("productPrice") ?: 0.0,
 				productImage = document.getString("productImage") ?: "",
-//				isAvailable = document.getBoolean("isAvailable") ?: true
+				isAvailable =
+					document.getBoolean("isAvailable") ?: true
 			)
 		}
 	}
@@ -86,7 +89,7 @@ class FirebaseProductSource {
 					"productName" to product.productName,
 					"productPrice" to product.productPrice,
 					"productImage" to product.productImage,
-//					"isAvailable" to product.isAvailable
+					"isAvailable" to product.isAvailable
 				)
 			)
 			.await()
@@ -106,7 +109,28 @@ class FirebaseProductSource {
 					"productName" to product.productName,
 					"productPrice" to product.productPrice,
 					"productImage" to product.productImage,
-//					"isAvailable" to product.isAvailable
+					"isAvailable" to product.isAvailable
+				)
+			)
+			.await()
+	}
+
+	suspend fun updateProductProfile(
+		productId: String,
+		productName: String,
+		productPrice: Double,
+		productImage: String,
+		isAvailable: Boolean
+	) {
+
+		productCollection
+			.document(productId)
+			.update(
+				mapOf(
+					"productName" to productName,
+					"productPrice" to productPrice,
+					"productImage" to productImage,
+					"isAvailable" to isAvailable
 				)
 			)
 			.await()

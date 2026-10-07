@@ -40,6 +40,23 @@ class FirebaseProductRepository(
 		source.updateProduct(product)
 	}
 
+	suspend fun updateProductProfile(
+		productId: String,
+		productName: String,
+		productPrice: Double,
+		productImage: String,
+		isAvailable: Boolean
+	) {
+
+		source.updateProductProfile(
+			productId = productId,
+			productName = productName,
+			productPrice = productPrice,
+			productImage = productImage,
+			isAvailable = isAvailable
+		)
+	}
+
 	suspend fun deleteProduct(
 		productId: String
 	) {

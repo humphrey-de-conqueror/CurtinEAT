@@ -653,6 +653,41 @@ class AppViewModel(
         }
     }
 
+    fun updateProductProfile(
+        productId: String,
+        productName: String,
+        productPrice: Double,
+        productImage: String,
+        isAvailable: Boolean,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+                productRepository.updateProductProfile(
+                    productId = productId,
+                    productName = productName,
+                    productPrice = productPrice,
+                    productImage = productImage,
+                    isAvailable = isAvailable
+                )
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "AppViewModel",
+                    "Failed to update product profile",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
     fun deleteProduct(
         productId: String,
         onResult: (Boolean) -> Unit = {}
