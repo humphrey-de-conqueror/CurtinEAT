@@ -1,6 +1,5 @@
 package com.example.curtineat.view
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -40,41 +39,31 @@ import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
 import com.example.curtineat.ui.theme.SecondaryCard
 import androidx.compose.material3.Text
 import coil.compose.AsyncImage
-import com.example.curtineat.ui.theme.PrimaryButton
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.platform.LocalContext
-import com.example.curtineat.R
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import com.google.firebase.auth.FirebaseAuth
 
 
-@SuppressLint("ResourceType")
+
 @Composable
 fun VendorLandingScreen(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onFoodClick: (String) -> Unit,
     onAddFoodClick: () -> Unit
 ) {
 
-    val account by
-    appViewModel.account.collectAsState()
+    val vendors by appViewModel.vendors.collectAsState()
 
-    val vendors by
-    appViewModel.vendors.collectAsState()
+    val products by appViewModel.products.collectAsState()
 
-    val products by
-    appViewModel.products.collectAsState()
+    val orders by appViewModel.orders.collectAsState()
 
-    val orders by
-    appViewModel.orders.collectAsState()
-
-    val loggedInVendorId = account.vendorId
+    val loggedInVendorId = FirebaseAuth.getInstance().currentUser?.uid
 
     val context = LocalContext.current
 
@@ -139,6 +128,7 @@ fun VendorLandingScreen(
         onLoginClick = onLoginClick,
         showSearch = false,
         showNotifications = true,
+        onProfileClick = onProfileClick,
 
         floatingActionButton = {
 
