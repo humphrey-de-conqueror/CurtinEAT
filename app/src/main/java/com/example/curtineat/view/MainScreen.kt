@@ -145,8 +145,7 @@ fun MainScreen(
     onProfileClick: () -> Unit,
     onHomeClick: () -> Unit,
     onWalletClick:() -> Unit,
-    onLoginClick: () -> Unit,
-    onFirestoreTestClick: () -> Unit //testing Firebase
+    onLoginClick: () -> Unit
 ) {
     val cart by appViewModel.cart.collectAsState()
 
@@ -188,8 +187,7 @@ fun MainScreen(
 
         BodyScreen(
             innerPadding = innerPadding,
-            appViewModel = appViewModel,
-            onFirestoreTestClick = onFirestoreTestClick
+            appViewModel = appViewModel
         )
 
     }
@@ -648,7 +646,6 @@ fun CartButton(
 fun BodyScreen(
     innerPadding: PaddingValues,
     appViewModel: AppViewModel,
-    onFirestoreTestClick: () -> Unit //Testing Firebase
 ) {
     val listState = rememberLazyListState()
 
@@ -678,25 +675,6 @@ fun BodyScreen(
         state = listState,
         modifier = Modifier.padding(innerPadding)
     ) {
-        //Testing Firebase
-        item {
-            PrimaryButton(
-                text = "Test Firebase",
-                onClick = onFirestoreTestClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-
-//            PrimaryButton(
-//                text = "Seed Firestore",
-//                onClick = {
-//                    appViewModel.seedFirestore()
-//                }
-//            )
-
-        }
-
         item {
             // either a swap up action to reload or
             // a button to reload

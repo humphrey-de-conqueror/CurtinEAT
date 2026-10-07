@@ -14,7 +14,6 @@ import com.example.curtineat.view.AddProductScreen
 import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.CustomerProfileScreen
-import com.example.curtineat.view.FirestoreTestingScreen
 import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.RegistrationScreen
@@ -31,7 +30,7 @@ import kotlin.getValue
 class MainActivity : ComponentActivity() {
 
     private val vm: AppViewModel by viewModels {
-        AppViewModelFactory()
+        AppViewModelFactory(applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,9 +73,6 @@ object RouteCustomerProfileScreen
 
 @Serializable
 object RouteAddProductScreen
-
-@Serializable
-object RouteFirestoreTestingScreen
 
 
 @Composable
@@ -177,10 +173,6 @@ fun ScreenNavigation(
         nav.navigate(RouteAddProductScreen)
     }
 
-    val onFirestoreTestClick: () -> Unit = {
-        nav.navigate(RouteFirestoreTestingScreen)
-    }
-
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -194,8 +186,7 @@ fun ScreenNavigation(
                 onProfileClick = onProfileClick,
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick,
-                onFirestoreTestClick = onFirestoreTestClick
+                onLoginClick = onLoginClick
             )
         }
 
@@ -276,13 +267,6 @@ fun ScreenNavigation(
                 onBackClick = {
                     nav.popBackStack()
                 }
-            )
-        }
-
-        composable<RouteFirestoreTestingScreen> {
-
-            FirestoreTestingScreen(
-                appViewModel = appViewModel
             )
         }
     }
