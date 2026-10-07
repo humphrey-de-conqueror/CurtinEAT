@@ -28,6 +28,7 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import kotlinx.coroutines.tasks.await
+import com.example.curtineat.data.remote.firebase.model.RecipientType
 
 
 class AppViewModel(
@@ -1217,6 +1218,14 @@ class AppViewModel(
         notificationListener?.remove()
         notificationListener = null
 
+        vendorOrderListener?.remove()
+        vendorOrderListener = null
+
+        customerOrderListener?.remove()
+        customerOrderListener = null
+
+        _orders.value = emptyList()
+
         _notifications.value = emptyList()
 
         clearAccount()
@@ -1565,7 +1574,43 @@ class AppViewModel(
                             orderProducts
                     )
 
-                orderRepository.addOrder(order)
+                val newOrderId =
+                    orderRepository.addOrder(
+                        order
+                    )
+                notificationRepository
+                    .addNotification(
+                        FirebaseNotificationData(
+                            recipientId =
+                                vendorId,
+
+                            recipientType =
+                                RecipientType.VENDOR,
+
+                            message =
+                                "New order received.",
+
+                            orderId =
+                                newOrderId
+                        )
+                    )
+
+                notificationRepository
+                    .addNotification(
+                        FirebaseNotificationData(
+                            recipientId =
+                                customerId,
+
+                            recipientType =
+                                RecipientType.CUSTOMER,
+
+                            message =
+                                "Your order has been placed.",
+
+                            orderId =
+                                newOrderId
+                        )
+                    )
 
                 _cart.value = emptyList()
 
@@ -1599,8 +1644,148 @@ class AppViewModel(
         _checkoutCompleted.value = false
     }
 
+    /* ====================
+     * Notification
+     * ==================== */
+
+    private var vendorOrderListener:
+            ListenerRegistration? = null
+
+    private var customerOrderListener:
+            ListenerRegistration? = null
+
+    fun startVendorOrderListener(
+        vendorId: String
+    ) {
+
+        vendorOrderListener?.remove()
+
+        vendorOrderListener =
+            orderRepository
+                .listenToOrdersByVendorId(
+                    vendorId
+                ) { orders ->
+
+                    _orders.value = orders
+                }
+    }
+
+
+    fun startCustomerOrderListener(
+        customerId: String
+    ) {
+
+        customerOrderListener?.remove()
+
+        customerOrderListener =
+            orderRepository
+                .listenToOrdersByCustomerId(
+                    customerId
+                ) { orders ->
+
+                    _orders.value = orders
+                }
+    }
+
+    fun advanceOrderStatus(
+        order: FirebaseOrderData,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        val nextStatus =
+            when (
+                order.status.uppercase()
+            ) {
+
+                "PENDING" ->
+                    "PREPARING"
+
+                "PREPARING" ->
+                    "READY"
+
+                "READY" ->
+                    "COMPLETED"
+
+                else ->
+                    null
+            }
+
+        if (nextStatus == null) {
+            onResult(false)
+            return
+        }
+
+        viewModelScope.launch {
+
+            try {
+
+                val updatedOrder =
+                    order.copy(
+                        status = nextStatus
+                    )
+
+                orderRepository
+                    .updateOrder(
+                        updatedOrder
+                    )
+
+
+                val notificationMessage =
+                    when (nextStatus) {
+
+                        "PREPARING" ->
+                            "Your order is being prepared."
+
+                        "READY" ->
+                            "Your order is ready for pickup!"
+
+                        "COMPLETED" ->
+                            "Your order has been completed."
+
+                        else ->
+                            "Your order status has been updated."
+                    }
+
+
+                notificationRepository
+                    .addNotification(
+                        FirebaseNotificationData(
+                            recipientId =
+                                order.customerId,
+
+                            recipientType =
+                                RecipientType.CUSTOMER,
+
+                            message =
+                                notificationMessage,
+
+                            orderId =
+                                order.orderId
+                        )
+                    )
+
+                onResult(true)
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "ORDER_STATUS",
+                    "Failed to update order status",
+                    e
+                )
+
+                onResult(false)
+            }
+        }
+    }
+
+
+    //to clear listeners
     override fun onCleared() {
         super.onCleared()
+
         notificationListener?.remove()
+        vendorOrderListener?.remove()
+        customerOrderListener?.remove()
     }
 }

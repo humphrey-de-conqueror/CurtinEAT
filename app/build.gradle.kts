@@ -92,6 +92,9 @@ dependencies {
     //Authentication
     implementation("com.google.firebase:firebase-auth")
 
+    //for display image
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     // Testing
     testImplementation(libs.junit)
 

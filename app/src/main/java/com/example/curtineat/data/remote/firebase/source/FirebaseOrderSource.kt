@@ -4,6 +4,8 @@ import com.example.curtineat.data.remote.firebase.FirebaseProvider
 import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
 import com.example.curtineat.data.remote.firebase.model.FirebaseOrderProductData
 import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.google.firebase.firestore.ListenerRegistration
 
 class FirebaseOrderSource {
 
@@ -67,30 +69,132 @@ class FirebaseOrderSource {
 		}
 	}
 
+	//for real time order
+	fun listenToOrdersByVendorId(
+		vendorId: String,
+		onUpdate: (List<FirebaseOrderData>) -> Unit
+	): ListenerRegistration {
+
+		return orderCollection
+			.whereEqualTo(
+				"vendorId",
+				vendorId
+			)
+			.addSnapshotListener { snapshot, error ->
+
+				if (error != null) {
+
+					Log.e(
+						"ORDER_LISTENER",
+						"Vendor order listener failed",
+						error
+					)
+
+					return@addSnapshotListener
+				}
+
+				val orders =
+					snapshot
+						?.documents
+						?.map { document ->
+							document.toFirebaseOrder()
+						}
+						?.sortedByDescending {
+							it.timestamp.toDate()
+						}
+						?: emptyList()
+
+				onUpdate(orders)
+			}
+	}
+
+
+	fun listenToOrdersByCustomerId(
+		customerId: String,
+		onUpdate: (List<FirebaseOrderData>) -> Unit
+	): ListenerRegistration {
+
+		return orderCollection
+			.whereEqualTo(
+				"customerId",
+				customerId
+			)
+			.addSnapshotListener { snapshot, error ->
+
+				if (error != null) {
+
+					Log.e(
+						"ORDER_LISTENER",
+						"Customer order listener failed",
+						error
+					)
+
+					return@addSnapshotListener
+				}
+
+				val orders =
+					snapshot
+						?.documents
+						?.map { document ->
+							document.toFirebaseOrder()
+						}
+						?.sortedByDescending {
+							it.timestamp.toDate()
+						}
+						?: emptyList()
+
+				onUpdate(orders)
+			}
+	}
+
 	suspend fun addOrder(
 		order: FirebaseOrderData
-	) {
-		val document = orderCollection.document()
+	): String {
+
+		val document =
+			orderCollection.document()
 
 		document
 			.set(
 				mapOf(
-					"customerId" to order.customerId,
-					"vendorId" to order.vendorId,
-					"totalPrice" to order.totalPrice,
-					"status" to order.status,
-					"products" to order.products.map { product ->
-						mapOf(
-							"productId" to product.productId,
-							"productName" to product.productName,
-							"productPrice" to product.productPrice,
-							"quantity" to product.quantity
-						)
-					},
-					"timestamp" to order.timestamp
+					"customerId" to
+							order.customerId,
+
+					"vendorId" to
+							order.vendorId,
+
+					"totalPrice" to
+							order.totalPrice,
+
+					"status" to
+							order.status,
+
+					"products" to
+							order.products.map {
+									product ->
+
+								mapOf(
+									"productId" to
+											product.productId,
+
+									"productName" to
+											product.productName,
+
+									"productPrice" to
+											product.productPrice,
+
+									"quantity" to
+											product.quantity
+								)
+							},
+
+					"timestamp" to
+							order.timestamp
 				)
 			)
 			.await()
+
+		return document.id
 	}
 
 	suspend fun updateOrder(

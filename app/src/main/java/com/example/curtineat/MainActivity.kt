@@ -193,15 +193,17 @@ fun ScreenNavigation(
                 onHomeClick = onVendorHomeClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
-                onOrderStatusClick = {},
-                onFoodClick = { productId -> },
+                onFoodClick = { _ -> },
                 onAddFoodClick = {}
             )
         }
 
         composable<RouteVendorProfileScreen> {
             VendorProfileScreen(
-                viewModel = appViewModel
+                viewModel = appViewModel,
+                onHomeClick = onVendorHomeClick,
+                onLoginClick = onLoginClick,
+
             )
         }
 
