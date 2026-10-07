@@ -26,8 +26,10 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import kotlinx.coroutines.tasks.await
 import com.example.curtineat.data.remote.firebase.model.RecipientType
+import com.example.curtineat.data.repository.room.MenuSyncRepository
+import com.example.curtineat.data.repository.room.ProductLocalRepository
+import com.example.curtineat.data.repository.room.VendorLocalRepository
 
 
 class AppViewModel(
@@ -36,7 +38,11 @@ class AppViewModel(
     private val productRepository: FirebaseProductRepository,
     private val orderRepository: FirebaseOrderRepository,
     private val notificationRepository: FirebaseNotificationRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+
+    private val vendorLocalRepository: VendorLocalRepository,
+    private val productLocalRepository: ProductLocalRepository,
+    private val menuSyncRepository: MenuSyncRepository
 
 ) : ViewModel() {
 
