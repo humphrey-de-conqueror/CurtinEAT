@@ -148,7 +148,7 @@ fun AppScaffold(
 
 @Composable
 fun MainScreen(
-    //expect onHistory and onSetting
+    //expect onHistory
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -158,27 +158,11 @@ fun MainScreen(
 ) {
     val cart by appViewModel.cart.collectAsState()
 
-//    val currentUser =
-//        FirebaseAuth.getInstance().currentUser
-//
-//    val userId =
-//        currentUser?.uid
-//
-//    LaunchedEffect(userId) {
-//
-//        if (userId != null) {
-//
-//            appViewModel.startNotificationListener(
-//                userId
-//            )
-//        }
-//    }
     LaunchedEffect(Unit) {
         appViewModel.loadHomeData()
     }
 
     AppScaffold(
-        // expect onHistory and onSetting
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
@@ -713,11 +697,6 @@ fun BodyScreen(
         modifier = Modifier.padding(innerPadding)
     ) {
         item {
-            // either a swap up action to reload or
-            // a button to reload
-            // intentionally do this
-            // nothing in viewmodel will do auto reload
-            // if need reload, run reload() manually
             PrimaryButton(
                 text = "Reload",
                 onClick = { appViewModel.loadHomeData() },
