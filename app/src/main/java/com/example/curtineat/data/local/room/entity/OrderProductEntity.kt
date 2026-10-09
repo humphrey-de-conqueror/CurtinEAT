@@ -5,21 +5,18 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-	tableName = "products",
+	tableName = "order_products",
 	indices = [
-		Index(value = ["vendorId"])
+		Index(value = ["orderId"])
 	]
 )
-data class ProductEntity(
-	@PrimaryKey
-	val productId: String,
+data class OrderProductEntity(
+	@PrimaryKey(autoGenerate = true)
+	val localId: Long = 0,
 
-	val vendorId: String,
+	val orderId: String,
+	val productId: String,
 	val productName: String,
 	val productPrice: Double,
-
-	// Image API identifier.
-	val productImage: String,
-
-	val isAvailable: Boolean
+	val quantity: Int
 )

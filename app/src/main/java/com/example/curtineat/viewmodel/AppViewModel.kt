@@ -98,6 +98,7 @@ class AppViewModel(
 
     init {
         observeLocalMenu()
+        observeLocalCustomers()
     }
 
     /* ====================
@@ -128,6 +129,17 @@ class AppViewModel(
                         products.map {
                             it.toFirebaseData()
                         }
+                }
+        }
+    }
+
+    private fun observeLocalCustomers() {
+        viewModelScope.launch {
+            customerLocalRepository
+                .getAllCustomers()
+                .collect { customers ->
+                    _customers.value =
+                        customers.map { it.toFirebaseData() }
                 }
         }
     }
@@ -420,44 +432,25 @@ class AppViewModel(
      * ==================== */
 
     fun loadCustomers() {
-
-        viewModelScope.launch {
-
-            try {
-                _customers.value =
-                    customerRepository.getAllCustomers()
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "AppViewModel",
-                    "Failed to load customers",
-                    e
-                )
-            }
-        }
+        syncMenu()
     }
 
     fun getCustomerById(
         customerId: String,
         onResult: (FirebaseCustomerData?) -> Unit
     ) {
-
         viewModelScope.launch {
-
             try {
-                onResult(
-                    customerRepository.getCustomerById(customerId)
-                )
+                val customer =
+                    customerLocalRepository.getCustomerById(customerId)
 
+                onResult(customer?.toFirebaseData())
             } catch (e: Exception) {
-
                 Log.e(
                     "AppViewModel",
-                    "Failed to get customer",
+                    "Failed to get customer from Room",
                     e
                 )
-
                 onResult(null)
             }
         }

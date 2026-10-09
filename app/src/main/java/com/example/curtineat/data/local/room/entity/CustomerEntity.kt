@@ -6,9 +6,12 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "customers")
 data class CustomerEntity(
 	@PrimaryKey
-	val customerId: String = "",
-	val customerName: String = "",
-	val customerEmail: String = "",
-	val moneyBalance: Double = 0.0,
-	val customerImage: String = ""
+	val customerId: String,
+
+	val customerName: String,
+	val customerEmail: String,
+	val moneyBalance: Double,
+
+	// Image API identifier.
+	val customerImage: String
 )
