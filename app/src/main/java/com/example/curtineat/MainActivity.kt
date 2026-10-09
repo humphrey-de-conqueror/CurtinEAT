@@ -20,7 +20,6 @@ import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.view.VendorProfileScreen
 import com.example.curtineat.viewmodel.AppViewModel
-import com.example.curtineat.viewmodel.AppViewModelFactory
 import com.example.curtineat.viewmodel.UserRole
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.serialization.Serializable
@@ -30,7 +29,9 @@ import kotlin.getValue
 class MainActivity : ComponentActivity() {
 
     private val vm: AppViewModel by viewModels {
-        AppViewModelFactory(applicationContext)
+        (application as CurtinEATApplication)
+            .appContainer
+            .appViewModelFactory
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

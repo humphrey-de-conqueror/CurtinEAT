@@ -2,7 +2,17 @@ package com.example.curtineat.data
 
 import android.content.Context
 import com.example.curtineat.data.local.room.RoomProvider
+import com.example.curtineat.data.remote.api.image.ImageApiProvider
+import com.example.curtineat.data.remote.api.image.ImageApiSource
+import com.example.curtineat.data.remote.firebase.FirebaseProvider
+import com.example.curtineat.data.remote.firebase.source.FirebaseAuthSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseCustomerSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseNotificationSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseOrderSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseProductSource
+import com.example.curtineat.data.remote.firebase.source.FirebaseVendorSource
 import com.example.curtineat.data.repository.api.ImageRepository
+import com.example.curtineat.data.repository.auth.AuthenticationRepository
 import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
 import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
 import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
@@ -20,21 +30,37 @@ import com.example.curtineat.data.repository.sync.OrderSyncRepository
 import com.example.curtineat.data.repository.sync.ProductSyncRepository
 import com.example.curtineat.data.repository.sync.VendorSyncRepository
 import com.example.curtineat.viewmodel.AppViewModelFactory
-import com.example.curtineat.data.remote.firebase.FirebaseProvider
-import com.example.curtineat.data.remote.firebase.source.FirebaseAuthSource
-import com.example.curtineat.data.repository.auth.AuthenticationRepository
 
-class AppContainer(
-	context: Context,
-	private val vendorRemote: FirebaseVendorRepository,
-	private val productRemote: FirebaseProductRepository,
-	private val customerRemote: FirebaseCustomerRepository,
-	private val orderRemote: FirebaseOrderRepository,
-	private val notificationRemote: FirebaseNotificationRepository,
-	private val imageRemote: ImageRepository
-) {
+class AppContainer(context: Context) {
+
+	// Local database
 	private val database = RoomProvider.getDatabase(context)
 
+	// Firebase remote sources
+	private val customerRemote =
+		FirebaseCustomerRepository(FirebaseCustomerSource())
+
+	private val vendorRemote =
+		FirebaseVendorRepository(FirebaseVendorSource())
+
+	private val productRemote =
+		FirebaseProductRepository(FirebaseProductSource())
+
+	private val orderRemote =
+		FirebaseOrderRepository(FirebaseOrderSource())
+
+	private val notificationRemote =
+		FirebaseNotificationRepository(FirebaseNotificationSource())
+
+	// Image API
+	private val imageRemote =
+		ImageRepository(
+			source = ImageApiSource(
+				service = ImageApiProvider.service
+			)
+		)
+
+	// Local repositories
 	private val vendorLocal = VendorLocalRepository(
 		database = database,
 		dao = database.vendorDao()
@@ -61,6 +87,7 @@ class AppContainer(
 		dao = database.notificationDao()
 	)
 
+	// Synchronization repositories
 	private val vendorSync = VendorSyncRepository(
 		remote = vendorRemote,
 		local = vendorLocal
@@ -86,11 +113,13 @@ class AppContainer(
 		local = notificationLocal
 	)
 
+	// Image cache: Room first, remote API on cache miss
 	private val imageCache = ImageCacheRepository(
 		imageDao = database.cachedImageDao(),
 		remote = imageRemote
 	)
 
+	// Authentication
 	private val firebaseAuthSource =
 		FirebaseAuthSource(FirebaseProvider.auth)
 
@@ -101,6 +130,7 @@ class AppContainer(
 			vendorRemote = vendorRemote
 		)
 
+	// Construct this last, after all dependencies are initialized
 	val appViewModelFactory = AppViewModelFactory(
 		vendorSync = vendorSync,
 		productSync = productSync,
