@@ -13,10 +13,12 @@ class ImageApiSource(
 		return service.uploadImage(image).imageId
 	}
 
-	suspend fun getImage(
-		imageId: String
-	): ResponseBody {
-		return service.getImage(imageId).body()
-			?: throw Exception("Image response is empty")
+	suspend fun getImage(imageId: String): ResponseBody {
+		val response = service.getImage(imageId)
+		if (!response.isSuccessful) {
+			throw java.io.IOException("GET images/$imageId -> HTTP ${response.code()}")
+		}
+		return response.body()
+			?: throw java.io.IOException("GET images/$imageId -> empty body")
 	}
 }

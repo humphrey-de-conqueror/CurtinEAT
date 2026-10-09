@@ -175,7 +175,8 @@ fun CustomerProfileScreen(
 				imageId = customerImage,
 				viewModel = viewModel,
 				contentDescription = "Customer profile picture",
-				modifier = Modifier.size(120.dp)
+				modifier = Modifier.size(120.dp),
+				retryOnTap = true
 			)
 		}
 

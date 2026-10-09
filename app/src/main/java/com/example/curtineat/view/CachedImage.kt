@@ -25,7 +25,8 @@ fun CachedImage(
 	imageId: String,
 	viewModel: AppViewModel,
 	contentDescription: String?,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	retryOnTap: Boolean = false
 ) {
 	val imageStates by viewModel.imageStates.collectAsState()
 
@@ -56,10 +57,10 @@ fun CachedImage(
 			(imageState is ImageUiState.Loaded && bitmap == null)
 
 	Box(
-		modifier = modifier.clickable(
-			enabled = canRetry
-		) {
-			viewModel.retryImage(imageId)
+		modifier = if (canRetry) {
+			modifier.clickable { viewModel.retryImage(imageId) }
+		} else {
+			modifier
 		}
 	) {
 		if (bitmap != null) {

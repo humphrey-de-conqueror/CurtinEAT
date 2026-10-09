@@ -193,7 +193,8 @@ fun VendorProfileScreen(
 				imageId = vendorImage,
 				viewModel = viewModel,
 				contentDescription = "Vendor profile picture",
-				modifier = Modifier.size(120.dp)
+				modifier = Modifier.size(120.dp),
+				retryOnTap = true
 			)
 		}
 

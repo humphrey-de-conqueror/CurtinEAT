@@ -1,6 +1,8 @@
 
 package com.example.curtineat.data.repository.image
 
+import android.graphics.BitmapFactory
+import android.util.Log
 import com.example.curtineat.data.local.room.dao.CachedImageDao
 import com.example.curtineat.data.local.room.entity.CachedImageEntity
 import com.example.curtineat.data.repository.api.ImageRepository
@@ -28,52 +30,74 @@ class ImageCacheRepository(
 	}
 
 	suspend fun getImageBytes(imageId: String): ByteArray? {
-		if (imageId.isBlank()) {
-			return null
-		}
+		if (imageId.isBlank()) return null
 
-		imageDao.getById(imageId)?.let { cached ->
-			return cached.imageBytes
-		}
+		readCache(imageId)?.let { return it }
 
 		val imageLock = imageLocks.getOrPut(imageId) { Mutex() }
 
 		return imageLock.withLock {
-			// Another request may have populated the cache while we waited.
-			imageDao.getById(imageId)?.let { cached ->
-				return@withLock cached.imageBytes
-			}
+			readCache(imageId)?.let { return@withLock it }
 
 			try {
 				val imageBytes = withContext(Dispatchers.IO) {
-					remote.getImage(imageId).use { responseBody ->
-						responseBody.bytes()
-					}
+					remote.getImage(imageId).use { it.bytes() }
 				}
 
-				if (imageBytes.isEmpty()) {
+				if (!isDecodableImage(imageBytes)) {
+					Log.w(TAG, "Not an image: $imageId (${imageBytes.size} bytes)")
 					return@withLock null
 				}
 
-				cacheMutationLock.withLock {
-					imageDao.upsert(
-						CachedImageEntity(
-							imageId = imageId,
-							imageBytes = imageBytes,
-							cachedAt = System.currentTimeMillis()
+				if (imageBytes.size <= MAX_ROW_BYTES) {
+					cacheMutationLock.withLock {
+						imageDao.upsert(
+							CachedImageEntity(imageId, imageBytes, System.currentTimeMillis())
 						)
-					)
-
-					evictUntilWithinLimit()
+						evictUntilWithinLimit()
+					}
 				}
-
 				imageBytes
-			} catch (exception: CancellationException) {
-				throw exception
-			} catch (exception: Exception) {
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				Log.w(TAG, "Download failed for $imageId", e)
 				null
 			}
 		}
+	}
+
+	// Never throws; removes bad entries so they can't poison the cache.
+	private suspend fun readCache(imageId: String): ByteArray? = try {
+		val cached = imageDao.getById(imageId)
+		when {
+			cached == null -> null
+			isDecodableImage(cached.imageBytes) -> cached.imageBytes
+			else -> {
+				Log.w(TAG, "Dropping corrupt cache entry: $imageId")
+				imageDao.deleteById(imageId)
+				null
+			}
+		}
+	} catch (e: CancellationException) {
+		throw e
+	} catch (e: Exception) {
+		Log.w(TAG, "Cache read failed for $imageId", e)   // e.g. row too big
+		runCatching { imageDao.deleteById(imageId) }
+		null
+	}
+
+	private fun isDecodableImage(bytes: ByteArray): Boolean {
+		if (bytes.isEmpty()) return false
+		val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+		BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+		return opts.outWidth > 0 && opts.outHeight > 0
+	}
+
+	companion object {
+		private const val TAG = "ImageCache"
+		private const val MAX_ROW_BYTES = 1_500_000
+		const val DEFAULT_MAX_CACHE_BYTES: Long = 100L * 1024L * 1024L
 	}
 
 	suspend fun cacheImage(
@@ -85,6 +109,13 @@ class ImageCacheRepository(
 		}
 		require(imageBytes.isNotEmpty()) {
 			"Image bytes must not be empty"
+		}
+
+		// Rows over ~2 MB cannot be read back from Room (CursorWindow limit).
+		// Skip caching; the image is downloaded on demand instead.
+		if (imageBytes.size > MAX_ROW_BYTES) {
+			Log.w(TAG, "Not caching $imageId: ${imageBytes.size} bytes is too big")
+			return
 		}
 
 		cacheMutationLock.withLock {
@@ -115,10 +146,5 @@ class ImageCacheRepository(
 		while (imageDao.getTotalBytes() > maxCacheBytes) {
 			imageDao.deleteOldest(1)
 		}
-	}
-
-	companion object {
-		const val DEFAULT_MAX_CACHE_BYTES: Long =
-			100L * 1024L * 1024L
 	}
 }
