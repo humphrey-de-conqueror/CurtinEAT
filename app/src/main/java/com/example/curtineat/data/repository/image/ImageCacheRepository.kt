@@ -1,3 +1,4 @@
+
 package com.example.curtineat.data.repository.image
 
 import com.example.curtineat.data.local.room.dao.CachedImageDao
@@ -12,31 +13,33 @@ import java.util.concurrent.ConcurrentHashMap
 
 class ImageCacheRepository(
 	private val imageDao: CachedImageDao,
-	private val remote: ImageRepository
+	private val remote: ImageRepository,
+	private val maxCacheBytes: Long = DEFAULT_MAX_CACHE_BYTES
 ) {
 	private val imageLocks = ConcurrentHashMap<String, Mutex>()
 
-	/**
-	 * Returns cached image bytes when available.
-	 * Downloads and caches the image on a cache miss.
-	 *
-	 * Returns null when the image cannot be retrieved.
-	 */
+	// Protect cache writes and eviction across different image requests.
+	private val cacheMutationLock = Mutex()
+
+	init {
+		require(maxCacheBytes > 0) {
+			"Maximum image cache size must be greater than zero"
+		}
+	}
+
 	suspend fun getImageBytes(imageId: String): ByteArray? {
 		if (imageId.isBlank()) {
 			return null
 		}
 
-		// Fast path: return the existing cache entry.
 		imageDao.getById(imageId)?.let { cached ->
 			return cached.imageBytes
 		}
 
-		// Prevent simultaneous requests for the same image.
-		val lock = imageLocks.getOrPut(imageId) { Mutex() }
+		val imageLock = imageLocks.getOrPut(imageId) { Mutex() }
 
-		return lock.withLock {
-			// Another coroutine may have populated the cache while we waited.
+		return imageLock.withLock {
+			// Another request may have populated the cache while we waited.
 			imageDao.getById(imageId)?.let { cached ->
 				return@withLock cached.imageBytes
 			}
@@ -52,29 +55,27 @@ class ImageCacheRepository(
 					return@withLock null
 				}
 
-				imageDao.upsert(
-					CachedImageEntity(
-						imageId = imageId,
-						imageBytes = imageBytes,
-						cachedAt = System.currentTimeMillis()
+				cacheMutationLock.withLock {
+					imageDao.upsert(
+						CachedImageEntity(
+							imageId = imageId,
+							imageBytes = imageBytes,
+							cachedAt = System.currentTimeMillis()
+						)
 					)
-				)
+
+					evictUntilWithinLimit()
+				}
 
 				imageBytes
 			} catch (exception: CancellationException) {
 				throw exception
 			} catch (exception: Exception) {
-				// Preserve the app's ability to show a placeholder.
-				// The next request can retry the network fetch.
 				null
 			}
 		}
 	}
 
-	/**
-	 * Stores image bytes already available locally,
-	 * for example after an image has been selected or processed.
-	 */
 	suspend fun cacheImage(
 		imageId: String,
 		imageBytes: ByteArray
@@ -82,29 +83,42 @@ class ImageCacheRepository(
 		require(imageId.isNotBlank()) {
 			"Image ID must not be blank"
 		}
-
 		require(imageBytes.isNotEmpty()) {
 			"Image bytes must not be empty"
 		}
 
-		imageDao.upsert(
-			CachedImageEntity(
-				imageId = imageId,
-				imageBytes = imageBytes,
-				cachedAt = System.currentTimeMillis()
+		cacheMutationLock.withLock {
+			imageDao.upsert(
+				CachedImageEntity(
+					imageId = imageId,
+					imageBytes = imageBytes,
+					cachedAt = System.currentTimeMillis()
+				)
 			)
-		)
+
+			evictUntilWithinLimit()
+		}
 	}
 
 	suspend fun removeCachedImage(imageId: String) {
 		imageDao.deleteById(imageId)
 	}
 
-	suspend fun getCacheSizeBytes(): Long {
-		return imageDao.getTotalBytes()
-	}
+	suspend fun getCacheSizeBytes(): Long =
+		imageDao.getTotalBytes()
 
 	suspend fun clearCache() {
 		imageDao.deleteAll()
+	}
+
+	private suspend fun evictUntilWithinLimit() {
+		while (imageDao.getTotalBytes() > maxCacheBytes) {
+			imageDao.deleteOldest(1)
+		}
+	}
+
+	companion object {
+		const val DEFAULT_MAX_CACHE_BYTES: Long =
+			100L * 1024L * 1024L
 	}
 }
