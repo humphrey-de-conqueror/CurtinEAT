@@ -1,6 +1,6 @@
+
 package com.example.curtineat.view
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,24 +21,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.curtineat.data.remote.firebase.model.FirebaseCustomerData
 import com.example.curtineat.viewmodel.AppViewModel
-import com.google.firebase.auth.FirebaseAuth
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-
-private const val IMAGE_BASE_URL =
-	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
+import com.example.curtineat.viewmodel.UserRole
 
 @Composable
 fun CustomerProfileScreen(
@@ -46,8 +37,14 @@ fun CustomerProfileScreen(
 	onLoginClick: () -> Unit,
 	onHomeClick: () -> Unit
 ) {
-	var customer by remember {
-		mutableStateOf<FirebaseCustomerData?>(null)
+	val authenticationState by
+	viewModel.authenticationState.collectAsState()
+
+	val customerState by
+	viewModel.customerState.collectAsState()
+
+	var authChecked by remember {
+		mutableStateOf(false)
 	}
 
 	var editMode by remember {
@@ -62,10 +59,6 @@ fun CustomerProfileScreen(
 		mutableStateOf("")
 	}
 
-	var loading by remember {
-		mutableStateOf(true)
-	}
-
 	var saving by remember {
 		mutableStateOf(false)
 	}
@@ -74,108 +67,69 @@ fun CustomerProfileScreen(
 		mutableStateOf(false)
 	}
 
-	val context =
-		LocalContext.current
+	val customerId = authenticationState.userId
+	val userRole = authenticationState.role
 
-	/*
-	 * Keep this check inside the screen as well.
-	 *
-	 * Navigation should normally prevent an unauthenticated
-	 * user from reaching this screen, but the screen itself
-	 * should not trust navigation as its only protection.
-	 */
-	val currentUser =
-		FirebaseAuth.getInstance().currentUser
+	LaunchedEffect(Unit) {
+		viewModel.checkCurrentUserRole {
+			authChecked = true
+		}
+	}
 
-	val customerId =
-		currentUser?.uid
+	LaunchedEffect(authChecked, customerId, userRole) {
+		if (authChecked) {
+			if (
+				customerId == null ||
+				userRole != UserRole.CUSTOMER
+			) {
+				onLoginClick()
+			} else {
+				viewModel.observeCustomer(customerId)
+			}
+		}
+	}
+
+	val customer = customerState.data
+
+	LaunchedEffect(customer) {
+		if (customer != null && !editMode) {
+			customerName = customer.customerName
+			customerImage = customer.customerImage
+		}
+	}
 
 	val imagePicker =
 		rememberLauncherForActivityResult(
 			contract = ActivityResultContracts.GetContent()
 		) { uri: Uri? ->
+			if (uri != null) {
+				uploadingImage = true
 
-			if (uri == null) {
-				return@rememberLauncherForActivityResult
-			}
+				viewModel.uploadImage(uri) { imageId ->
+					if (imageId != null) {
+						customerImage = imageId
+					}
 
-			uploadCustomerImage(
-				context = context,
-				uri = uri,
-				viewModel = viewModel
-			) { imageId ->
-
-				if (imageId != null) {
-					customerImage = imageId
+					uploadingImage = false
 				}
-
-				uploadingImage = false
 			}
-
-			uploadingImage = true
 		}
 
-	/*
-	 * Load the customer belonging to the authenticated
-	 * Firebase user.
-	 */
-	LaunchedEffect(customerId) {
-
-		if (customerId == null) {
-			loading = false
-			onLoginClick()
-			return@LaunchedEffect
-		}
-
-		viewModel.getCustomerById(
-			customerId
-		) { result ->
-
-			customer = result
-
-			if (result != null) {
-				customerName =
-					result.customerName
-
-				customerImage =
-					result.customerImage
-			}
-
-			loading = false
-		}
-	}
-
-	if (loading) {
-		Text(
-			text = "Loading..."
-		)
-
+	if (!authChecked || customerState.isInitialLoading) {
+		Text(text = "Loading...")
 		return
 	}
 
-	/*
-	 * Defensive check in case authentication state is
-	 * unavailable after the LaunchedEffect.
-	 */
-	if (customerId == null) {
+	if (customerId == null || userRole != UserRole.CUSTOMER) {
 		return
 	}
 
-	/*
-	 * Firebase Authentication succeeded, but the corresponding
-	 * customer document does not exist.
-	 */
 	if (customer == null) {
-		Text(
-			text = "Customer profile not found."
-		)
-
+		Text(text = "Customer profile not found.")
 		return
 	}
 
-	val currentCustomer =
-		customer!!
-
+	val currentCustomer = customer
 	val scrollState = rememberScrollState()
 
 	Column(
@@ -184,8 +138,7 @@ fun CustomerProfileScreen(
 			.verticalScroll(scrollState)
 			.padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp)
-	){
-
+	) {
 		/*
 		 * Header
 		 */
@@ -193,23 +146,14 @@ fun CustomerProfileScreen(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
-
-			Text(
-				text = "Customer Profile"
-			)
+			Text(text = "Customer Profile")
 
 			if (!editMode) {
-
 				Button(
 					onClick = {
-
 						editMode = true
-
-						customerName =
-							currentCustomer.customerName
-
-						customerImage =
-							currentCustomer.customerImage
+						customerName = currentCustomer.customerName
+						customerImage = currentCustomer.customerImage
 					}
 				) {
 					Text("Edit")
@@ -221,26 +165,17 @@ fun CustomerProfileScreen(
 		 * Profile picture
 		 */
 		if (customerImage.isBlank()) {
-
 			Icon(
-				imageVector =
-					Icons.Default.AccountCircle,
-				contentDescription =
-					"Default customer profile picture",
-				modifier =
-					Modifier.size(120.dp)
+				imageVector = Icons.Default.AccountCircle,
+				contentDescription = "Default customer profile picture",
+				modifier = Modifier.size(120.dp)
 			)
-
 		} else {
-
-			AsyncImage(
-				model =
-					IMAGE_BASE_URL +
-						customerImage,
-				contentDescription =
-					"Customer profile picture",
-				modifier =
-					Modifier.size(120.dp)
+			CachedImage(
+				imageId = customerImage,
+				viewModel = viewModel,
+				contentDescription = "Customer profile picture",
+				modifier = Modifier.size(120.dp)
 			)
 		}
 
@@ -248,7 +183,6 @@ fun CustomerProfileScreen(
 		 * Change profile picture
 		 */
 		if (editMode) {
-
 			OutlinedButton(
 				onClick = {
 					imagePicker.launch("image/*")
@@ -256,7 +190,6 @@ fun CustomerProfileScreen(
 				enabled = !uploadingImage,
 				modifier = Modifier.fillMaxWidth()
 			) {
-
 				Text(
 					if (uploadingImage) {
 						"Uploading..."
@@ -271,7 +204,6 @@ fun CustomerProfileScreen(
 		 * Customer name
 		 */
 		if (editMode) {
-
 			OutlinedTextField(
 				value = customerName,
 				onValueChange = {
@@ -282,12 +214,9 @@ fun CustomerProfileScreen(
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
-
 		} else {
-
 			OutlinedTextField(
-				value =
-					currentCustomer.customerName,
+				value = currentCustomer.customerName,
 				onValueChange = {},
 				readOnly = true,
 				label = {
@@ -299,14 +228,9 @@ fun CustomerProfileScreen(
 
 		/*
 		 * Email is read-only.
-		 *
-		 * This comes from the customer's Firestore data.
-		 * The profile update function deliberately does not
-		 * allow this field to be changed.
 		 */
 		OutlinedTextField(
-			value =
-				currentCustomer.customerEmail,
+			value = currentCustomer.customerEmail,
 			onValueChange = {},
 			readOnly = true,
 			label = {
@@ -317,12 +241,9 @@ fun CustomerProfileScreen(
 
 		/*
 		 * Balance is read-only.
-		 *
-		 * Customer profile updates cannot modify this field.
 		 */
 		OutlinedTextField(
-			value =
-				currentCustomer.moneyBalance.toString(),
+			value = currentCustomer.moneyBalance.toString(),
 			onValueChange = {},
 			readOnly = true,
 			label = {
@@ -335,72 +256,42 @@ fun CustomerProfileScreen(
 		 * Save / Cancel
 		 */
 		if (editMode) {
-
 			Row(
 				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement =
-					Arrangement.spacedBy(8.dp)
+				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
-
 				OutlinedButton(
 					onClick = {
-
-						customerName =
-							currentCustomer.customerName
-
-						customerImage =
-							currentCustomer.customerImage
-
+						customerName = currentCustomer.customerName
+						customerImage = currentCustomer.customerImage
 						editMode = false
 					},
-					modifier =
-						Modifier.weight(1f)
+					modifier = Modifier.weight(1f)
 				) {
-
 					Text("Cancel")
 				}
 
 				Button(
 					onClick = {
-
 						saving = true
 
 						viewModel.updateCustomerProfile(
-							customerId =
-								currentCustomer.customerId,
-
-							customerName =
-								customerName.trim(),
-
-							customerImage =
-								customerImage
+							customerId = currentCustomer.customerId,
+							customerName = customerName.trim(),
+							customerImage = customerImage
 						) { success ->
-
 							if (success) {
-
-								customer =
-									currentCustomer.copy(
-										customerName =
-											customerName.trim(),
-
-										customerImage =
-											customerImage
-									)
-
 								editMode = false
 							}
 
 							saving = false
 						}
 					},
-					enabled =
-						!saving &&
-							!uploadingImage &&
-							customerName.isNotBlank(),
-					modifier =
-						Modifier.weight(1f)
+					enabled = !saving &&
+						!uploadingImage &&
+						customerName.isNotBlank(),
+					modifier = Modifier.weight(1f)
 				) {
-
 					Text(
 						if (saving) {
 							"Saving..."
@@ -410,11 +301,9 @@ fun CustomerProfileScreen(
 					)
 				}
 			}
-
 		} else {
-
 			/*
-			 * Logout
+			 * Back / Logout
 			 */
 			Row(
 				modifier = Modifier
@@ -433,7 +322,7 @@ fun CustomerProfileScreen(
 
 				Button(
 					onClick = {
-						viewModel.logout()
+						viewModel.signOut()
 						onHomeClick()
 					},
 					modifier = Modifier.weight(1f)
@@ -441,65 +330,6 @@ fun CustomerProfileScreen(
 					Text("Logout")
 				}
 			}
-
 		}
-	}
-}
-
-private fun uploadCustomerImage(
-	context: Context,
-	uri: Uri,
-	viewModel: AppViewModel,
-	onResult: (String?) -> Unit
-) {
-
-	try {
-
-		val inputStream =
-			context.contentResolver
-				.openInputStream(uri)
-				?: throw Exception(
-					"Unable to open image"
-				)
-
-		val file =
-			File.createTempFile(
-				"customer_image",
-				".jpg",
-				context.cacheDir
-			)
-
-		inputStream.use { input ->
-
-			file.outputStream().use { output ->
-
-				input.copyTo(output)
-			}
-		}
-
-		val requestBody =
-			file.asRequestBody(
-				"image/*".toMediaType()
-			)
-
-		val multipartBody =
-			MultipartBody.Part.createFormData(
-				"image",
-				file.name,
-				requestBody
-			)
-
-		viewModel.uploadImage(
-			multipartBody
-		) { imageId ->
-
-			file.delete()
-
-			onResult(imageId)
-		}
-
-	} catch (e: Exception) {
-
-		onResult(null)
 	}
 }

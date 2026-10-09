@@ -1,3 +1,4 @@
+
 package com.example.curtineat.data.repository.sync
 
 import com.example.curtineat.data.local.room.entity.VendorEntity
@@ -19,5 +20,22 @@ class VendorSyncRepository(
 	suspend fun refresh() {
 		val vendors = remote.getAllVendors().map { it.toEntity() }
 		local.replaceAll(vendors)
+	}
+
+	suspend fun updateProfile(
+		vendorId: String,
+		vendorName: String,
+		category: String,
+		vendorImage: String
+	) {
+		remote.updateVendorProfile(
+			vendorId = vendorId,
+			vendorName = vendorName,
+			category = category,
+			vendorImage = vendorImage
+		)
+
+		// Refresh Room so all observers receive the updated profile.
+		refresh()
 	}
 }

@@ -21,10 +21,8 @@ import com.example.curtineat.view.VendorLandingScreen
 import com.example.curtineat.view.VendorProfileScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.serialization.Serializable
 import kotlin.getValue
-
 
 class MainActivity : ComponentActivity() {
 
@@ -46,7 +44,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Serializable
 object RouteMainScreen
@@ -75,12 +72,10 @@ object RouteCustomerProfileScreen
 @Serializable
 object RouteAddProductScreen
 
-
 @Composable
 fun ScreenNavigation(
     appViewModel: AppViewModel
 ) {
-
     val nav = rememberNavController()
 
     val onCartButtonClick: () -> Unit = {
@@ -98,18 +93,28 @@ fun ScreenNavigation(
     }
 
     val onWalletClick: () -> Unit = {
+        appViewModel.checkCurrentUserRole { role ->
+            when (role) {
+                UserRole.CUSTOMER,
+                UserRole.VENDOR -> {
+                    nav.navigate(RouteBalanceScreen) {
+                        launchSingleTop = true
+                    }
+                }
 
-        if (
-            1 == 1
-        ) {
-            nav.navigate(RouteBalanceScreen)
-        } else {
-            nav.navigate(RouteLoginScreen)
+                UserRole.NONE -> {
+                    nav.navigate(RouteLoginScreen) {
+                        launchSingleTop = true
+                    }
+                }
+            }
         }
     }
 
     val onLoginClick: () -> Unit = {
-        nav.navigate(RouteLoginScreen)
+        nav.navigate(RouteLoginScreen) {
+            launchSingleTop = true
+        }
     }
 
     val onRegistrationClick: () -> Unit = {
@@ -117,11 +122,20 @@ fun ScreenNavigation(
     }
 
     val onLoginSuccess: (Boolean) -> Unit = { isVendor ->
-
         if (isVendor) {
-            nav.navigate(RouteVendorLandingScreen)
+            nav.navigate(RouteVendorLandingScreen) {
+                popUpTo(RouteLoginScreen) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
         } else {
-            nav.navigate(RouteMainScreen)
+            nav.navigate(RouteMainScreen) {
+                popUpTo(RouteLoginScreen) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
         }
     }
 
@@ -132,40 +146,23 @@ fun ScreenNavigation(
     }
 
     val onVendorProfileClick: () -> Unit = {
-        nav.navigate(RouteVendorProfileScreen)
+        nav.navigate(RouteVendorProfileScreen) {
+            launchSingleTop = true
+        }
     }
 
     val onCustomerProfileClick: () -> Unit = {
-        nav.navigate(RouteCustomerProfileScreen)
+        nav.navigate(RouteCustomerProfileScreen) {
+            launchSingleTop = true
+        }
     }
 
     val onProfileClick: () -> Unit = {
-
-        val currentUser =
-            FirebaseAuth.getInstance().currentUser
-
-        if (currentUser == null) {
-
-            onLoginClick()
-
-        } else {
-
-            appViewModel.checkCurrentUserRole { role ->
-
-                when (role) {
-
-                    UserRole.VENDOR -> {
-                        onVendorProfileClick()
-                    }
-
-                    UserRole.CUSTOMER -> {
-                        onCustomerProfileClick()
-                    }
-
-                    UserRole.NONE -> {
-                        onLoginClick()
-                    }
-                }
+        appViewModel.checkCurrentUserRole { role ->
+            when (role) {
+                UserRole.VENDOR -> onVendorProfileClick()
+                UserRole.CUSTOMER -> onCustomerProfileClick()
+                UserRole.NONE -> onLoginClick()
             }
         }
     }
@@ -178,9 +175,7 @@ fun ScreenNavigation(
         navController = nav,
         startDestination = RouteMainScreen
     ) {
-
         composable<RouteMainScreen> {
-
             MainScreen(
                 appViewModel = appViewModel,
                 onCartButtonClick = onCartButtonClick,
@@ -192,7 +187,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteCartScreen> {
-
             CartScreen(
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick,
@@ -204,7 +198,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteLoginScreen> {
-
             LoginScreen(
                 appViewModel = appViewModel,
                 onLoginSuccess = onLoginSuccess,
@@ -215,7 +208,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteRegistrationScreen> {
-
             RegistrationScreen(
                 appViewModel = appViewModel,
                 onLoginSuccess = onLoginSuccess,
@@ -225,7 +217,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteBalanceScreen> {
-
             BalanceScreen(
                 appViewModel = appViewModel,
                 onBackButtonClick = onBackButtonClick
@@ -233,7 +224,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteVendorLandingScreen> {
-
             VendorLandingScreen(
                 appViewModel = appViewModel,
                 onHomeClick = onVendorHomeClick,
@@ -262,7 +252,6 @@ fun ScreenNavigation(
         }
 
         composable<RouteAddProductScreen> {
-
             AddProductScreen(
                 viewModel = appViewModel,
                 onBackClick = {

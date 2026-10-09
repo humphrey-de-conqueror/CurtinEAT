@@ -1,5 +1,7 @@
+
 package com.example.curtineat.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.curtineat.data.local.room.entity.CustomerEntity
@@ -8,24 +10,26 @@ import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.ProductEntity
 import com.example.curtineat.data.local.room.entity.VendorEntity
 import com.example.curtineat.data.remote.firebase.model.RecipientType
+import com.example.curtineat.data.repository.api.ImageUploadRepository
+import com.example.curtineat.data.repository.auth.AuthenticationRepository
+import com.example.curtineat.data.repository.auth.LoginResult
 import com.example.curtineat.data.repository.image.ImageCacheRepository
 import com.example.curtineat.data.repository.sync.CustomerSyncRepository
 import com.example.curtineat.data.repository.sync.NotificationSyncRepository
 import com.example.curtineat.data.repository.sync.OrderSyncRepository
 import com.example.curtineat.data.repository.sync.ProductSyncRepository
 import com.example.curtineat.data.repository.sync.VendorSyncRepository
+import com.example.curtineat.viewmodel.state.AuthenticationUiState
 import com.example.curtineat.viewmodel.state.DataUiState
 import com.example.curtineat.viewmodel.state.ImageUiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import com.example.curtineat.data.repository.auth.AuthenticationRepository
-import com.example.curtineat.data.repository.auth.LoginResult
-import com.example.curtineat.viewmodel.state.AuthenticationUiState
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -34,7 +38,8 @@ class AppViewModel(
     private val orderSync: OrderSyncRepository,
     private val notificationSync: NotificationSyncRepository,
     private val imageCache: ImageCacheRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val authenticationRepository: AuthenticationRepository,
+    private val imageUploadRepository: ImageUploadRepository
 ) : ViewModel() {
 
     // ---------------------------------------------------------
@@ -43,39 +48,53 @@ class AppViewModel(
 
     private val _vendorState =
         MutableStateFlow(DataUiState<List<VendorEntity>>(emptyList()))
+
     val vendorState: StateFlow<DataUiState<List<VendorEntity>>> =
         _vendorState.asStateFlow()
 
     private val _productState =
         MutableStateFlow(DataUiState<List<ProductEntity>>(emptyList()))
+
     val productState: StateFlow<DataUiState<List<ProductEntity>>> =
         _productState.asStateFlow()
 
     private val _customerState =
         MutableStateFlow(DataUiState<CustomerEntity?>(null))
+
     val customerState: StateFlow<DataUiState<CustomerEntity?>> =
         _customerState.asStateFlow()
 
+    private val _vendorProfileState =
+        MutableStateFlow(DataUiState<VendorEntity?>(null))
+
+    val vendorProfileState: StateFlow<DataUiState<VendorEntity?>> =
+        _vendorProfileState.asStateFlow()
+
     private val _orderState =
         MutableStateFlow(DataUiState<List<OrderEntity>>(emptyList()))
+
     val orderState: StateFlow<DataUiState<List<OrderEntity>>> =
         _orderState.asStateFlow()
 
     private val _notificationState =
         MutableStateFlow(DataUiState<List<NotificationEntity>>(emptyList()))
+
     val notificationState: StateFlow<DataUiState<List<NotificationEntity>>> =
         _notificationState.asStateFlow()
 
     private val _imageStates =
         MutableStateFlow<Map<String, ImageUiState>>(emptyMap())
+
     val imageStates: StateFlow<Map<String, ImageUiState>> =
         _imageStates.asStateFlow()
 
     private var customerObservationJob: Job? = null
+    private var vendorProfileObservationJob: Job? = null
     private var orderObservationJob: Job? = null
     private var notificationObservationJob: Job? = null
 
     private var observedCustomerId: String? = null
+    private var observedVendorId: String? = null
     private var observedOrderScope: String? = null
     private var observedRecipientId: String? = null
     private var observedRecipientType: RecipientType? = null
@@ -144,6 +163,44 @@ class AppViewModel(
         }
     }
 
+    fun observeVendorProfile(vendorId: String) {
+        if (
+            observedVendorId == vendorId &&
+            vendorProfileObservationJob?.isActive == true
+        ) {
+            return
+        }
+
+        observedVendorId = vendorId
+        vendorProfileObservationJob?.cancel()
+
+        _vendorProfileState.value = DataUiState(
+            data = null,
+            isInitialLoading = true
+        )
+
+        vendorProfileObservationJob = viewModelScope.launch {
+            launch {
+                vendorSync.observeVendor(vendorId).collect { vendor ->
+                    _vendorProfileState.value =
+                        _vendorProfileState.value.copy(
+                            data = vendor,
+                            hasLoaded = true,
+                            isInitialLoading = false
+                        )
+                }
+            }
+
+            perform(
+                getState = { _vendorProfileState.value },
+                setState = { _vendorProfileState.value = it },
+                fallbackMessage = "Unable to refresh vendor profile"
+            ) {
+                vendorSync.refresh()
+            }
+        }
+    }
+
     fun observeOrdersByCustomer(customerId: String) {
         observeOrderScope(
             scope = "customer:$customerId",
@@ -170,7 +227,7 @@ class AppViewModel(
 
     private fun observeOrderScope(
         scope: String,
-        observe: () -> kotlinx.coroutines.flow.Flow<List<OrderEntity>>,
+        observe: () -> Flow<List<OrderEntity>>,
         refresh: suspend () -> Unit
     ) {
         if (
@@ -351,8 +408,76 @@ class AppViewModel(
     }
 
     // ---------------------------------------------------------
-    // Image cache
+    // Profile operations
     // ---------------------------------------------------------
+
+    fun updateCustomerProfile(
+        customerId: String,
+        customerName: String,
+        customerImage: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                customerSync.updateProfile(
+                    customerId = customerId,
+                    customerName = customerName,
+                    customerImage = customerImage
+                )
+
+                onResult(true)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateVendorProfile(
+        vendorId: String,
+        vendorName: String,
+        category: String,
+        vendorImage: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                vendorSync.updateProfile(
+                    vendorId = vendorId,
+                    vendorName = vendorName,
+                    category = category,
+                    vendorImage = vendorImage
+                )
+
+                onResult(true)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Image operations
+    // ---------------------------------------------------------
+
+    fun uploadImage(
+        uri: Uri,
+        onResult: (String?) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val imageId = imageUploadRepository.uploadImage(uri)
+                onResult(imageId)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(null)
+            }
+        }
+    }
 
     fun loadImage(imageId: String) {
         if (imageId.isBlank()) return
@@ -410,6 +535,7 @@ class AppViewModel(
     }
 
     private val _errorForImageRemoval = MutableStateFlow<String?>(null)
+
     val errorForImageRemoval: StateFlow<String?> =
         _errorForImageRemoval.asStateFlow()
 
@@ -520,6 +646,16 @@ class AppViewModel(
                             )
                         }
 
+                        when (result.role) {
+                            UserRole.CUSTOMER ->
+                                refreshCustomer(result.userId)
+
+                            UserRole.VENDOR ->
+                                refreshVendors()
+
+                            UserRole.NONE -> Unit
+                        }
+
                         onResult(true)
                     }
 
@@ -553,7 +689,8 @@ class AppViewModel(
                 _authenticationState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "Unable to log in. Please try again"
+                        errorMessage =
+                            "Unable to log in. Please try again"
                     )
                 }
 
@@ -603,7 +740,6 @@ class AppViewModel(
                         )
                     }
 
-                    // Populate the profile cache after registration.
                     if (userId != null) {
                         if (isVendor) {
                             refreshVendors()
@@ -627,7 +763,8 @@ class AppViewModel(
                 _authenticationState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "Registration failed. Please try again"
+                        errorMessage =
+                            "Registration failed. Please try again"
                     )
                 }
 
@@ -648,6 +785,7 @@ class AppViewModel(
                     it.copy(
                         userId = userId,
                         role = role,
+                        isLoading = false,
                         errorMessage = null
                     )
                 }
@@ -659,6 +797,7 @@ class AppViewModel(
                 _authenticationState.update {
                     it.copy(
                         role = UserRole.NONE,
+                        isLoading = false,
                         errorMessage = "Unable to verify account"
                     )
                 }
@@ -672,6 +811,18 @@ class AppViewModel(
         authenticationRepository.signOut()
 
         _authenticationState.value = AuthenticationUiState()
+
+        observedCustomerId = null
+        observedVendorId = null
+
+        customerObservationJob?.cancel()
+        customerObservationJob = null
+
+        vendorProfileObservationJob?.cancel()
+        vendorProfileObservationJob = null
+
+        _customerState.value = DataUiState(data = null)
+        _vendorProfileState.value = DataUiState(data = null)
     }
 
     fun clearAuthenticationError() {

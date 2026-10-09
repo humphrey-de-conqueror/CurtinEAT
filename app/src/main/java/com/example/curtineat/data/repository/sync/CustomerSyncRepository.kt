@@ -1,3 +1,4 @@
+
 package com.example.curtineat.data.repository.sync
 
 import com.example.curtineat.data.local.room.entity.CustomerEntity
@@ -16,6 +17,20 @@ class CustomerSyncRepository(
 	suspend fun refresh(customerId: String) {
 		val customer = remote.getCustomerById(customerId) ?: return
 		local.upsert(customer.toEntity())
+	}
+
+	suspend fun updateProfile(
+		customerId: String,
+		customerName: String,
+		customerImage: String
+	) {
+		remote.updateCustomerProfile(
+			customerId = customerId,
+			customerName = customerName,
+			customerImage = customerImage
+		)
+
+		refresh(customerId)
 	}
 
 	suspend fun removeCachedCustomer(customerId: String) {

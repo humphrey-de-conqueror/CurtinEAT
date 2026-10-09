@@ -1,6 +1,6 @@
+
 package com.example.curtineat.view
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -21,23 +19,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
 import com.example.curtineat.viewmodel.AppViewModel
-import com.google.firebase.auth.FirebaseAuth
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
+import com.example.curtineat.viewmodel.UserRole
 
 private val vendorCategories = listOf(
 	"Western",
@@ -51,18 +45,20 @@ private val vendorCategories = listOf(
 	"Other"
 )
 
-private const val IMAGE_BASE_URL =
-	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
-
 @Composable
 fun VendorProfileScreen(
 	viewModel: AppViewModel,
 	onLoginClick: () -> Unit,
 	onHomeClick: () -> Unit
 ) {
+	val authenticationState by
+	viewModel.authenticationState.collectAsState()
 
-	var vendor by remember {
-		mutableStateOf<FirebaseVendorData?>(null)
+	val vendorProfileState by
+	viewModel.vendorProfileState.collectAsState()
+
+	var authChecked by remember {
+		mutableStateOf(false)
 	}
 
 	var editMode by remember {
@@ -85,10 +81,6 @@ fun VendorProfileScreen(
 		mutableStateOf(false)
 	}
 
-	var loading by remember {
-		mutableStateOf(true)
-	}
-
 	var saving by remember {
 		mutableStateOf(false)
 	}
@@ -97,87 +89,70 @@ fun VendorProfileScreen(
 		mutableStateOf(false)
 	}
 
-	val context =
-		LocalContext.current
+	val vendorId = authenticationState.userId
+	val userRole = authenticationState.role
 
-	val currentUser =
-		FirebaseAuth.getInstance().currentUser
+	LaunchedEffect(Unit) {
+		viewModel.checkCurrentUserRole {
+			authChecked = true
+		}
+	}
 
-	val vendorId =
-		currentUser?.uid
+	LaunchedEffect(authChecked, vendorId, userRole) {
+		if (authChecked) {
+			if (
+				vendorId == null ||
+				userRole != UserRole.VENDOR
+			) {
+				onLoginClick()
+			} else {
+				viewModel.observeVendorProfile(vendorId)
+			}
+		}
+	}
+
+	val vendor = vendorProfileState.data
+
+	LaunchedEffect(vendor) {
+		if (vendor != null && !editMode) {
+			vendorName = vendor.vendorName
+			category = vendor.category
+			vendorImage = vendor.vendorImage
+		}
+	}
 
 	val imagePicker =
 		rememberLauncherForActivityResult(
 			contract = ActivityResultContracts.GetContent()
 		) { uri: Uri? ->
+			if (uri != null) {
+				uploadingImage = true
 
-			if (uri == null) {
-				return@rememberLauncherForActivityResult
-			}
+				viewModel.uploadImage(uri) { imageId ->
+					if (imageId != null) {
+						vendorImage = imageId
+					}
 
-			uploadVendorImage(
-				context = context,
-				uri = uri,
-				viewModel = viewModel
-			) { imageId ->
-
-				if (imageId != null) {
-					vendorImage = imageId
+					uploadingImage = false
 				}
-
-				uploadingImage = false
 			}
-
-			uploadingImage = true
 		}
 
-	LaunchedEffect(vendorId) {
-
-		if (vendorId == null) {
-			loading = false
-			onLoginClick()
-			return@LaunchedEffect
-		}
-
-		viewModel.getVendorById(
-			vendorId
-		) { result ->
-
-			vendor = result
-
-			if (result != null) {
-				vendorName = result.vendorName
-				category = result.category
-				vendorImage = result.vendorImage
-			}
-
-			loading = false
-		}
-	}
-
-	if (loading) {
-		Text(
-			text = "Loading..."
-		)
-
+	if (!authChecked || vendorProfileState.isInitialLoading) {
+		Text(text = "Loading...")
 		return
 	}
 
-	if (vendorId == null) {
+	if (vendorId == null || userRole != UserRole.VENDOR) {
 		return
 	}
 
 	if (vendor == null) {
-		Text(
-			text = "Vendor profile not found."
-		)
-
+		Text(text = "Vendor profile not found.")
 		return
 	}
 
-	val currentVendor =
-		vendor!!
-
+	val currentVendor = vendor
 	val scrollState = rememberScrollState()
 
 	Column(
@@ -187,22 +162,16 @@ fun VendorProfileScreen(
 			.padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp)
 	) {
-
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
-
-			Text(
-				text = "Vendor Profile"
-			)
+			Text(text = "Vendor Profile")
 
 			if (!editMode) {
-
 				Button(
 					onClick = {
 						editMode = true
-
 						vendorName = currentVendor.vendorName
 						category = currentVendor.category
 						vendorImage = currentVendor.vendorImage
@@ -214,24 +183,21 @@ fun VendorProfileScreen(
 		}
 
 		if (vendorImage.isBlank()) {
-
 			Icon(
 				imageVector = Icons.Default.AccountCircle,
 				contentDescription = "Default vendor profile picture",
 				modifier = Modifier.size(120.dp)
 			)
-
 		} else {
-
-			AsyncImage(
-				model = IMAGE_BASE_URL + vendorImage,
+			CachedImage(
+				imageId = vendorImage,
+				viewModel = viewModel,
 				contentDescription = "Vendor profile picture",
 				modifier = Modifier.size(120.dp)
 			)
 		}
 
 		if (editMode) {
-
 			OutlinedButton(
 				onClick = {
 					imagePicker.launch("image/*")
@@ -250,7 +216,6 @@ fun VendorProfileScreen(
 		}
 
 		if (editMode) {
-
 			OutlinedTextField(
 				value = vendorName,
 				onValueChange = {
@@ -261,9 +226,7 @@ fun VendorProfileScreen(
 				},
 				modifier = Modifier.fillMaxWidth()
 			)
-
 		} else {
-
 			OutlinedTextField(
 				value = currentVendor.vendorName,
 				onValueChange = {},
@@ -286,11 +249,9 @@ fun VendorProfileScreen(
 		)
 
 		if (editMode) {
-
 			Column(
 				modifier = Modifier.fillMaxWidth()
 			) {
-
 				OutlinedTextField(
 					value = category,
 					onValueChange = {},
@@ -307,9 +268,7 @@ fun VendorProfileScreen(
 						categoryExpanded = false
 					}
 				) {
-
 					vendorCategories.forEach { item ->
-
 						DropdownMenuItem(
 							text = {
 								Text(item)
@@ -337,9 +296,7 @@ fun VendorProfileScreen(
 					)
 				}
 			}
-
 		} else {
-
 			OutlinedTextField(
 				value = currentVendor.category,
 				onValueChange = {},
@@ -382,12 +339,10 @@ fun VendorProfileScreen(
 		)
 
 		if (editMode) {
-
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
-
 				OutlinedButton(
 					onClick = {
 						vendorName = currentVendor.vendorName
@@ -402,7 +357,6 @@ fun VendorProfileScreen(
 
 				Button(
 					onClick = {
-
 						saving = true
 
 						viewModel.updateVendorProfile(
@@ -411,16 +365,7 @@ fun VendorProfileScreen(
 							category = category,
 							vendorImage = vendorImage
 						) { success ->
-
 							if (success) {
-
-								vendor =
-									currentVendor.copy(
-										vendorName = vendorName.trim(),
-										category = category,
-										vendorImage = vendorImage
-									)
-
 								editMode = false
 							}
 
@@ -442,9 +387,7 @@ fun VendorProfileScreen(
 					)
 				}
 			}
-
 		} else {
-
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -462,7 +405,7 @@ fun VendorProfileScreen(
 
 				Button(
 					onClick = {
-						viewModel.logout()
+						viewModel.signOut()
 						onHomeClick()
 					},
 					modifier = Modifier.weight(1f)
@@ -471,58 +414,5 @@ fun VendorProfileScreen(
 				}
 			}
 		}
-	}
-}
-
-private fun uploadVendorImage(
-	context: Context,
-	uri: Uri,
-	viewModel: AppViewModel,
-	onResult: (String?) -> Unit
-) {
-
-	try {
-
-		val inputStream =
-			context.contentResolver.openInputStream(uri)
-				?: throw Exception("Unable to open image")
-
-		val file =
-			File.createTempFile(
-				"vendor_image",
-				".jpg",
-				context.cacheDir
-			)
-
-		inputStream.use { input ->
-			file.outputStream().use { output ->
-				input.copyTo(output)
-			}
-		}
-
-		val requestBody =
-			file.asRequestBody(
-				"image/*".toMediaType()
-			)
-
-		val multipartBody =
-			MultipartBody.Part.createFormData(
-				"image",
-				file.name,
-				requestBody
-			)
-
-		viewModel.uploadImage(
-			multipartBody
-		) { imageId ->
-
-			file.delete()
-
-			onResult(imageId)
-		}
-
-	} catch (e: Exception) {
-
-		onResult(null)
 	}
 }

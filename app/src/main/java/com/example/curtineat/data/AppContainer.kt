@@ -1,3 +1,4 @@
+
 package com.example.curtineat.data
 
 import android.content.Context
@@ -12,6 +13,7 @@ import com.example.curtineat.data.remote.firebase.source.FirebaseOrderSource
 import com.example.curtineat.data.remote.firebase.source.FirebaseProductSource
 import com.example.curtineat.data.remote.firebase.source.FirebaseVendorSource
 import com.example.curtineat.data.repository.api.ImageRepository
+import com.example.curtineat.data.repository.api.ImageUploadRepository
 import com.example.curtineat.data.repository.auth.AuthenticationRepository
 import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
 import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
@@ -36,7 +38,7 @@ class AppContainer(context: Context) {
 	// Local database
 	private val database = RoomProvider.getDatabase(context)
 
-	// Firebase remote sources
+	// Firebase remote repositories
 	private val customerRemote =
 		FirebaseCustomerRepository(FirebaseCustomerSource())
 
@@ -52,13 +54,25 @@ class AppContainer(context: Context) {
 	private val notificationRemote =
 		FirebaseNotificationRepository(FirebaseNotificationSource())
 
-	// Image API
-	private val imageRemote =
-		ImageRepository(
-			source = ImageApiSource(
-				service = ImageApiProvider.service
-			)
+	// Image API repository
+	private val imageRemote = ImageRepository(
+		source = ImageApiSource(
+			service = ImageApiProvider.service
 		)
+	)
+
+	// Image cache: Room first, remote API on cache miss
+	private val imageCache = ImageCacheRepository(
+		imageDao = database.cachedImageDao(),
+		remote = imageRemote
+	)
+
+	// Image upload: prepares, uploads, and caches selected images
+	private val imageUploadRepository = ImageUploadRepository(
+		context = context,
+		imageRepository = imageRemote,
+		imageCache = imageCache
+	)
 
 	// Local repositories
 	private val vendorLocal = VendorLocalRepository(
@@ -113,24 +127,17 @@ class AppContainer(context: Context) {
 		local = notificationLocal
 	)
 
-	// Image cache: Room first, remote API on cache miss
-	private val imageCache = ImageCacheRepository(
-		imageDao = database.cachedImageDao(),
-		remote = imageRemote
-	)
-
 	// Authentication
 	private val firebaseAuthSource =
 		FirebaseAuthSource(FirebaseProvider.auth)
 
-	private val authenticationRepository =
-		AuthenticationRepository(
-			authSource = firebaseAuthSource,
-			customerRemote = customerRemote,
-			vendorRemote = vendorRemote
-		)
+	private val authenticationRepository = AuthenticationRepository(
+		authSource = firebaseAuthSource,
+		customerRemote = customerRemote,
+		vendorRemote = vendorRemote
+	)
 
-	// Construct this last, after all dependencies are initialized
+	// ViewModel factory
 	val appViewModelFactory = AppViewModelFactory(
 		vendorSync = vendorSync,
 		productSync = productSync,
@@ -138,6 +145,7 @@ class AppContainer(context: Context) {
 		orderSync = orderSync,
 		notificationSync = notificationSync,
 		imageCache = imageCache,
-		authenticationRepository = authenticationRepository
+		authenticationRepository = authenticationRepository,
+		imageUploadRepository = imageUploadRepository
 	)
 }
