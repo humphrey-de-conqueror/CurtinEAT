@@ -31,6 +31,7 @@ import com.example.curtineat.data.repository.room.MenuSyncRepository
 import com.example.curtineat.data.repository.room.ProductLocalRepository
 import com.example.curtineat.data.repository.room.VendorLocalRepository
 import com.example.curtineat.data.local.room.mapper.toFirebaseData
+import com.example.curtineat.data.repository.room.CustomerLocalRepository
 
 
 class AppViewModel(
@@ -43,6 +44,7 @@ class AppViewModel(
 
     private val vendorLocalRepository: VendorLocalRepository,
     private val productLocalRepository: ProductLocalRepository,
+    private val customerLocalRepository: CustomerLocalRepository,
     private val menuSyncRepository: MenuSyncRepository
 
 ) : ViewModel() {

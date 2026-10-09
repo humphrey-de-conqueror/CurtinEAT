@@ -17,6 +17,7 @@ import com.example.curtineat.data.repository.firebase.FirebaseNotificationReposi
 import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
 import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
 import com.example.curtineat.data.repository.firebase.FirebaseVendorRepository
+import com.example.curtineat.data.repository.room.CustomerLocalRepository
 import com.example.curtineat.data.repository.room.MenuSyncRepository
 import com.example.curtineat.data.repository.room.ProductLocalRepository
 import com.example.curtineat.data.repository.room.VendorLocalRepository
@@ -31,6 +32,7 @@ class AppViewModelFactory(
 
         if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
 
+            // Firebase repositories
             val vendorRepository =
                 FirebaseVendorRepository(
                     FirebaseVendorSource()
@@ -63,12 +65,7 @@ class AppViewModelFactory(
                     )
                 )
 
-            /*
-             * ====================
-             * Room
-             * ====================
-             */
-
+            // Room repositories
             val database =
                 RoomProvider.getDatabase(context)
 
@@ -82,12 +79,20 @@ class AppViewModelFactory(
                     database.productDao()
                 )
 
+            val customerLocalRepository =
+                CustomerLocalRepository(
+                    database.customerDao()
+                )
+
+            // Firebase -> Room synchronization
             val menuSyncRepository =
                 MenuSyncRepository(
                     firebaseVendorRepository = vendorRepository,
                     firebaseProductRepository = productRepository,
+                    firebaseCustomerRepository = customerRepository,
                     vendorLocalRepository = vendorLocalRepository,
-                    productLocalRepository = productLocalRepository
+                    productLocalRepository = productLocalRepository,
+                    customerLocalRepository = customerLocalRepository
                 )
 
             @Suppress("UNCHECKED_CAST")
@@ -99,13 +104,11 @@ class AppViewModelFactory(
                 notificationRepository = notificationRepository,
                 imageRepository = imageRepository,
 
-                /*
-                 * Room dependencies
-                 */
+                // Room dependencies
                 vendorLocalRepository = vendorLocalRepository,
                 productLocalRepository = productLocalRepository,
+                customerLocalRepository = customerLocalRepository,
                 menuSyncRepository = menuSyncRepository
-
             ) as T
         }
 
