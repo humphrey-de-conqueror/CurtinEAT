@@ -1,5 +1,6 @@
 package com.example.curtineat.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,7 +47,8 @@ fun OrderHistoryScreen(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onOrderClick: (String) -> Unit
 ) {
 
     val orders by appViewModel.orders.collectAsState()
@@ -170,7 +173,8 @@ fun OrderHistoryScreen(
 
                         OrderHistoryCard(
                             order = order,
-                            counterpartLabel = counterpartLabel
+                            counterpartLabel = counterpartLabel,
+                            onClick = { onOrderClick(order.orderId) }
                         )
                     }
                 }
@@ -200,7 +204,7 @@ fun OrderHistoryTitleCard() {
                 fontSize = 24.sp
             )
 
-            // PLACEHOLDER: will be used for sorting later
+            // PLACEHOLDER: might be used for sorting later
             IconButton(
                 onClick = { }
             ) {
@@ -213,15 +217,16 @@ fun OrderHistoryTitleCard() {
     }
 }
 
-// Read-only: no click handling on purpose
+// Tap for receipt
 @Composable
 fun OrderHistoryCard(
     order: FirebaseOrderData,
-    counterpartLabel: String
+    counterpartLabel: String,
+    onClick: () -> Unit,
 ) {
 
     PrimaryCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable{ onClick() }
     ) {
 
         // WHO + STATUS
@@ -238,12 +243,22 @@ fun OrderHistoryCard(
                 fontSize = 18.sp
             )
 
-            Text(
-                text = order.status,
-                color = orderStatusColor(order.status),
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = order.status,
+                    color = orderStatusColor(order.status),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "View receipt"
+                )
+            }
         }
 
         // DATE
