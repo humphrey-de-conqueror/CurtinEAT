@@ -1,6 +1,5 @@
 package com.example.curtineat.view
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,11 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
@@ -32,8 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,61 +39,59 @@ import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
-import com.example.curtineat.ui.theme.mySpacerWidth
 import com.example.curtineat.viewmodel.AppViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
-
 
 // ---------------- CART SCREEN ----------------
 @Composable
 fun CartScreen(
-    // since cardScreen can see humburger, expect full onAction
     appViewModel: AppViewModel,
     onBackButtonClick: () -> Unit,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
-    onLoginClick: () -> Unit
-) {
+    onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit
+){
     val cart by appViewModel.cart.collectAsState()
-    val customers by appViewModel.customers.collectAsState()
-    val vendors by appViewModel.vendors.collectAsState()
+    val customerState by appViewModel.customerState.collectAsState()
+    val vendorState by appViewModel.vendorState.collectAsState()
+    val authenticationState by appViewModel.authenticationState.collectAsState()
     val checkoutCompleted by appViewModel.checkoutCompleted.collectAsState()
-    val currentUser = FirebaseAuth.getInstance().currentUser
+    val checkoutInProgress by appViewModel.checkoutInProgress.collectAsState()
+    val checkoutError by appViewModel.checkoutError.collectAsState()
 
-    val loggedInCustomerId =
-        currentUser?.uid
+    val loggedInCustomerId = authenticationState.userId
+        .takeIf {
+            authenticationState.role == UserRole.CUSTOMER
+        }
+
+    val currentCustomer = customerState.data
+
+    val vendorId = cart.firstOrNull()?.product?.vendorId
+
+    val cartVendor = vendorState.data.find {
+        it.vendorId == vendorId
+    }
 
     var showEmptyCartDialog by remember {
         mutableStateOf(false)
     }
 
-    val currentCustomer = customers.find {
-        it.customerId == loggedInCustomerId
-    }
-
-    val vendorId = cart
-        .firstOrNull()
-        ?.product
-        ?.vendorId
-
-    val cartVendor = vendors.find {
-        it.vendorId == vendorId
-    }
-
-    LaunchedEffect(checkoutCompleted) {
-
-        if (checkoutCompleted) {
-
-            delay(1000)
-
-            appViewModel.clearCheckoutCompleted()
-
-            onBackButtonClick()
+    LaunchedEffect(loggedInCustomerId) {
+        if (loggedInCustomerId != null) {
+            appViewModel.observeCustomer(loggedInCustomerId)
         }
     }
 
+    LaunchedEffect(checkoutCompleted) {
+        if (checkoutCompleted) {
+            delay(1000)
+            appViewModel.clearCheckoutCompleted()
+            onBackButtonClick()
+        }
+    }
 
     AppScaffold(
         appViewModel = appViewModel,
@@ -105,6 +99,7 @@ fun CartScreen(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true
     ) { innerPadding ->
@@ -115,7 +110,6 @@ fun CartScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-
 
             if (cart.isEmpty()) {
 
@@ -130,24 +124,24 @@ fun CartScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
 
-                    //----
+                    // Customer information
                     mySpacer()
+
                     if (loggedInCustomerId != null) {
                         TextNormal(
-                            text = "Customer ID: $loggedInCustomerId",
+                            text = "Customer ID: $loggedInCustomerId"
                         )
 
                         TextNormal(
-                            text = "Ordering as: ${currentCustomer?.customerName ?: ""}",
-
-                            )
+                            text = "Ordering as: ${currentCustomer?.customerName ?: ""}"
+                        )
                     } else {
                         TextNormal(
-                            text = "Not logged in",
+                            text = "Not logged in"
                         )
                     }
+
                     mySpacer()
-                    //----
 
                     // Vendor
                     CartHeader(
@@ -163,13 +157,13 @@ fun CartScreen(
 
                         CartItemRow(
                             cartItem = cartItem,
+                            appViewModel = appViewModel,
                             onIncrease = {
                                 appViewModel.increaseQuantity(
                                     cartItem.product.productId
                                 )
                             },
                             onDecrease = {
-
                                 if (
                                     cart.size == 1 &&
                                     cartItem.quantity == 1
@@ -193,16 +187,30 @@ fun CartScreen(
 
                     mySpacer()
 
+                    if (checkoutError != null) {
+                        TextNormal(
+                            text = checkoutError ?: "",
+                        )
+
+                        TextButton(
+                            onClick = {
+                                appViewModel.clearCheckoutError()
+                            }
+                        ) {
+                            TextNormal(text = "Dismiss")
+                        }
+                    }
+
                     PrimaryButton(
-                        text = "Place Order",
+                        text = if (checkoutInProgress) {
+                            "Placing Order..."
+                        } else {
+                            "Place Order"
+                        },
                         onClick = {
-
                             if (loggedInCustomerId == null) {
-
                                 onLoginClick()
-
                             } else {
-
                                 appViewModel.checkout(
                                     customerId = loggedInCustomerId
                                 )
@@ -210,31 +218,36 @@ fun CartScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    if (checkoutInProgress) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(top = 8.dp)
+                                .size(24.dp)
+                        )
+                    }
                 }
             }
         }
     }
 
     if (showEmptyCartDialog) {
-
         AlertDialog(
             onDismissRequest = {
                 showEmptyCartDialog = false
             },
-
             title = {
                 TextNormal(
                     text = "Remove last item?",
                     fontWeight = FontWeight.Bold
                 )
             },
-
             text = {
                 TextNormal(
                     text = "Removing this item will empty your cart."
                 )
             },
-
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -243,27 +256,21 @@ fun CartScreen(
                         onBackButtonClick()
                     }
                 ) {
-                    TextNormal(
-                        text = "Remove"
-                    )
+                    TextNormal(text = "Remove")
                 }
             },
-
             dismissButton = {
                 TextButton(
                     onClick = {
                         showEmptyCartDialog = false
                     }
                 ) {
-                    TextNormal(
-                        text = "Cancel"
-                    )
+                    TextNormal(text = "Cancel")
                 }
             }
         )
     }
 }
-
 
 // ---------------- EMPTY CART ----------------
 @Composable
@@ -301,7 +308,6 @@ fun EmptyCart(
     }
 }
 
-
 // ---------------- CART HEADER ----------------
 @Composable
 fun CartHeader(
@@ -336,18 +342,14 @@ fun CartHeader(
     }
 }
 
-
 // ---------------- CART ITEM ----------------
 @Composable
 fun CartItemRow(
     cartItem: CartItem,
+    appViewModel: AppViewModel,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    val imageRes = getDrawableId(
-        cartItem.product.productImage
-    )
-
     SecondaryCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(12.dp)
@@ -359,13 +361,13 @@ fun CartItemRow(
         ) {
 
             // Food image
-            Image(
-                painter = painterResource(imageRes),
+            CachedImage(
+                imageId = cartItem.product.productImage,
+                viewModel = appViewModel,
                 contentDescription = cartItem.product.productName,
                 modifier = Modifier
                     .size(90.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
+                    .clip(RoundedCornerShape(12.dp))
             )
 
             // Food information
@@ -420,7 +422,6 @@ fun CartItemRow(
         }
     }
 }
-
 
 // ---------------- PAYMENT SUMMARY ----------------
 @Composable

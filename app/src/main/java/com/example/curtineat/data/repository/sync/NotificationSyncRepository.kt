@@ -33,13 +33,26 @@ class NotificationSyncRepository(
 			remote.getNotificationsByRecipientId(recipientId)
 				.filter { it.recipientType == recipientType }
 
-		val notifications =
-			remoteNotifications.map { it.toEntity() }
+		val notifications = remoteNotifications.map { it.toEntity() }
 
 		local.replaceByRecipient(
 			recipientId = recipientId,
 			recipientType = recipientType.name,
 			notifications = notifications
 		)
+	}
+
+	suspend fun markAsRead(notificationId: String) {
+		// Update Room first so the UI can reflect the change locally.
+		local.markAsRead(notificationId)
+
+		// Synchronize the updated read status with Firebase.
+		val notification = remote.getNotificationById(notificationId)
+
+		if (notification != null && !notification.isRead) {
+			remote.updateNotification(
+				notification.copy(isRead = true)
+			)
+		}
 	}
 }

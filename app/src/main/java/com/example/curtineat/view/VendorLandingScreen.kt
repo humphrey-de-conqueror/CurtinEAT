@@ -3,6 +3,8 @@ package com.example.curtineat.view
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,37 +16,31 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
+import com.example.curtineat.data.local.room.entity.OrderEntity
+import com.example.curtineat.data.local.room.entity.ProductEntity
 import com.example.curtineat.ui.theme.PrimaryCard
+import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.viewmodel.AppViewModel
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material3.OutlinedButton
-import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
-import com.example.curtineat.ui.theme.SecondaryCard
-import androidx.compose.material3.Text
-import coil.compose.AsyncImage
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import com.google.firebase.auth.FirebaseAuth
-
-
+import com.example.curtineat.viewmodel.UserRole
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun VendorLandingScreen(
@@ -53,223 +49,163 @@ fun VendorLandingScreen(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onFoodClick: (String) -> Unit,
     onAddProductClick: () -> Unit
-) {
+){
+    val authenticationState by
+    appViewModel.authenticationState.collectAsState()
 
-    val vendors by appViewModel.vendors.collectAsState()
+    val vendorProfileState by
+    appViewModel.vendorProfileState.collectAsState()
 
-    val products by appViewModel.products.collectAsState()
+    val productState by
+    appViewModel.productState.collectAsState()
 
-    val orders by appViewModel.orders.collectAsState()
+    val orderState by
+    appViewModel.orderState.collectAsState()
 
-    val loggedInVendorId = FirebaseAuth.getInstance().currentUser?.uid
+    val loggedInVendorId = authenticationState.userId.takeIf {
+        authenticationState.role == UserRole.VENDOR
+    }
 
-    val context = LocalContext.current
-
-    var ordersExpanded by
-    rememberSaveable {
+    var ordersExpanded by rememberSaveable {
         mutableStateOf(true)
     }
 
-    var productsExpanded by
-    rememberSaveable {
+    var productsExpanded by rememberSaveable {
         mutableStateOf(true)
     }
 
-    val currentVendor =
-        vendors.find {
-            it.vendorId == loggedInVendorId
+    val currentVendor = vendorProfileState.data
+
+    val vendorProducts = productState.data.filter {
+        it.vendorId == loggedInVendorId
+    }
+
+    val activeOrders = orderState.data
+        .filter {
+            it.vendorId == loggedInVendorId &&
+                    it.status.trim().uppercase() != "COMPLETED"
+        }
+        .sortedByDescending {
+            it.timestamp
         }
 
-    val vendorProducts =
-        products.filter {
-            it.vendorId == loggedInVendorId
-        }
-
-    val activeOrders =
-        orders
-            .filter {
-                it.vendorId == loggedInVendorId &&
-                        it.status.uppercase() != "COMPLETED"
-            }
-            .sortedByDescending {
-                it.timestamp.toDate()
-            }
-
-
-    LaunchedEffect(
-        loggedInVendorId
-    ) {
-
+    LaunchedEffect(loggedInVendorId) {
         if (loggedInVendorId != null) {
-
-            appViewModel.loadHomeData()
-
-//            // Realtime incoming orders
-            appViewModel.startVendorOrderListener(loggedInVendorId)
-
-            // Realtime notification drawer
-//            appViewModel
-//                .startNotificationListener(
-//                    loggedInVendorId
-//                )
+            appViewModel.observeVendorProfile(loggedInVendorId)
+            appViewModel.refreshProductsByVendor(loggedInVendorId)
+            appViewModel.observeOrdersByVendor(loggedInVendorId)
         }
     }
-
 
     AppScaffold(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true,
         onProfileClick = onProfileClick,
-
         floatingActionButton = {
-
             FloatingActionButton(
                 onClick = onAddProductClick
             ) {
-
                 Icon(
-                    imageVector =
-                        Icons.Default.Add,
-                    contentDescription =
-                        "Add product"
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add product"
                 )
             }
         }
     ) { innerPadding ->
-
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
             item {
-
                 TextNormal(
-                    text =
-                        currentVendor
-                            ?.vendorName
-                            ?: "Vendor",
-                    fontWeight =
-                        FontWeight.Bold,
+                    text = currentVendor?.vendorName ?: "Vendor",
+                    fontWeight = FontWeight.Bold,
                     fontSize = 30.sp
                 )
-
             }
 
-
             /*
-             * ORDERS
-             */
+	     * ORDERS
+	     */
 
             item {
-
                 VendorSectionHeader(
                     title = "Active Orders",
                     count = activeOrders.size,
                     expanded = ordersExpanded,
                     onClick = {
-                        ordersExpanded =
-                            !ordersExpanded
+                        ordersExpanded = !ordersExpanded
                     }
                 )
             }
 
-
             if (ordersExpanded) {
-
                 if (activeOrders.isEmpty()) {
-
                     item {
-
                         TextNormal(
-                            text =
-                                "No active orders",
+                            text = "No active orders",
                             fontSize = 16.sp
                         )
                     }
-
                 } else {
-
                     items(
                         items = activeOrders,
-                        key = {
-                            it.orderId
-                        }
+                        key = { it.orderId }
                     ) { order ->
-
                         VendorOrderItem(
                             order = order,
                             onStatusClick = {
-
-                                appViewModel
-                                    .advanceOrderStatus(
-                                        order
-                                    )
+                                appViewModel.advanceOrderStatus(order)
                             }
                         )
                     }
                 }
             }
 
-
             /*
-             * PRODUCTS
-             */
+	     * PRODUCTS
+	     */
 
             item {
-
                 VendorSectionHeader(
                     title = "My Products",
-                    count =
-                        vendorProducts.size,
-                    expanded =
-                        productsExpanded,
+                    count = vendorProducts.size,
+                    expanded = productsExpanded,
                     onClick = {
-                        productsExpanded =
-                            !productsExpanded
+                        productsExpanded = !productsExpanded
                     }
                 )
             }
 
-
             if (productsExpanded) {
-
                 if (vendorProducts.isEmpty()) {
-
                     item {
-
                         TextNormal(
-                            text =
-                                "No products yet",
+                            text = "No products yet",
                             fontSize = 16.sp
                         )
                     }
-
                 } else {
-
                     items(
                         items = vendorProducts,
-                        key = {
-                            it.productId
-                        }
+                        key = { it.productId }
                     ) { product ->
-
                         VendorFoodItem(
                             product = product,
                             onClick = {
-                                onFoodClick(
-                                    product.productId
-                                )
-                            }
+                                onFoodClick(product.productId)
+                            },
+                            viewModel = appViewModel
                         )
                     }
                 }
@@ -285,7 +221,6 @@ fun VendorSectionHeader(
     expanded: Boolean,
     onClick: () -> Unit
 ) {
-
     PrimaryCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -293,125 +228,96 @@ fun VendorSectionHeader(
                 onClick()
             }
     ) {
-
         Row(
-            modifier =
-                Modifier.fillMaxWidth(),
-            horizontalArrangement =
-                Arrangement.SpaceBetween,
-            verticalAlignment =
-                Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
             TextNormal(
                 text = "$title ($count)",
-                fontWeight =
-                    FontWeight.Bold,
+                fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
             )
 
             Icon(
-                imageVector =
-                    if (expanded) {
-                        Icons.Default.ExpandLess
-                    } else {
-                        Icons.Default.ExpandMore
-                    },
-                contentDescription =
-                    if (expanded) {
-                        "Collapse"
-                    } else {
-                        "Expand"
-                    }
+                imageVector = if (expanded) {
+                    Icons.Default.ExpandLess
+                } else {
+                    Icons.Default.ExpandMore
+                },
+                contentDescription = if (expanded) {
+                    "Collapse"
+                } else {
+                    "Expand"
+                }
             )
         }
     }
-}
 
+}
 
 @Composable
 fun VendorOrderItem(
-    order: FirebaseOrderData,
+    order: OrderEntity,
     onStatusClick: () -> Unit
 ) {
-
     SecondaryCard(
-        modifier =
-            Modifier.fillMaxWidth(),
-        contentPadding =
-            PaddingValues(16.dp)
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp)
     ) {
-
         TextNormal(
-            text =
-                "Order ID: ${order.orderId}",
-            fontWeight =
-                FontWeight.Bold,
+            text = "Order ID: ${order.orderId}",
+            fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
             maxLines = 1
         )
 
         Spacer(
-            modifier =
-                Modifier.height(6.dp)
+            modifier = Modifier.height(6.dp)
         )
 
         TextNormal(
-            text =
-                formatOrderTime(
-                    order.timestamp
-                        .toDate()
-                ),
+            text = formatOrderTime(Date(order.timestamp)),
             fontSize = 14.sp
         )
 
         Spacer(
-            modifier =
-                Modifier.height(10.dp)
+            modifier = Modifier.height(10.dp)
         )
 
         OutlinedButton(
             onClick = onStatusClick,
-            enabled =
-                order.status.uppercase() !=
-                        "COMPLETED"
+            enabled = order.status.trim().uppercase() != "COMPLETED"
         ) {
-
             Text(
-                text =
-                    order.status.uppercase()
+                text = order.status.uppercase()
             )
         }
     }
+
 }
 
-fun formatOrderTime(
-    date: java.util.Date
-): String {
-
-    return java.text.SimpleDateFormat(
+fun formatOrderTime(date: Date): String {
+    return SimpleDateFormat(
         "d MMM yyyy, h:mm a",
-        java.util.Locale.getDefault()
+        Locale.getDefault()
     ).format(date)
 }
 
-
 @Composable
 fun VendorFoodItem(
-    product: FirebaseProductData,
-    onClick: () -> Unit
+    product: ProductEntity,
+    onClick: () -> Unit,
+    viewModel: AppViewModel
 ) {
-
     SecondaryCard(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
-        contentPadding =
-            PaddingValues(12.dp)
+        contentPadding = PaddingValues(12.dp)
     ) {
-
         ProductImage(
             product = product,
+            viewModel = viewModel,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
@@ -420,81 +326,28 @@ fun VendorFoodItem(
         mySpacer()
 
         TextNormal(
-            text =
-                product.productName,
-            fontWeight =
-                FontWeight.Bold,
+            text = product.productName,
+            fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
 
         TextNormal(
-            text =
-                "RM %.2f".format(
-                    product.productPrice
-                ),
+            text = "RM %.2f".format(product.productPrice),
             fontSize = 16.sp
         )
     }
 }
 
-private fun productImageUrl(
-    imageId: String
-): String {
-
-    return "https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/$imageId"
-}
-
 @Composable
 fun ProductImage(
-    product: FirebaseProductData,
+    product: ProductEntity,
+    viewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
-
-    if (
-        product.productImage.startsWith(
-            "local:"
-        )
-    ) {
-
-        val context =
-            LocalContext.current
-
-        val imageName =
-            product.productImage
-                .removePrefix("local:")
-
-        val imageRes =
-            context.resources.getIdentifier(
-                imageName,
-                "drawable",
-                context.packageName
-            )
-
-        if (imageRes != 0) {
-
-            Image(
-                painter =
-                    painterResource(imageRes),
-                contentDescription =
-                    product.productName,
-                modifier = modifier,
-                contentScale =
-                    ContentScale.Crop
-            )
-        }
-
-    } else {
-
-        AsyncImage(
-            model =
-                productImageUrl(
-                    product.productImage
-                ),
-            contentDescription =
-                product.productName,
-            modifier = modifier,
-            contentScale =
-                ContentScale.Crop
-        )
-    }
+    CachedImage(
+        imageId = product.productImage,
+        viewModel = viewModel,
+        contentDescription = product.productName,
+        modifier = modifier
+    )
 }

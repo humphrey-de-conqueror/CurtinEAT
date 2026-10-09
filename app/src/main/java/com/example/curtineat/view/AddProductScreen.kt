@@ -1,6 +1,5 @@
 package com.example.curtineat.view
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,30 +14,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 import com.example.curtineat.viewmodel.AppViewModel
-import com.google.firebase.auth.FirebaseAuth
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
+import com.example.curtineat.viewmodel.UserRole
 
 private const val IMAGE_BASE_URL =
 	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
@@ -48,7 +41,6 @@ fun AddProductScreen(
 	viewModel: AppViewModel,
 	onBackClick: () -> Unit
 ) {
-
 	var productName by remember {
 		mutableStateOf("")
 	}
@@ -73,42 +65,37 @@ fun AddProductScreen(
 		mutableStateOf(false)
 	}
 
-	val context =
-		LocalContext.current
+	var errorMessage by remember {
+		mutableStateOf<String?>(null)
+	}
 
-	val currentUser =
-		FirebaseAuth.getInstance().currentUser
+	val authenticationState by
+	viewModel.authenticationState.collectAsState()
 
-	val vendorId =
-		currentUser?.uid
+	val vendorId = authenticationState.userId.takeIf {
+		authenticationState.role == UserRole.VENDOR
+	}
 
-	val imagePicker =
-		rememberLauncherForActivityResult(
-			contract = ActivityResultContracts.GetContent()
-		) { uri: Uri? ->
-
-			if (uri == null) {
-				return@rememberLauncherForActivityResult
-			}
-
+	val imagePicker = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.GetContent()
+	) { uri: Uri? ->
+		if (uri != null) {
 			uploadingImage = true
+			errorMessage = null
 
-			uploadProductImage(
-				context = context,
-				uri = uri,
-				viewModel = viewModel
-			) { imageId ->
-
+			viewModel.uploadImage(uri) { imageId ->
 				if (imageId != null) {
 					productImage = imageId
+				} else {
+					errorMessage = "Unable to upload product image."
 				}
 
 				uploadingImage = false
 			}
 		}
+	}
 
-	val scrollState =
-		rememberScrollState()
+	val scrollState = rememberScrollState()
 
 	Column(
 		modifier = Modifier
@@ -117,21 +104,17 @@ fun AddProductScreen(
 			.padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp)
 	) {
-
 		Text(
 			text = "Add Food"
 		)
 
 		if (productImage.isBlank()) {
-
-			androidx.compose.material3.Icon(
+			Icon(
 				imageVector = Icons.Default.Fastfood,
 				contentDescription = "Default product image",
 				modifier = Modifier.size(120.dp)
 			)
-
 		} else {
-
 			AsyncImage(
 				model = IMAGE_BASE_URL + productImage,
 				contentDescription = "Product image",
@@ -144,10 +127,9 @@ fun AddProductScreen(
 			onClick = {
 				imagePicker.launch("image/*")
 			},
-			enabled = !uploadingImage,
+			enabled = !uploadingImage && !saving,
 			modifier = Modifier.fillMaxWidth()
 		) {
-
 			Text(
 				if (uploadingImage) {
 					"Uploading..."
@@ -161,22 +143,26 @@ fun AddProductScreen(
 			value = productName,
 			onValueChange = {
 				productName = it
+				errorMessage = null
 			},
 			label = {
 				Text("Product Name")
 			},
-			modifier = Modifier.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth(),
+			enabled = !saving
 		)
 
 		OutlinedTextField(
 			value = productPrice,
 			onValueChange = {
 				productPrice = it
+				errorMessage = null
 			},
 			label = {
 				Text("Price")
 			},
-			modifier = Modifier.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth(),
+			enabled = !saving
 		)
 
 		Row(
@@ -184,7 +170,6 @@ fun AddProductScreen(
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
-
 			Text(
 				text = "Available"
 			)
@@ -193,7 +178,14 @@ fun AddProductScreen(
 				checked = isAvailable,
 				onCheckedChange = {
 					isAvailable = it
-				}
+				},
+				enabled = !saving
+			)
+		}
+
+		if (errorMessage != null) {
+			Text(
+				text = errorMessage!!
 			)
 		}
 
@@ -201,51 +193,49 @@ fun AddProductScreen(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.spacedBy(8.dp)
 		) {
-
 			OutlinedButton(
-				onClick = {
-					onBackClick()
-				},
+				onClick = onBackClick,
+				enabled = !saving && !uploadingImage,
 				modifier = Modifier.weight(1f)
 			) {
 				Text("Cancel")
 			}
 
+			val parsedPrice = productPrice.toDoubleOrNull()
+			val validPrice = parsedPrice != null &&
+				parsedPrice.isFinite() &&
+				parsedPrice >= 0.0
+
 			Button(
 				onClick = {
+					val price = productPrice.toDoubleOrNull()
 
 					if (vendorId == null) {
-						onBackClick()
+						errorMessage = "Please sign in with a vendor account."
 						return@Button
 					}
 
-					val price =
-						productPrice.toDoubleOrNull()
-
-					if (price == null) {
+					if (price == null || !price.isFinite() || price < 0.0) {
+						errorMessage = "Enter a valid non-negative price."
 						return@Button
 					}
 
 					saving = true
-
-					val product =
-						FirebaseProductData(
-							productId = "",
-							vendorId = vendorId,
-							productName = productName.trim(),
-							productPrice = price,
-							productImage = productImage,
-							isAvailable = isAvailable
-						)
+					errorMessage = null
 
 					viewModel.addProduct(
-						product
+						vendorId = vendorId,
+						productName = productName.trim(),
+						productPrice = price,
+						productImage = productImage,
+						isAvailable = isAvailable
 					) { success ->
-
 						saving = false
 
 						if (success) {
 							onBackClick()
+						} else {
+							errorMessage = "Unable to save product. Please try again."
 						}
 					}
 				},
@@ -253,12 +243,10 @@ fun AddProductScreen(
 					!uploadingImage &&
 					vendorId != null &&
 					productName.isNotBlank() &&
-					productPrice.toDoubleOrNull() != null &&
-					productPrice.toDoubleOrNull()!! >= 0.0 &&
+					validPrice &&
 					productImage.isNotBlank(),
 				modifier = Modifier.weight(1f)
 			) {
-
 				Text(
 					if (saving) {
 						"Saving..."
@@ -268,58 +256,5 @@ fun AddProductScreen(
 				)
 			}
 		}
-	}
-}
-
-private fun uploadProductImage(
-	context: Context,
-	uri: Uri,
-	viewModel: AppViewModel,
-	onResult: (String?) -> Unit
-) {
-
-	try {
-
-		val inputStream =
-			context.contentResolver.openInputStream(uri)
-				?: throw Exception("Unable to open image")
-
-		val file =
-			File.createTempFile(
-				"product_image",
-				".jpg",
-				context.cacheDir
-			)
-
-		inputStream.use { input ->
-			file.outputStream().use { output ->
-				input.copyTo(output)
-			}
-		}
-
-		val requestBody =
-			file.asRequestBody(
-				"image/*".toMediaType()
-			)
-
-		val multipartBody =
-			MultipartBody.Part.createFormData(
-				"image",
-				file.name,
-				requestBody
-			)
-
-		viewModel.uploadImage(
-			multipartBody
-		) { imageId ->
-
-			file.delete()
-
-			onResult(imageId)
-		}
-
-	} catch (e: Exception) {
-
-		onResult(null)
 	}
 }

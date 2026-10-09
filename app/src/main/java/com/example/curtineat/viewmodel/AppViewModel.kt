@@ -1,4 +1,3 @@
-
 package com.example.curtineat.viewmodel
 
 import android.net.Uri
@@ -9,6 +8,9 @@ import com.example.curtineat.data.local.room.entity.NotificationEntity
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.ProductEntity
 import com.example.curtineat.data.local.room.entity.VendorEntity
+import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
+import com.example.curtineat.data.remote.firebase.model.FirebaseOrderProductData
+import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 import com.example.curtineat.data.remote.firebase.model.RecipientType
 import com.example.curtineat.data.repository.api.ImageUploadRepository
 import com.example.curtineat.data.repository.auth.AuthenticationRepository
@@ -22,14 +24,21 @@ import com.example.curtineat.data.repository.sync.VendorSyncRepository
 import com.example.curtineat.viewmodel.state.AuthenticationUiState
 import com.example.curtineat.viewmodel.state.DataUiState
 import com.example.curtineat.viewmodel.state.ImageUiState
+import com.example.curtineat.model.CartItem
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.curtineat.data.local.room.entity.OrderProductEntity
+import kotlinx.coroutines.flow.first
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -41,6 +50,22 @@ class AppViewModel(
     private val authenticationRepository: AuthenticationRepository,
     private val imageUploadRepository: ImageUploadRepository
 ) : ViewModel() {
+
+    // ---------------------------------------------------------
+    // Cart and checkout state
+    // ---------------------------------------------------------
+
+    private val _cart = MutableStateFlow<List<CartItem>>(emptyList())
+    val cart = _cart.asStateFlow()
+
+    private val _checkoutCompleted = MutableStateFlow(false)
+    val checkoutCompleted = _checkoutCompleted.asStateFlow()
+
+    private val _checkoutInProgress = MutableStateFlow(false)
+    val checkoutInProgress = _checkoutInProgress.asStateFlow()
+
+    private val _checkoutError = MutableStateFlow<String?>(null)
+    val checkoutError = _checkoutError.asStateFlow()
 
     // ---------------------------------------------------------
     // UI state
@@ -87,6 +112,31 @@ class AppViewModel(
 
     val imageStates: StateFlow<Map<String, ImageUiState>> =
         _imageStates.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchVendorId = MutableStateFlow<String?>(null)
+    val searchVendorId: StateFlow<String?> = _searchVendorId.asStateFlow()
+
+    private val _errorForImageRemoval = MutableStateFlow<String?>(null)
+    val errorForImageRemoval: StateFlow<String?> =
+        _errorForImageRemoval.asStateFlow()
+
+    val isLoading: StateFlow<Boolean> = combine(
+        vendorState,
+        productState
+    ) { vendors, products ->
+        vendors.isInitialLoading || products.isInitialLoading
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = true
+    )
+
+    // ---------------------------------------------------------
+    // Observation jobs and scopes
+    // ---------------------------------------------------------
 
     private var customerObservationJob: Job? = null
     private var vendorProfileObservationJob: Job? = null
@@ -407,6 +457,52 @@ class AppViewModel(
         refreshNotifications()
     }
 
+    fun loadHomeData() {
+        refreshVendors()
+        refreshProducts()
+    }
+
+    // ---------------------------------------------------------
+    // Product operations
+    // ---------------------------------------------------------
+
+    fun addProduct(
+        vendorId: String,
+        productName: String,
+        productPrice: Double,
+        productImage: String,
+        isAvailable: Boolean,
+        onResult: (Boolean) -> Unit
+    ) {
+        if (vendorId.isBlank() ||
+            productName.isBlank() ||
+            productPrice < 0.0 ||
+            productImage.isBlank()
+        ) {
+            onResult(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val product = FirebaseProductData(
+                    vendorId = vendorId,
+                    productName = productName.trim(),
+                    productPrice = productPrice,
+                    productImage = productImage,
+                    isAvailable = isAvailable
+                )
+
+                productSync.createProduct(product)
+                onResult(true)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
     // ---------------------------------------------------------
     // Profile operations
     // ---------------------------------------------------------
@@ -483,6 +579,7 @@ class AppViewModel(
         if (imageId.isBlank()) return
 
         val currentState = _imageStates.value[imageId]
+
         if (
             currentState is ImageUiState.Loading ||
             currentState is ImageUiState.Loaded
@@ -533,11 +630,6 @@ class AppViewModel(
             }
         }
     }
-
-    private val _errorForImageRemoval = MutableStateFlow<String?>(null)
-
-    val errorForImageRemoval: StateFlow<String?> =
-        _errorForImageRemoval.asStateFlow()
 
     fun clearImageRemovalError() {
         _errorForImageRemoval.value = null
@@ -796,6 +888,7 @@ class AppViewModel(
             } catch (exception: Exception) {
                 _authenticationState.update {
                     it.copy(
+                        userId = null,
                         role = UserRole.NONE,
                         isLoading = false,
                         errorMessage = "Unable to verify account"
@@ -812,22 +905,313 @@ class AppViewModel(
 
         _authenticationState.value = AuthenticationUiState()
 
-        observedCustomerId = null
-        observedVendorId = null
-
         customerObservationJob?.cancel()
         customerObservationJob = null
 
         vendorProfileObservationJob?.cancel()
         vendorProfileObservationJob = null
 
+        orderObservationJob?.cancel()
+        orderObservationJob = null
+
+        notificationObservationJob?.cancel()
+        notificationObservationJob = null
+
+        observedCustomerId = null
+        observedVendorId = null
+        observedOrderScope = null
+        observedRecipientId = null
+        observedRecipientType = null
+
         _customerState.value = DataUiState(data = null)
         _vendorProfileState.value = DataUiState(data = null)
+        _orderState.value = DataUiState(data = emptyList())
+        _notificationState.value = DataUiState(data = emptyList())
+
+        clearCart()
+        clearCheckoutCompleted()
+        clearCheckoutError()
     }
 
     fun clearAuthenticationError() {
         _authenticationState.update {
             it.copy(errorMessage = null)
         }
+    }
+
+    // ---------------------------------------------------------
+    // Product search
+    // ---------------------------------------------------------
+
+    fun searchProduct(productName: String) {
+        val query = productName.trim()
+        _searchQuery.value = query
+
+        _searchVendorId.value = if (query.isBlank()) {
+            null
+        } else {
+            productState.value.data.firstOrNull {
+                it.productName.contains(query, ignoreCase = true)
+            }?.vendorId
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Cart operations
+    // ---------------------------------------------------------
+
+
+    fun addToCart(product: ProductEntity) {
+        println("CART DEBUG: clicked product = ${product.productName}")
+        println("CART DEBUG: product ID = ${product.productId}")
+        println("CART DEBUG: vendor ID = ${product.vendorId}")
+        println("CART DEBUG: available = ${product.isAvailable}")
+
+        if (!product.isAvailable) {
+            println("CART DEBUG: rejected because product is unavailable")
+            return
+        }
+
+        val currentCart = _cart.value
+        val currentVendorId = currentCart.firstOrNull()?.product?.vendorId
+
+        if (currentVendorId != null && currentVendorId != product.vendorId) {
+            _cart.value = listOf(CartItem(product = product))
+            println("CART DEBUG: replaced cart with new vendor's product")
+            return
+        }
+
+        val existingItem = currentCart.firstOrNull {
+            it.product.productId == product.productId
+        }
+
+        if (existingItem != null) {
+            _cart.value = currentCart.map { item ->
+                if (item.product.productId == product.productId) {
+                    item.copy(quantity = item.quantity + 1)
+                } else {
+                    item
+                }
+            }
+        } else {
+            _cart.value = currentCart + CartItem(product = product)
+        }
+
+        println("CART DEBUG: cart size = ${_cart.value.size}")
+    }
+
+    fun updateCartQuantity(productId: String, quantity: Int) {
+        _cart.value = if (quantity <= 0) {
+            _cart.value.filter { it.product.productId != productId }
+        } else {
+            _cart.value.map { item ->
+                if (item.product.productId == productId) {
+                    item.copy(quantity = quantity)
+                } else {
+                    item
+                }
+            }
+        }
+    }
+
+    fun increaseQuantity(productId: String) {
+        _cart.value = _cart.value.map { item ->
+            if (item.product.productId == productId) {
+                item.copy(quantity = item.quantity + 1)
+            } else {
+                item
+            }
+        }
+    }
+
+    fun decreaseQuantity(productId: String) {
+        _cart.value = _cart.value.mapNotNull { item ->
+            if (item.product.productId != productId) {
+                item
+            } else if (item.quantity > 1) {
+                item.copy(quantity = item.quantity - 1)
+            } else {
+                null
+            }
+        }
+    }
+
+    fun removeFromCart(productId: String) {
+        _cart.value = _cart.value.filterNot {
+            it.product.productId == productId
+        }
+    }
+
+    fun clearCart() {
+        _cart.value = emptyList()
+    }
+
+    fun cartTotalPrice(): Double {
+        return _cart.value.sumOf { item ->
+            item.product.productPrice * item.quantity
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Checkout
+    // ---------------------------------------------------------
+
+    fun clearCheckoutCompleted() {
+        _checkoutCompleted.value = false
+    }
+
+    fun clearCheckoutError() {
+        _checkoutError.value = null
+    }
+
+    fun checkout(customerId: String) {
+        if (_checkoutInProgress.value) return
+
+        val currentCart = _cart.value
+
+        if (currentCart.isEmpty()) {
+            _checkoutError.value = "Your cart is empty."
+            return
+        }
+
+        val vendorId = currentCart.first().product.vendorId
+
+        if (currentCart.any { it.product.vendorId != vendorId }) {
+            _checkoutError.value =
+                "Your cart contains products from multiple vendors."
+            return
+        }
+
+        viewModelScope.launch {
+            _checkoutInProgress.value = true
+            _checkoutError.value = null
+            _checkoutCompleted.value = false
+
+            try {
+                val order = FirebaseOrderData(
+                    orderId = "",
+                    vendorId = vendorId,
+                    customerId = customerId,
+                    totalPrice = currentCart.sumOf {
+                        it.product.productPrice * it.quantity
+                    },
+                    status = "Pending",
+                    products = currentCart.map { item ->
+                        FirebaseOrderProductData(
+                            productId = item.product.productId,
+                            productName = item.product.productName,
+                            productPrice = item.product.productPrice,
+                            quantity = item.quantity
+                        )
+                    },
+                    timestamp = Timestamp.now()
+                )
+
+                orderSync.createOrder(order)
+
+                _cart.value = emptyList()
+                _checkoutCompleted.value = true
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _checkoutError.value =
+                    exception.message ?: "Unable to place your order."
+            } finally {
+                _checkoutInProgress.value = false
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Order status
+    // ---------------------------------------------------------
+
+    fun advanceOrderStatus(order: OrderEntity) {
+        val nextStatus = when (order.status.trim().uppercase()) {
+            "PENDING" -> "Preparing"
+            "PREPARING" -> "Ready"
+            "READY" -> "Completed"
+            else -> return
+        }
+
+        viewModelScope.launch {
+            try {
+                orderSync.updateOrderStatus(
+                    orderId = order.orderId,
+                    status = nextStatus
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _orderState.update { state ->
+                    state.copy(
+                        errorMessage = exception.message
+                            ?: "Unable to update order status"
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadOrderDetails(
+        orderId: String,
+        onResult: (OrderEntity?, List<OrderProductEntity>) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val order = orderSync.observeOrder(orderId).first()
+                val products = orderSync.getProductsByOrderId(orderId)
+
+                onResult(order, products)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(null, emptyList())
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Notifications
+    // ---------------------------------------------------------
+
+    fun markNotificationAsRead(notificationId: String) {
+        viewModelScope.launch {
+            try {
+                notificationSync.markAsRead(notificationId)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _notificationState.update { state ->
+                    state.copy(
+                        errorMessage = exception.message
+                            ?: "Unable to mark notification as read"
+                    )
+                }
+            }
+        }
+    }
+
+    fun markAllNotificationsAsRead() {
+        val unreadNotifications = notificationState.value.data.filter {
+            !it.isRead
+        }
+
+        unreadNotifications.forEach { notification ->
+            markNotificationAsRead(notification.notificationId)
+        }
+    }
+
+    fun observeNotificationsForCurrentUser() {
+        val auth = authenticationState.value
+        val userId = auth.userId ?: return
+
+        val recipientType = when (auth.role) {
+            UserRole.CUSTOMER -> RecipientType.CUSTOMER
+            UserRole.VENDOR -> RecipientType.VENDOR
+            UserRole.NONE -> return
+        }
+
+        observeNotifications(userId, recipientType)
     }
 }

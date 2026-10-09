@@ -1,8 +1,9 @@
+
 package com.example.curtineat.model
 
-import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
+import com.example.curtineat.data.local.room.entity.ProductEntity
 
 data class CartItem(
-    val product: FirebaseProductData,
+    val product: ProductEntity,
     val quantity: Int = 1
 )

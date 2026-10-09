@@ -1,81 +1,73 @@
+
 package com.example.curtineat.view
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.curtineat.viewmodel.AppViewModel
-import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
-import androidx.compose.foundation.lazy.items
-import com.example.curtineat.data.remote.firebase.model.FirebaseVendorData
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActionScope
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import com.example.curtineat.R
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.curtineat.data.local.room.entity.NotificationEntity
+import com.example.curtineat.data.local.room.entity.ProductEntity
+import com.example.curtineat.data.local.room.entity.VendorEntity
 import com.example.curtineat.ui.theme.PrimaryButton
 import com.example.curtineat.ui.theme.PrimaryCard
 import com.example.curtineat.ui.theme.SecondaryCard
 import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
-import com.google.firebase.auth.FirebaseAuth
-
+import com.example.curtineat.viewmodel.AppViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun AppScaffold(
@@ -84,20 +76,21 @@ fun AppScaffold(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-
     val isLoading by appViewModel.isLoading.collectAsState()
+    val authenticationState by appViewModel.authenticationState.collectAsState()
 
-    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+    val currentUserId = authenticationState.userId
+    val currentRole = authenticationState.role
 
-    LaunchedEffect(currentUserId) {
-
+    LaunchedEffect(currentUserId, currentRole) {
         if (currentUserId != null) {
-            appViewModel.startNotificationListener(currentUserId)
+            appViewModel.observeNotificationsForCurrentUser()
         }
     }
 
@@ -106,6 +99,7 @@ fun AppScaffold(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick
     ) { onMenuClick ->
 
         Scaffold(
@@ -123,11 +117,9 @@ fun AppScaffold(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-
                 content(innerPadding)
 
                 if (isLoading) {
-
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -148,14 +140,14 @@ fun AppScaffold(
 
 @Composable
 fun MainScreen(
-    //expect onHistory
     appViewModel: AppViewModel,
     onCartButtonClick: () -> Unit,
     onProfileClick: () -> Unit,
     onHomeClick: () -> Unit,
-    onWalletClick:() -> Unit,
-    onLoginClick: () -> Unit
-) {
+    onWalletClick: () -> Unit,
+    onLoginClick: () -> Unit,
+    onHistoryClick: () -> Unit
+){
     val cart by appViewModel.cart.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -168,6 +160,7 @@ fun MainScreen(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
+        onHistoryClick = onHistoryClick,
         showSearch = true,
         showNotifications = true,
         floatingActionButton = {
@@ -177,12 +170,10 @@ fun MainScreen(
             )
         }
     ) { innerPadding ->
-
         BodyScreen(
             innerPadding = innerPadding,
             appViewModel = appViewModel
         )
-
     }
 }
 
@@ -194,7 +185,6 @@ fun NotificationItem(
     isClickable: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-
     SecondaryCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
@@ -203,23 +193,21 @@ fun NotificationItem(
             }
         },
         containerColor =
-            if (!isRead)
+            if (!isRead) {
                 MaterialTheme.colorScheme.primaryContainer
-            else
-                MaterialTheme.colorScheme.surface,
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
         contentPadding = PaddingValues(
             horizontal = 12.dp,
             vertical = 16.dp
         )
     ) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             if (!isRead) {
-
                 Box(
                     modifier = Modifier
                         .size(8.dp)
@@ -229,9 +217,7 @@ fun NotificationItem(
                         )
                 )
 
-                Spacer(
-                    modifier = Modifier.width(10.dp)
-                )
+                Spacer(modifier = Modifier.width(10.dp))
             }
 
             TextNormal(
@@ -239,10 +225,8 @@ fun NotificationItem(
                 modifier = Modifier.weight(1f),
                 fontSize = 16.sp,
                 fontWeight =
-                    if (!isRead)
-                        FontWeight.Bold
-                    else
-                        FontWeight.Normal
+                    if (!isRead) FontWeight.Bold
+                    else FontWeight.Normal
             )
 
             TextNormal(
@@ -251,7 +235,6 @@ fun NotificationItem(
             )
 
             if (isClickable) {
-
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Open order",
@@ -274,7 +257,8 @@ fun TopBarScreen(
     var searchText by rememberSaveable { mutableStateOf("") }
     var notificationsOpen by remember { mutableStateOf(false) }
 
-    val notifications by appViewModel.notifications.collectAsState()
+    val notificationState by appViewModel.notificationState.collectAsState()
+    val notifications = notificationState.data
     val unreadCount = notifications.count { !it.isRead }
 
     var notificationDrawerLoading by remember {
@@ -282,15 +266,11 @@ fun TopBarScreen(
     }
 
     LaunchedEffect(notificationDrawerLoading) {
-
         if (notificationDrawerLoading) {
-
-            kotlinx.coroutines.delay(500)
-
+            delay(500)
             notificationDrawerLoading = false
         }
     }
-
 
     TopAppBar(
         title = {
@@ -306,12 +286,14 @@ fun TopBarScreen(
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-
-                    // change the meaning of phone's bottom right ENTER key
-                    keyboardOptions = KeyboardOptions( imeAction = ImeAction.Search),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search
+                    ),
                     keyboardActions = KeyboardActions(
                         onSearch = {
-                            appViewModel.searchProduct(productName = searchText)
+                            appViewModel.searchProduct(
+                                productName = searchText
+                            )
                         }
                     )
                 )
@@ -323,21 +305,15 @@ fun TopBarScreen(
                 )
             }
         },
-
         navigationIcon = {
-            IconButton(
-                onClick = onMenuClick
-            ) {
+            IconButton(onClick = onMenuClick) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu"
                 )
             }
         },
-
         actions = {
-
-            // SEARCH
             if (showSearch) {
                 IconButton(
                     onClick = {
@@ -345,42 +321,34 @@ fun TopBarScreen(
 
                         if (!searching) {
                             searchText = ""
+                            appViewModel.searchProduct("")
                         }
                     }
                 ) {
                     Icon(
                         imageVector =
-                            if (searching)
-                                Icons.Default.Close
-                            else
-                                Icons.Default.Search,
+                            if (searching) Icons.Default.Close
+                            else Icons.Default.Search,
                         contentDescription = "Search"
                     )
                 }
             }
 
-            // NOTIFICATION
             if (showNotifications) {
-
                 Box {
-
                     IconButton(
                         onClick = {
                             notificationDrawerLoading = true
                             notificationsOpen = true
                         }
                     ) {
-
                         Icon(
-                            imageVector =
-                                Icons.Default.Notifications,
-                            contentDescription =
-                                "Notifications"
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications"
                         )
                     }
 
                     if (unreadCount > 0) {
-
                         Box(
                             modifier = Modifier
                                 .size(20.dp)
@@ -389,82 +357,50 @@ fun TopBarScreen(
                                     color = Color.Red,
                                     shape = CircleShape
                                 ),
-                            contentAlignment =
-                                Alignment.Center
+                            contentAlignment = Alignment.Center
                         ) {
-
                             Text(
                                 text =
-                                    if (unreadCount > 99) {
-                                        "99+"
-                                    } else {
-                                        unreadCount.toString()
-                                    },
+                                    if (unreadCount > 99) "99+"
+                                    else unreadCount.toString(),
                                 color = Color.White,
                                 fontSize = 10.sp,
-                                fontWeight =
-                                    FontWeight.Bold
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
             }
-
-
         }
     )
+
     if (notificationsOpen) {
+        val sortedNotifications = notifications.sortedByDescending {
+            it.timestamp
+        }
 
-        val sortedNotifications =
-            notifications.sortedByDescending {
-                it.timestamp.toDate()
-            }
-
-        val groupedNotifications =
-            sortedNotifications.groupBy {
-                getNotificationDateLabel(
-                    it.timestamp.toDate()
-                )
-            }
+        val groupedNotifications = sortedNotifications.groupBy {
+            getNotificationDateLabel(java.util.Date(it.timestamp))
+        }
 
         ModalBottomSheet(
             onDismissRequest = {
-
                 notificationsOpen = false
-
-                notifications
-                    .filter { notification ->
-                        !notification.isRead
-                    }
-                    .forEach { notification ->
-
-                        appViewModel.updateNotification(
-                            notification.copy(
-                                isRead = true
-                            )
-                        )
-                    }
+                appViewModel.markAllNotificationsAsRead()
             }
-            ){
-
+        ) {
             LazyColumn(
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
                     .fillMaxHeight(0.85f)
             ) {
-
                 if (notificationDrawerLoading) {
-
                     item {
-
                         LoadingDots()
                     }
-
                 } else if (notifications.isEmpty()) {
-
                     item {
-
                         TextNormal(
                             text = "No notifications",
                             modifier = Modifier
@@ -474,14 +410,9 @@ fun TopBarScreen(
                             fontSize = 16.sp
                         )
                     }
-
                 } else {
-
                     groupedNotifications.forEach { (dateLabel, notificationList) ->
-
-                        // DATE
                         item {
-
                             TextNormal(
                                 text = dateLabel,
                                 modifier = Modifier
@@ -496,30 +427,22 @@ fun TopBarScreen(
                             )
                         }
 
-                        // NOTIFICATIONS UNDER THAT DATE
                         items(
                             items = notificationList,
-                            key = {
-                                it.notificationId
-                            }
+                            key = { it.notificationId }
                         ) { notification ->
-
                             NotificationItem(
                                 message = notification.message,
                                 time = formatNotificationTime(
-                                    notification.timestamp.toDate()
+                                    java.util.Date(notification.timestamp)
                                 ),
                                 isRead = notification.isRead
                             )
 
-                            Spacer(
-                                modifier = Modifier.height(8.dp)
-                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
-
-
             }
         }
     }
@@ -527,23 +450,16 @@ fun TopBarScreen(
 
 @Composable
 fun LoadingDots() {
-
-    var dots by remember {
-        mutableStateOf(".")
-    }
+    var dots by remember { mutableStateOf(".") }
 
     LaunchedEffect(Unit) {
-
         while (true) {
-
-            kotlinx.coroutines.delay(350)
-
-            dots =
-                when (dots) {
-                    "." -> ".."
-                    ".." -> "..."
-                    else -> "."
-                }
+            delay(350)
+            dots = when (dots) {
+                "." -> ".."
+                ".." -> "..."
+                else -> "."
+            }
         }
     }
 
@@ -558,69 +474,53 @@ fun LoadingDots() {
     )
 }
 
-//Notification helper
-fun getNotificationDateLabel(
-    date: java.util.Date
-): String {
-
+fun getNotificationDateLabel(date: java.util.Date): String {
     val timeZone = java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
     val today = java.util.Calendar.getInstance(timeZone)
+    val notificationDate = java.util.Calendar.getInstance(timeZone).apply {
+        time = date
+    }
 
-    val notificationDate = java.util.Calendar.getInstance(timeZone).apply { time = date }
-
-    // TODAY
     if (
         today.get(java.util.Calendar.YEAR) ==
         notificationDate.get(java.util.Calendar.YEAR) &&
-
         today.get(java.util.Calendar.DAY_OF_YEAR) ==
         notificationDate.get(java.util.Calendar.DAY_OF_YEAR)
     ) {
         return "Today"
     }
 
-    // YESTERDAY
     val yesterday = java.util.Calendar.getInstance(timeZone).apply {
-                add(
-                    java.util.Calendar.DAY_OF_YEAR,
-                    -1
-                )
-            }
+        add(java.util.Calendar.DAY_OF_YEAR, -1)
+    }
 
     if (
         yesterday.get(java.util.Calendar.YEAR) ==
         notificationDate.get(java.util.Calendar.YEAR) &&
-
         yesterday.get(java.util.Calendar.DAY_OF_YEAR) ==
         notificationDate.get(java.util.Calendar.DAY_OF_YEAR)
     ) {
         return "Yesterday"
     }
 
-    // OTHER DATES
-    val formatter =
-        java.text.SimpleDateFormat(
-            "d MMMM yyyy",
-            java.util.Locale.getDefault()
-        )
+    val formatter = java.text.SimpleDateFormat(
+        "d MMMM yyyy",
+        java.util.Locale.getDefault()
+    )
 
     formatter.timeZone = timeZone
-
     return formatter.format(date)
 }
 
-fun formatNotificationTime(
-    date: java.util.Date
-): String {
+fun formatNotificationTime(date: java.util.Date): String {
+    val formatter = java.text.SimpleDateFormat(
+        "h:mm a",
+        java.util.Locale.getDefault()
+    )
 
-    val formatter =
-        java.text.SimpleDateFormat(
-            "h:mm a",
-            java.util.Locale.getDefault()
-        )
-
-    formatter.timeZone = java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    formatter.timeZone =
+        java.util.TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
     return formatter.format(date)
 }
@@ -631,10 +531,7 @@ fun CartButton(
     totalQuantity: Int
 ) {
     Box {
-
-        FloatingActionButton(
-            onClick = onCartButtonClick
-        ) {
+        FloatingActionButton(onClick = onCartButtonClick) {
             Icon(
                 imageVector = Icons.Default.ShoppingCart,
                 contentDescription = "Cart"
@@ -666,31 +563,30 @@ fun CartButton(
 @Composable
 fun BodyScreen(
     innerPadding: PaddingValues,
-    appViewModel: AppViewModel,
+    appViewModel: AppViewModel
 ) {
     val listState = rememberLazyListState()
 
-    val vendors by appViewModel.vendors.collectAsState()
-    val products by appViewModel.products.collectAsState()
+    val vendorState by appViewModel.vendorState.collectAsState()
+    val productState by appViewModel.productState.collectAsState()
+    val searchQuery by appViewModel.searchQuery.collectAsState()
     val searchVendorId by appViewModel.searchVendorId.collectAsState()
 
-    LaunchedEffect(
-        searchVendorId,
-        vendors
-    ) {
+    val vendors = vendorState.data
+    val products = productState.data
+
+    LaunchedEffect(searchVendorId, vendors) {
         if (searchVendorId != null) {
             val index = vendors.indexOfFirst {
                 it.vendorId == searchVendorId
             }
 
-            println("VENDOR INDEX = $index")
-
             if (index >= 0) {
-                listState.animateScrollToItem(index)
+                // The first LazyColumn item is the Reload button.
+                listState.animateScrollToItem(index + 1)
             }
         }
     }
-
 
     LazyColumn(
         state = listState,
@@ -699,7 +595,9 @@ fun BodyScreen(
         item {
             PrimaryButton(
                 text = "Reload",
-                onClick = { appViewModel.loadHomeData() },
+                onClick = {
+                    appViewModel.loadHomeData()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
@@ -708,49 +606,47 @@ fun BodyScreen(
 
         items(
             items = vendors,
-            key = { eachVendor -> eachVendor.vendorId }
-        ) { eachVendor ->
-            val vendorProducts = products.filter {
-                it.vendorId == eachVendor.vendorId
+            key = { it.vendorId }
+        ) { vendor ->
+            val vendorProducts = products.filter { product ->
+                product.vendorId == vendor.vendorId &&
+                        product.isAvailable &&
+                        (
+                                searchQuery.isBlank() ||
+                                        product.productName.contains(
+                                            searchQuery,
+                                            ignoreCase = true
+                                        )
+                                )
             }
-            RestaurantCard(appViewModel = appViewModel, eachVendor, vendorProducts)
-        }
 
+            if (searchQuery.isBlank() || vendorProducts.isNotEmpty()) {
+                RestaurantCard(
+                    appViewModel = appViewModel,
+                    vendor = vendor,
+                    products = vendorProducts
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun RestaurantCard(
     appViewModel: AppViewModel,
-    vendor: FirebaseVendorData,
-    products: List<FirebaseProductData>
+    vendor: VendorEntity,
+    products: List<ProductEntity>
 ) {
     PrimaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-
         TextNormal(
             text = vendor.vendorName,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp
         )
-
-//        TextNormal(
-//            text = if (vendor.isOpen) {
-//                "Open"
-//            } else {
-//                "Closed"
-//            },
-//            color = if (vendor.isOpen) {
-//                MaterialTheme.colorScheme.primary
-//            } else {
-//                MaterialTheme.colorScheme.error
-//            },
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 14.sp
-//        )
 
         mySpacer()
 
@@ -758,10 +654,7 @@ fun RestaurantCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 TextNormal(
                     text = "%.1f".format(vendor.rating),
                     fontSize = 18.sp
@@ -775,38 +668,32 @@ fun RestaurantCard(
                 )
             }
 
-            TextNormal(
-                text = vendor.category
-            )
+            TextNormal(text = vendor.category)
 
             TextNormal(
                 text = "%.1f km".format(vendor.distance)
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (products.isEmpty()) {
-
             TextNormal(
                 text = "No products available",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp
             )
-
         } else {
-
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(products) { product ->
-
+                items(
+                    items = products,
+                    key = { it.productId }
+                ) { product ->
                     FoodItem(
                         appViewModel = appViewModel,
-                        product = product,
-//                        enabled = vendor.isOpen
+                        product = product
                     )
                 }
             }
@@ -814,97 +701,51 @@ fun RestaurantCard(
     }
 }
 
-
-//Helper to get product Image
-@Composable
-fun getDrawableId(imageName: String): Int {
-    return try {
-        R.drawable::class.java
-            .getField(imageName)
-            .getInt(null)
-    } catch (e: Exception) {
-        R.drawable.food1
-    }
-}
-
 @Composable
 fun FoodItem(
     appViewModel: AppViewModel,
-    product: FirebaseProductData,
+    product: ProductEntity,
     enabled: Boolean = true
 ) {
-    val imageRes = getDrawableId(product.productImage)
-
-//    val canOrder = enabled && product.isAvailable
-
-    SecondaryCard(
-        onClick = {
-            appViewModel.addToCart(product)
-        },
-//        enabled = canOrder,
+    Column(
         modifier = Modifier.width(150.dp)
     ) {
-
         Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-
-            Column {
-
-                Image(
-                    painter = painterResource(imageRes),
-                    contentDescription = product.productName,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    modifier = Modifier.padding(8.dp)
-                ) {
-
-                    TextNormal(
-                        text = "RM %.2f".format(
-                            product.productPrice
-                        ),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-
-                    TextNormal(
-                        text = product.productName,
-                        fontSize = 14.sp
-                    )
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clickable {
+                    println("IMAGE AREA CLICKED: ${product.productName}")
+                    appViewModel.addToCart(product)
                 }
-            }
+        ) {
+            CachedImage(
+                imageId = product.productImage,
+                viewModel = appViewModel,
+                contentDescription = product.productName,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
-//            if (!canOrder) {
-//
-//                Box(
-//                    modifier = Modifier
-//                        .matchParentSize()
-//                        .background(
-//                            Color.White.copy(
-//                                alpha = 0.70f
-//                            )
-//                        ),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//
-//                    TextNormal(
-//                        text =
-//                            if (!product.isAvailable) {
-//                                "Sold out"
-//                            } else {
-//                                "Store closed"
-//                            },
-//                        color = Color.DarkGray,
-//                        fontWeight = FontWeight.Bold,
-//                        fontSize = 18.sp
-//                    )
-//                }
-//            }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    println("DETAIL AREA CLICKED: ${product.productName}")
+                    appViewModel.addToCart(product)
+                }
+                .padding(8.dp)
+        ) {
+            TextNormal(
+                text = "RM %.2f".format(product.productPrice),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            TextNormal(
+                text = product.productName,
+                fontSize = 14.sp
+            )
         }
     }
 }

@@ -5,6 +5,7 @@ import com.example.curtineat.data.local.room.mapper.toEntity
 import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
 import com.example.curtineat.data.repository.local.ProductLocalRepository
 import kotlinx.coroutines.flow.Flow
+import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 
 class ProductSyncRepository(
 	private val remote: FirebaseProductRepository,
@@ -27,4 +28,14 @@ class ProductSyncRepository(
 
 		local.replaceByVendor(vendorId, products)
 	}
+	suspend fun createProduct(
+		product: FirebaseProductData
+	): String {
+		val productId = remote.addProduct(product.copy(productId = ""))
+
+		refreshByVendor(product.vendorId)
+
+		return productId
+	}
+
 }

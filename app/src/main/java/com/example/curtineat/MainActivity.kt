@@ -23,6 +23,9 @@ import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.serialization.Serializable
 import kotlin.getValue
+import androidx.navigation.toRoute
+import com.example.curtineat.view.OrderHistoryScreen
+import com.example.curtineat.view.OrderDetailScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -71,6 +74,14 @@ object RouteCustomerProfileScreen
 
 @Serializable
 object RouteAddProductScreen
+
+@Serializable
+object RouteOrderHistoryScreen
+
+@Serializable
+data class RouteOrderDetailScreen(
+    val orderId: String
+)
 
 @Composable
 fun ScreenNavigation(
@@ -171,6 +182,16 @@ fun ScreenNavigation(
         nav.navigate(RouteAddProductScreen)
     }
 
+    val onHistoryClick: () -> Unit = {
+        nav.navigate(RouteOrderHistoryScreen) {
+            launchSingleTop = true
+        }
+    }
+
+    val onOrderClick: (String) -> Unit = { orderId ->
+        nav.navigate(RouteOrderDetailScreen(orderId))
+    }
+
     NavHost(
         navController = nav,
         startDestination = RouteMainScreen
@@ -182,7 +203,8 @@ fun ScreenNavigation(
                 onProfileClick = onProfileClick,
                 onHomeClick = onHomeClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick
+                onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick
             )
         }
 
@@ -193,7 +215,8 @@ fun ScreenNavigation(
                 onHomeClick = onHomeClick,
                 onProfileClick = onProfileClick,
                 onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick
+                onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick
             )
         }
 
@@ -230,11 +253,11 @@ fun ScreenNavigation(
                 onProfileClick = onProfileClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick,
                 onFoodClick = { _ -> },
                 onAddProductClick = onAddProductClick
             )
         }
-
         composable<RouteVendorProfileScreen> {
             VendorProfileScreen(
                 viewModel = appViewModel,
@@ -257,6 +280,28 @@ fun ScreenNavigation(
                 onBackClick = {
                     nav.popBackStack()
                 }
+            )
+        }
+
+        composable<RouteOrderHistoryScreen> {
+            OrderHistoryScreen(
+                appViewModel = appViewModel,
+                onHomeClick = onHomeClick,
+                onProfileClick = onProfileClick,
+                onWalletClick = onWalletClick,
+                onLoginClick = onLoginClick,
+                onHistoryClick = onHistoryClick,
+                onOrderClick = onOrderClick
+            )
+        }
+
+        composable<RouteOrderDetailScreen> { backStackEntry ->
+            val route = backStackEntry.toRoute<RouteOrderDetailScreen>()
+
+            OrderDetailScreen(
+                appViewModel = appViewModel,
+                orderId = route.orderId,
+                onBackButtonClick = onBackButtonClick
             )
         }
     }
