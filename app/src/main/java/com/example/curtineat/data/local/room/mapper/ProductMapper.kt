@@ -4,7 +4,6 @@ import com.example.curtineat.data.local.room.entity.ProductEntity
 import com.example.curtineat.data.remote.firebase.model.FirebaseProductData
 
 fun FirebaseProductData.toEntity(): ProductEntity {
-
 	return ProductEntity(
 		productId = productId,
 		vendorId = vendorId,
@@ -15,8 +14,7 @@ fun FirebaseProductData.toEntity(): ProductEntity {
 	)
 }
 
-fun ProductEntity.toFirebaseData(): FirebaseProductData {
-
+fun ProductEntity.toFirebaseModel(): FirebaseProductData {
 	return FirebaseProductData(
 		productId = productId,
 		vendorId = vendorId,

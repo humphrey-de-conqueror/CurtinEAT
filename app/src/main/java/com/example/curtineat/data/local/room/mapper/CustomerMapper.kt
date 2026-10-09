@@ -13,7 +13,7 @@ fun FirebaseCustomerData.toEntity(): CustomerEntity {
 	)
 }
 
-fun CustomerEntity.toFirebaseData(): FirebaseCustomerData {
+fun CustomerEntity.toFirebaseModel(): FirebaseCustomerData {
 	return FirebaseCustomerData(
 		customerId = customerId,
 		customerName = customerName,

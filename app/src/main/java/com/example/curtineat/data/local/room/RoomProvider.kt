@@ -6,22 +6,18 @@ import androidx.room.Room
 object RoomProvider {
 
 	@Volatile
-	private var database: AppDatabase? = null
+	private var instance: AppDatabase? = null
 
-	fun getDatabase(
-		context: Context
-	): AppDatabase {
-
-		return database ?: synchronized(this) {
-
-			database ?: Room.databaseBuilder(
+	fun getDatabase(context: Context): AppDatabase {
+		return instance ?: synchronized(this) {
+			instance ?: Room.databaseBuilder(
 				context.applicationContext,
 				AppDatabase::class.java,
 				"curtineat_database"
 			)
 				.build()
-				.also {
-					database = it
+				.also { database ->
+					instance = database
 				}
 		}
 	}
