@@ -59,22 +59,21 @@ class FirebaseNotificationSource {
 
 	suspend fun addNotification(
 		notification: FirebaseNotificationData
-	) {
-
+	): String {
 		val document = notificationCollection.document()
 
-		document
-			.set(
-				mapOf(
-					"recipientId" to notification.recipientId,
-					"recipientType" to notification.recipientType.name,
-					"message" to notification.message,
-					"orderId" to notification.orderId,
-					"timestamp" to notification.timestamp,
-					"isRead" to notification.isRead,
-				)
+		document.set(
+			mapOf(
+				"recipientId" to notification.recipientId,
+				"recipientType" to notification.recipientType.name,
+				"message" to notification.message,
+				"orderId" to notification.orderId,
+				"timestamp" to notification.timestamp,
+				"isRead" to notification.isRead
 			)
-			.await()
+		).await()
+
+		return document.id
 	}
 
 	suspend fun updateNotification(

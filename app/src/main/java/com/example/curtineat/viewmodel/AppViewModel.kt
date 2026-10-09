@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import kotlinx.coroutines.flow.first
+import android.util.Log
+import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -1108,6 +1110,52 @@ class AppViewModel(
                 )
 
                 orderSync.createOrder(order)
+
+                val orderId = orderSync.createOrder(order)
+
+                // Create the customer's notification.
+                try {
+                    notificationSync.createNotification(
+                        FirebaseNotificationData(
+                            recipientId = customerId,
+                            recipientType = RecipientType.CUSTOMER,
+                            message = "Your order has been placed successfully.",
+                            orderId = orderId,
+                            timestamp = Timestamp.now(),
+                            isRead = false
+                        )
+                    )
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    Log.e(
+                        "CHECKOUT_NOTIFICATION",
+                        "Failed to create customer notification",
+                        exception
+                    )
+                }
+
+                // Create the vendor's notification independently.
+                try {
+                    notificationSync.createNotification(
+                        FirebaseNotificationData(
+                            recipientId = vendorId,
+                            recipientType = RecipientType.VENDOR,
+                            message = "You received a new order.",
+                            orderId = orderId,
+                            timestamp = Timestamp.now(),
+                            isRead = false
+                        )
+                    )
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    Log.e(
+                        "CHECKOUT_NOTIFICATION",
+                        "Failed to create vendor notification",
+                        exception
+                    )
+                }
 
                 _cart.value = emptyList()
                 _checkoutCompleted.value = true

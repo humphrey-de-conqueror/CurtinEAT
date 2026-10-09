@@ -7,6 +7,7 @@ import com.example.curtineat.data.remote.firebase.model.RecipientType
 import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
 import com.example.curtineat.data.repository.local.NotificationLocalRepository
 import kotlinx.coroutines.flow.Flow
+import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 
 class NotificationSyncRepository(
 	private val remote: FirebaseNotificationRepository,
@@ -54,5 +55,18 @@ class NotificationSyncRepository(
 				notification.copy(isRead = true)
 			)
 		}
+	}
+
+	suspend fun createNotification(
+		notification: FirebaseNotificationData
+	): String {
+		val notificationId = remote.addNotification(notification)
+
+		refreshByRecipient(
+			recipientId = notification.recipientId,
+			recipientType = notification.recipientType
+		)
+
+		return notificationId
 	}
 }

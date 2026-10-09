@@ -29,9 +29,8 @@ class FirebaseNotificationRepository(
 
 	suspend fun addNotification(
 		notification: FirebaseNotificationData
-	) {
-
-		source.addNotification(notification)
+	): String {
+		return source.addNotification(notification)
 	}
 
 	suspend fun updateNotification(
