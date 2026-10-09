@@ -15,6 +15,8 @@ import com.example.curtineat.data.repository.sync.NotificationSyncRepository
 import com.example.curtineat.data.repository.sync.OrderSyncRepository
 import com.example.curtineat.data.repository.sync.ProductSyncRepository
 import com.example.curtineat.data.repository.sync.VendorSyncRepository
+import com.example.curtineat.viewmodel.state.DataUiState
+import com.example.curtineat.viewmodel.state.ImageUiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,61 +34,47 @@ class AppViewModel(
 ) : ViewModel() {
 
     // ---------------------------------------------------------
-    // Observable application state
+    // UI state
     // ---------------------------------------------------------
 
-    private val _vendors =
-        MutableStateFlow<List<VendorEntity>>(emptyList())
-    val vendors: StateFlow<List<VendorEntity>> =
-        _vendors.asStateFlow()
+    private val _vendorState =
+        MutableStateFlow(DataUiState<List<VendorEntity>>(emptyList()))
+    val vendorState: StateFlow<DataUiState<List<VendorEntity>>> =
+        _vendorState.asStateFlow()
 
-    private val _products =
-        MutableStateFlow<List<ProductEntity>>(emptyList())
-    val products: StateFlow<List<ProductEntity>> =
-        _products.asStateFlow()
+    private val _productState =
+        MutableStateFlow(DataUiState<List<ProductEntity>>(emptyList()))
+    val productState: StateFlow<DataUiState<List<ProductEntity>>> =
+        _productState.asStateFlow()
 
-    private val _customer =
-        MutableStateFlow<CustomerEntity?>(null)
-    val customer: StateFlow<CustomerEntity?> =
-        _customer.asStateFlow()
+    private val _customerState =
+        MutableStateFlow(DataUiState<CustomerEntity?>(null))
+    val customerState: StateFlow<DataUiState<CustomerEntity?>> =
+        _customerState.asStateFlow()
 
-    private val _orders =
-        MutableStateFlow<List<OrderEntity>>(emptyList())
-    val orders: StateFlow<List<OrderEntity>> =
-        _orders.asStateFlow()
+    private val _orderState =
+        MutableStateFlow(DataUiState<List<OrderEntity>>(emptyList()))
+    val orderState: StateFlow<DataUiState<List<OrderEntity>>> =
+        _orderState.asStateFlow()
 
-    private val _notifications =
-        MutableStateFlow<List<NotificationEntity>>(emptyList())
-    val notifications: StateFlow<List<NotificationEntity>> =
-        _notifications.asStateFlow()
+    private val _notificationState =
+        MutableStateFlow(DataUiState<List<NotificationEntity>>(emptyList()))
+    val notificationState: StateFlow<DataUiState<List<NotificationEntity>>> =
+        _notificationState.asStateFlow()
 
-    private val _images =
-        MutableStateFlow<Map<String, ByteArray>>(emptyMap())
-    val images: StateFlow<Map<String, ByteArray>> =
-        _images.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> =
-        _isLoading.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> =
-        _errorMessage.asStateFlow()
+    private val _imageStates =
+        MutableStateFlow<Map<String, ImageUiState>>(emptyMap())
+    val imageStates: StateFlow<Map<String, ImageUiState>> =
+        _imageStates.asStateFlow()
 
     private var customerObservationJob: Job? = null
     private var orderObservationJob: Job? = null
     private var notificationObservationJob: Job? = null
 
-    private var customerId: String? = null
+    private var observedCustomerId: String? = null
     private var observedOrderScope: String? = null
-    private var recipientId: String? = null
-    private var recipientType: RecipientType? = null
-
-    // All ViewModel state mutations occur on the main dispatcher.
-    private var activeOperations = 0
-
-    // Prevent duplicate ViewModel requests for the same image.
-    private val loadingImageIds = mutableSetOf<String>()
+    private var observedRecipientId: String? = null
+    private var observedRecipientType: RecipientType? = null
 
     init {
         observeVendors()
@@ -94,84 +82,93 @@ class AppViewModel(
     }
 
     // ---------------------------------------------------------
-    // Observe Room data
+    // Observe cached Room data
     // ---------------------------------------------------------
 
     private fun observeVendors() {
         viewModelScope.launch {
-            vendorSync.observeVendors().collect { result ->
-                _vendors.value = result
+            vendorSync.observeVendors().collect { vendors ->
+                _vendorState.value = _vendorState.value.copy(
+                    data = vendors,
+                    hasLoaded = true,
+                    isInitialLoading = false
+                )
             }
         }
     }
 
     private fun observeProducts() {
         viewModelScope.launch {
-            productSync.observeProducts().collect { result ->
-                _products.value = result
+            productSync.observeProducts().collect { products ->
+                _productState.value = _productState.value.copy(
+                    data = products,
+                    hasLoaded = true,
+                    isInitialLoading = false
+                )
             }
         }
     }
 
     fun observeCustomer(customerId: String) {
         if (
-            this.customerId == customerId &&
+            observedCustomerId == customerId &&
             customerObservationJob?.isActive == true
         ) {
             return
         }
 
-        this.customerId = customerId
+        observedCustomerId = customerId
         customerObservationJob?.cancel()
 
+        _customerState.value = DataUiState(
+            data = _customerState.value.data,
+            isInitialLoading = true
+        )
+
         customerObservationJob = viewModelScope.launch {
-            // Start observing Room before refreshing Firebase.
             launch {
-                customerSync.observeCustomer(customerId).collect { result ->
-                    _customer.value = result
+                customerSync.observeCustomer(customerId).collect { customer ->
+                    _customerState.value = _customerState.value.copy(
+                        data = customer,
+                        hasLoaded = true,
+                        isInitialLoading = false
+                    )
                 }
             }
 
-            perform(
-                fallbackMessage = "Unable to refresh customer profile"
-            ) {
-                customerSync.refresh(customerId)
-            }
+            refreshCustomer(customerId)
         }
     }
 
     fun observeOrdersByCustomer(customerId: String) {
-        val scope = "customer:$customerId"
-
-        if (
-            observedOrderScope == scope &&
-            orderObservationJob?.isActive == true
-        ) {
-            return
-        }
-
-        observedOrderScope = scope
-        orderObservationJob?.cancel()
-
-        orderObservationJob = viewModelScope.launch {
-            // Room continues emitting cached orders even if refresh fails.
-            launch {
-                orderSync.observeOrdersByCustomer(customerId).collect { result ->
-                    _orders.value = result
-                }
-            }
-
-            perform(
-                fallbackMessage = "Unable to refresh customer orders"
-            ) {
+        observeOrderScope(
+            scope = "customer:$customerId",
+            observe = {
+                orderSync.observeOrdersByCustomer(customerId)
+            },
+            refresh = {
                 orderSync.refreshByCustomer(customerId)
             }
-        }
+        )
     }
 
     fun observeOrdersByVendor(vendorId: String) {
-        val scope = "vendor:$vendorId"
+        observeOrderScope(
+            scope = "vendor:$vendorId",
+            observe = {
+                orderSync.observeOrdersByVendor(vendorId)
+            },
+            refresh = {
+                orderSync.refreshByVendor(vendorId)
+            }
+        )
+    }
 
+    private fun observeOrderScope(
+        scope: String,
+        observe: () -> kotlinx.coroutines.flow.Flow<List<OrderEntity>>,
+        refresh: suspend () -> Unit
+    ) {
         if (
             observedOrderScope == scope &&
             orderObservationJob?.isActive == true
@@ -182,96 +179,161 @@ class AppViewModel(
         observedOrderScope = scope
         orderObservationJob?.cancel()
 
+        _orderState.value = DataUiState(
+            data = emptyList(),
+            isInitialLoading = true
+        )
+
         orderObservationJob = viewModelScope.launch {
             launch {
-                orderSync.observeOrdersByVendor(vendorId).collect { result ->
-                    _orders.value = result
+                observe().collect { orders ->
+                    _orderState.value = _orderState.value.copy(
+                        data = orders,
+                        hasLoaded = true,
+                        isInitialLoading = false
+                    )
                 }
             }
 
-            perform(
-                fallbackMessage = "Unable to refresh vendor orders"
-            ) {
-                orderSync.refreshByVendor(vendorId)
-            }
+            refreshOrdersInScope(refresh)
         }
     }
 
+    private suspend fun refreshOrdersInScope(
+        refresh: suspend () -> Unit
+    ) {
+        perform(
+            getState = { _orderState.value },
+            setState = { _orderState.value = it },
+            fallbackMessage = "Unable to refresh orders",
+            action = refresh
+        )
+    }
+
     fun observeNotifications(
-        id: String,
+        recipientId: String,
         type: RecipientType
     ) {
         if (
-            recipientId == id &&
-            recipientType == type &&
+            observedRecipientId == recipientId &&
+            observedRecipientType == type &&
             notificationObservationJob?.isActive == true
         ) {
             return
         }
 
-        recipientId = id
-        recipientType = type
+        observedRecipientId = recipientId
+        observedRecipientType = type
         notificationObservationJob?.cancel()
+
+        _notificationState.value = DataUiState(
+            data = emptyList(),
+            isInitialLoading = true
+        )
 
         notificationObservationJob = viewModelScope.launch {
             launch {
                 notificationSync
-                    .observeNotifications(id, type.name)
-                    .collect { result ->
-                        _notifications.value = result
+                    .observeNotifications(recipientId, type.name)
+                    .collect { notifications ->
+                        _notificationState.value =
+                            _notificationState.value.copy(
+                                data = notifications,
+                                hasLoaded = true,
+                                isInitialLoading = false
+                            )
                     }
             }
 
-            perform(
-                fallbackMessage = "Unable to refresh notifications"
-            ) {
-                notificationSync.refreshByRecipient(id, type)
-            }
+            refreshNotificationsFor(recipientId, type)
+        }
+    }
+
+    private suspend fun refreshNotificationsFor(
+        recipientId: String,
+        type: RecipientType
+    ) {
+        perform(
+            getState = { _notificationState.value },
+            setState = { _notificationState.value = it },
+            fallbackMessage = "Unable to refresh notifications"
+        ) {
+            notificationSync.refreshByRecipient(recipientId, type)
         }
     }
 
     // ---------------------------------------------------------
-    // Refresh data from Firebase
+    // Refresh operations
     // ---------------------------------------------------------
 
     fun refreshVendors() {
-        execute("Unable to refresh vendors") {
+        execute(
+            getState = { _vendorState.value },
+            setState = { _vendorState.value = it },
+            fallbackMessage = "Unable to refresh vendors"
+        ) {
             vendorSync.refresh()
         }
     }
 
     fun refreshProducts() {
-        execute("Unable to refresh products") {
+        execute(
+            getState = { _productState.value },
+            setState = { _productState.value = it },
+            fallbackMessage = "Unable to refresh products"
+        ) {
             productSync.refreshAll()
         }
     }
 
     fun refreshProductsByVendor(vendorId: String) {
-        execute("Unable to refresh vendor products") {
+        execute(
+            getState = { _productState.value },
+            setState = { _productState.value = it },
+            fallbackMessage = "Unable to refresh vendor products"
+        ) {
             productSync.refreshByVendor(vendorId)
         }
     }
 
     fun refreshCustomer(customerId: String) {
-        execute("Unable to refresh customer profile") {
+        execute(
+            getState = { _customerState.value },
+            setState = { _customerState.value = it },
+            fallbackMessage = "Unable to refresh customer profile"
+        ) {
             customerSync.refresh(customerId)
         }
     }
 
     fun refreshOrders() {
-        execute("Unable to refresh orders") {
+        execute(
+            getState = { _orderState.value },
+            setState = { _orderState.value = it },
+            fallbackMessage = "Unable to refresh orders"
+        ) {
             orderSync.refreshAll()
         }
     }
 
     fun refreshNotifications() {
-        val id = recipientId
-        val type = recipientType
+        val id = observedRecipientId
+        val type = observedRecipientType
 
-        execute("Unable to refresh notifications") {
-            if (id != null && type != null) {
+        if (id != null && type != null) {
+            execute(
+                getState = { _notificationState.value },
+                setState = { _notificationState.value = it },
+                fallbackMessage = "Unable to refresh notifications"
+            ) {
                 notificationSync.refreshByRecipient(id, type)
-            } else {
+            }
+        } else {
+            execute(
+                getState = { _notificationState.value },
+                setState = { _notificationState.value = it },
+                fallbackMessage = "Unable to refresh notifications"
+            ) {
                 notificationSync.refreshAll()
             }
         }
@@ -289,72 +351,126 @@ class AppViewModel(
     // ---------------------------------------------------------
 
     fun loadImage(imageId: String) {
+        if (imageId.isBlank()) return
+
+        val currentState = _imageStates.value[imageId]
         if (
-            imageId.isBlank() ||
-            _images.value.containsKey(imageId) ||
-            !loadingImageIds.add(imageId)
+            currentState is ImageUiState.Loading ||
+            currentState is ImageUiState.Loaded
         ) {
             return
         }
+
+        _imageStates.value = _imageStates.value +
+                (imageId to ImageUiState.Loading)
 
         viewModelScope.launch {
             try {
                 val bytes = imageCache.getImageBytes(imageId)
 
-                if (bytes != null) {
-                    _images.value = _images.value + (imageId to bytes)
-                }
+                _imageStates.value = _imageStates.value +
+                        (
+                                imageId to if (bytes != null) {
+                                    ImageUiState.Loaded(bytes)
+                                } else {
+                                    ImageUiState.Unavailable
+                                }
+                                )
             } catch (exception: CancellationException) {
+                _imageStates.value = _imageStates.value - imageId
                 throw exception
             } catch (exception: Exception) {
-                _errorMessage.value = "Unable to load image"
-            } finally {
-                loadingImageIds.remove(imageId)
+                _imageStates.value = _imageStates.value +
+                        (imageId to ImageUiState.Unavailable)
             }
         }
     }
 
+    fun retryImage(imageId: String) {
+        _imageStates.value = _imageStates.value - imageId
+        loadImage(imageId)
+    }
+
     fun removeCachedImage(imageId: String) {
-        execute("Unable to remove cached image") {
-            imageCache.removeCachedImage(imageId)
-            _images.value = _images.value - imageId
+        viewModelScope.launch {
+            try {
+                imageCache.removeCachedImage(imageId)
+                _imageStates.value = _imageStates.value - imageId
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _errorForImageRemoval.value =
+                    "Unable to remove cached image"
+            }
         }
     }
 
-    // ---------------------------------------------------------
-    // General state helpers
-    // ---------------------------------------------------------
+    private val _errorForImageRemoval = MutableStateFlow<String?>(null)
+    val errorForImageRemoval: StateFlow<String?> =
+        _errorForImageRemoval.asStateFlow()
 
-    fun clearError() {
-        _errorMessage.value = null
+    fun clearImageRemovalError() {
+        _errorForImageRemoval.value = null
     }
 
-    private fun execute(
+    // ---------------------------------------------------------
+    // Per-domain operation state
+    // ---------------------------------------------------------
+
+    private fun <T> execute(
+        getState: () -> DataUiState<T>,
+        setState: (DataUiState<T>) -> Unit,
         fallbackMessage: String,
         action: suspend () -> Unit
     ) {
         viewModelScope.launch {
-            perform(fallbackMessage, action)
+            perform(
+                getState = getState,
+                setState = setState,
+                fallbackMessage = fallbackMessage,
+                action = action
+            )
         }
     }
 
-    private suspend fun perform(
+    private suspend fun <T> perform(
+        getState: () -> DataUiState<T>,
+        setState: (DataUiState<T>) -> Unit,
         fallbackMessage: String,
         action: suspend () -> Unit
     ) {
-        activeOperations++
-        _isLoading.value = true
+        val previous = getState()
+
+        setState(
+            previous.copy(
+                isInitialLoading = !previous.hasLoaded,
+                isRefreshing = previous.hasLoaded,
+                errorMessage = null
+            )
+        )
 
         try {
             action()
+
+            val current = getState()
+            setState(
+                current.copy(
+                    isInitialLoading = false,
+                    isRefreshing = false,
+                    errorMessage = null
+                )
+            )
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
-            _errorMessage.value =
-                exception.message ?: fallbackMessage
-        } finally {
-            activeOperations--
-            _isLoading.value = activeOperations > 0
+            val current = getState()
+            setState(
+                current.copy(
+                    isInitialLoading = false,
+                    isRefreshing = false,
+                    errorMessage = exception.message ?: fallbackMessage
+                )
+            )
         }
     }
 }
