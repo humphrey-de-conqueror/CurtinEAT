@@ -1,114 +1,35 @@
 package com.example.curtineat.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.curtineat.data.local.room.RoomProvider
-import com.example.curtineat.data.remote.api.image.ImageApiProvider
-import com.example.curtineat.data.remote.api.image.ImageApiSource
-import com.example.curtineat.data.remote.firebase.source.FirebaseCustomerSource
-import com.example.curtineat.data.remote.firebase.source.FirebaseNotificationSource
-import com.example.curtineat.data.remote.firebase.source.FirebaseOrderSource
-import com.example.curtineat.data.remote.firebase.source.FirebaseProductSource
-import com.example.curtineat.data.remote.firebase.source.FirebaseVendorSource
-import com.example.curtineat.data.repository.api.ImageRepository
-import com.example.curtineat.data.repository.firebase.FirebaseCustomerRepository
-import com.example.curtineat.data.repository.firebase.FirebaseNotificationRepository
-import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
-import com.example.curtineat.data.repository.firebase.FirebaseProductRepository
-import com.example.curtineat.data.repository.firebase.FirebaseVendorRepository
-import com.example.curtineat.data.repository.room.CustomerLocalRepository
-import com.example.curtineat.data.repository.room.MenuSyncRepository
-import com.example.curtineat.data.repository.room.ProductLocalRepository
-import com.example.curtineat.data.repository.room.VendorLocalRepository
+import com.example.curtineat.data.repository.image.ImageCacheRepository
+import com.example.curtineat.data.repository.sync.CustomerSyncRepository
+import com.example.curtineat.data.repository.sync.NotificationSyncRepository
+import com.example.curtineat.data.repository.sync.OrderSyncRepository
+import com.example.curtineat.data.repository.sync.ProductSyncRepository
+import com.example.curtineat.data.repository.sync.VendorSyncRepository
 
 class AppViewModelFactory(
-    private val context: Context
+    private val vendorSync: VendorSyncRepository,
+    private val productSync: ProductSyncRepository,
+    private val customerSync: CustomerSyncRepository,
+    private val orderSync: OrderSyncRepository,
+    private val notificationSync: NotificationSyncRepository,
+    private val imageCache: ImageCacheRepository
 ) : ViewModelProvider.Factory {
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(
         modelClass: Class<T>
     ): T {
-
         if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
-
-            // Firebase repositories
-            val vendorRepository =
-                FirebaseVendorRepository(
-                    FirebaseVendorSource()
-                )
-
-            val customerRepository =
-                FirebaseCustomerRepository(
-                    FirebaseCustomerSource()
-                )
-
-            val productRepository =
-                FirebaseProductRepository(
-                    FirebaseProductSource()
-                )
-
-            val orderRepository =
-                FirebaseOrderRepository(
-                    FirebaseOrderSource()
-                )
-
-            val notificationRepository =
-                FirebaseNotificationRepository(
-                    FirebaseNotificationSource()
-                )
-
-            val imageRepository =
-                ImageRepository(
-                    ImageApiSource(
-                        ImageApiProvider.service
-                    )
-                )
-
-            // Room repositories
-            val database =
-                RoomProvider.getDatabase(context)
-
-            val vendorLocalRepository =
-                VendorLocalRepository(
-                    database.vendorDao()
-                )
-
-            val productLocalRepository =
-                ProductLocalRepository(
-                    database.productDao()
-                )
-
-            val customerLocalRepository =
-                CustomerLocalRepository(
-                    database.customerDao()
-                )
-
-            // Firebase -> Room synchronization
-            val menuSyncRepository =
-                MenuSyncRepository(
-                    firebaseVendorRepository = vendorRepository,
-                    firebaseProductRepository = productRepository,
-                    firebaseCustomerRepository = customerRepository,
-                    vendorLocalRepository = vendorLocalRepository,
-                    productLocalRepository = productLocalRepository,
-                    customerLocalRepository = customerLocalRepository
-                )
-
-            @Suppress("UNCHECKED_CAST")
             return AppViewModel(
-                vendorRepository = vendorRepository,
-                customerRepository = customerRepository,
-                productRepository = productRepository,
-                orderRepository = orderRepository,
-                notificationRepository = notificationRepository,
-                imageRepository = imageRepository,
-
-                // Room dependencies
-                vendorLocalRepository = vendorLocalRepository,
-                productLocalRepository = productLocalRepository,
-                customerLocalRepository = customerLocalRepository,
-                menuSyncRepository = menuSyncRepository
+                vendorSync = vendorSync,
+                productSync = productSync,
+                customerSync = customerSync,
+                orderSync = orderSync,
+                notificationSync = notificationSync,
+                imageCache = imageCache
             ) as T
         }
 
