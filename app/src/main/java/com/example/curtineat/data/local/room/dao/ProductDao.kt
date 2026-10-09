@@ -10,21 +10,38 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProductDao {
 
-	@Query("SELECT * FROM products")
-	fun getAllProducts(): Flow<List<ProductEntity>>
+	@Query("SELECT * FROM products ORDER BY productName ASC")
+	fun observeAll(): Flow<List<ProductEntity>>
 
-	@Query(
-		"SELECT * FROM products WHERE vendorId = :vendorId"
-	)
-	fun getProductsByVendorId(
-		vendorId: String
-	): Flow<List<ProductEntity>>
+	@Query("""
+        SELECT * FROM products
+        WHERE vendorId = :vendorId
+        ORDER BY productName ASC
+    """)
+	fun observeByVendorId(vendorId: String): Flow<List<ProductEntity>>
+
+	@Query("""
+        SELECT * FROM products
+        WHERE vendorId = :vendorId
+        ORDER BY productName ASC
+    """)
+	suspend fun getByVendorId(vendorId: String): List<ProductEntity>
+
+	@Query("SELECT * FROM products WHERE productId = :productId LIMIT 1")
+	suspend fun getById(productId: String): ProductEntity?
 
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
-	suspend fun insertProducts(
-		products: List<ProductEntity>
-	)
+	suspend fun upsertAll(products: List<ProductEntity>)
+
+	@Insert(onConflict = OnConflictStrategy.REPLACE)
+	suspend fun upsert(product: ProductEntity)
+
+	@Query("DELETE FROM products WHERE productId = :productId")
+	suspend fun deleteById(productId: String)
+
+	@Query("DELETE FROM products WHERE vendorId = :vendorId")
+	suspend fun deleteByVendorId(vendorId: String)
 
 	@Query("DELETE FROM products")
-	suspend fun deleteAllProducts()
+	suspend fun deleteAll()
 }

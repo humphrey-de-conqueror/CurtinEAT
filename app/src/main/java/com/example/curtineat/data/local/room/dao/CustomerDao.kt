@@ -10,24 +10,21 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CustomerDao {
 
-	@Query("SELECT * FROM customers")
-	fun getAllCustomers(): Flow<List<CustomerEntity>>
+	@Query("SELECT * FROM customers WHERE customerId = :customerId LIMIT 1")
+	fun observeById(customerId: String): Flow<CustomerEntity?>
 
-	@Query("SELECT * FROM customers WHERE customerId = :customerId")
-	suspend fun getCustomerById(
-		customerId: String
-	): CustomerEntity?
+	@Query("SELECT * FROM customers WHERE customerId = :customerId LIMIT 1")
+	suspend fun getById(customerId: String): CustomerEntity?
 
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
-	suspend fun insertCustomers(
-		customers: List<CustomerEntity>
-	)
+	suspend fun upsert(customer: CustomerEntity)
 
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
-	suspend fun insertCustomer(
-		customer: CustomerEntity
-	)
+	suspend fun upsertAll(customers: List<CustomerEntity>)
+
+	@Query("DELETE FROM customers WHERE customerId = :customerId")
+	suspend fun deleteById(customerId: String)
 
 	@Query("DELETE FROM customers")
-	suspend fun deleteAllCustomers()
+	suspend fun deleteAll()
 }
