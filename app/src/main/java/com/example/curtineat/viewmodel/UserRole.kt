@@ -1,7 +1,7 @@
 package com.example.curtineat.viewmodel
 
 enum class UserRole {
-	NONE,
+	CUSTOMER,
 	VENDOR,
-	CUSTOMER
+	NONE
 }

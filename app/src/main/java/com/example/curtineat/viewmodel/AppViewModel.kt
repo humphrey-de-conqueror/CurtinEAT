@@ -1,4 +1,3 @@
-
 package com.example.curtineat.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -23,6 +22,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.curtineat.data.repository.auth.AuthenticationRepository
+import com.example.curtineat.data.repository.auth.LoginResult
+import com.example.curtineat.viewmodel.state.AuthenticationUiState
+import kotlinx.coroutines.flow.update
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -30,7 +33,8 @@ class AppViewModel(
     private val customerSync: CustomerSyncRepository,
     private val orderSync: OrderSyncRepository,
     private val notificationSync: NotificationSyncRepository,
-    private val imageCache: ImageCacheRepository
+    private val imageCache: ImageCacheRepository,
+    private val authenticationRepository: AuthenticationRepository
 ) : ViewModel() {
 
     // ---------------------------------------------------------
@@ -471,6 +475,208 @@ class AppViewModel(
                     errorMessage = exception.message ?: fallbackMessage
                 )
             )
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Authentication
+    // ---------------------------------------------------------
+
+    private val _authenticationState =
+        MutableStateFlow(AuthenticationUiState())
+
+    val authenticationState: StateFlow<AuthenticationUiState> =
+        _authenticationState.asStateFlow()
+
+    fun login(
+        email: String,
+        password: String,
+        isVendor: Boolean,
+        onResult: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authenticationState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            try {
+                when (
+                    val result = authenticationRepository.login(
+                        email = email,
+                        password = password,
+                        isVendor = isVendor
+                    )
+                ) {
+                    is LoginResult.Success -> {
+                        _authenticationState.update {
+                            it.copy(
+                                userId = result.userId,
+                                role = result.role,
+                                isLoading = false,
+                                errorMessage = null
+                            )
+                        }
+
+                        onResult(true)
+                    }
+
+                    LoginResult.InvalidCredentials,
+                    LoginResult.WrongRole,
+                    LoginResult.Error -> {
+                        _authenticationState.update {
+                            it.copy(
+                                userId = null,
+                                role = UserRole.NONE,
+                                isLoading = false,
+                                errorMessage = when (result) {
+                                    LoginResult.InvalidCredentials ->
+                                        "Invalid email or password"
+
+                                    LoginResult.WrongRole ->
+                                        "This account does not match the selected role"
+
+                                    else ->
+                                        "Unable to log in. Please try again"
+                                }
+                            )
+                        }
+
+                        onResult(false)
+                    }
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _authenticationState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Unable to log in. Please try again"
+                    )
+                }
+
+                onResult(false)
+            }
+        }
+    }
+
+    fun register(
+        email: String,
+        password: String,
+        name: String,
+        category: String,
+        isVendor: Boolean,
+        onResult: (RegisterResult) -> Unit
+    ) {
+        viewModelScope.launch {
+            _authenticationState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            try {
+                val result = authenticationRepository.register(
+                    email = email,
+                    password = password,
+                    name = name,
+                    category = category,
+                    isVendor = isVendor
+                )
+
+                if (result == RegisterResult.SUCCESS) {
+                    val userId = authenticationRepository.currentUserId
+
+                    _authenticationState.update {
+                        it.copy(
+                            userId = userId,
+                            role = if (isVendor) {
+                                UserRole.VENDOR
+                            } else {
+                                UserRole.CUSTOMER
+                            },
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+
+                    // Populate the profile cache after registration.
+                    if (userId != null) {
+                        if (isVendor) {
+                            refreshVendors()
+                        } else {
+                            refreshCustomer(userId)
+                        }
+                    }
+                } else {
+                    _authenticationState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Registration failed"
+                        )
+                    }
+                }
+
+                onResult(result)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _authenticationState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Registration failed. Please try again"
+                    )
+                }
+
+                onResult(RegisterResult.ERROR)
+            }
+        }
+    }
+
+    fun checkCurrentUserRole(
+        onResult: (UserRole) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val role = authenticationRepository.getCurrentUserRole()
+                val userId = authenticationRepository.currentUserId
+
+                _authenticationState.update {
+                    it.copy(
+                        userId = userId,
+                        role = role,
+                        errorMessage = null
+                    )
+                }
+
+                onResult(role)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _authenticationState.update {
+                    it.copy(
+                        role = UserRole.NONE,
+                        errorMessage = "Unable to verify account"
+                    )
+                }
+
+                onResult(UserRole.NONE)
+            }
+        }
+    }
+
+    fun signOut() {
+        authenticationRepository.signOut()
+
+        _authenticationState.value = AuthenticationUiState()
+    }
+
+    fun clearAuthenticationError() {
+        _authenticationState.update {
+            it.copy(errorMessage = null)
         }
     }
 }

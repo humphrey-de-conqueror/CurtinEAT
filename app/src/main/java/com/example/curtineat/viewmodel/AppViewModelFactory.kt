@@ -2,6 +2,7 @@ package com.example.curtineat.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.curtineat.data.repository.auth.AuthenticationRepository
 import com.example.curtineat.data.repository.image.ImageCacheRepository
 import com.example.curtineat.data.repository.sync.CustomerSyncRepository
 import com.example.curtineat.data.repository.sync.NotificationSyncRepository
@@ -15,7 +16,8 @@ class AppViewModelFactory(
     private val customerSync: CustomerSyncRepository,
     private val orderSync: OrderSyncRepository,
     private val notificationSync: NotificationSyncRepository,
-    private val imageCache: ImageCacheRepository
+    private val imageCache: ImageCacheRepository,
+    private val authenticationRepository: AuthenticationRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -29,7 +31,8 @@ class AppViewModelFactory(
                 customerSync = customerSync,
                 orderSync = orderSync,
                 notificationSync = notificationSync,
-                imageCache = imageCache
+                imageCache = imageCache,
+                authenticationRepository = authenticationRepository
             ) as T
         }
 

@@ -20,6 +20,9 @@ import com.example.curtineat.data.repository.sync.OrderSyncRepository
 import com.example.curtineat.data.repository.sync.ProductSyncRepository
 import com.example.curtineat.data.repository.sync.VendorSyncRepository
 import com.example.curtineat.viewmodel.AppViewModelFactory
+import com.example.curtineat.data.remote.firebase.FirebaseProvider
+import com.example.curtineat.data.remote.firebase.source.FirebaseAuthSource
+import com.example.curtineat.data.repository.auth.AuthenticationRepository
 
 class AppContainer(
 	context: Context,
@@ -88,12 +91,23 @@ class AppContainer(
 		remote = imageRemote
 	)
 
+	private val firebaseAuthSource =
+		FirebaseAuthSource(FirebaseProvider.auth)
+
+	private val authenticationRepository =
+		AuthenticationRepository(
+			authSource = firebaseAuthSource,
+			customerRemote = customerRemote,
+			vendorRemote = vendorRemote
+		)
+
 	val appViewModelFactory = AppViewModelFactory(
 		vendorSync = vendorSync,
 		productSync = productSync,
 		customerSync = customerSync,
 		orderSync = orderSync,
 		notificationSync = notificationSync,
-		imageCache = imageCache
+		imageCache = imageCache,
+		authenticationRepository = authenticationRepository
 	)
 }
