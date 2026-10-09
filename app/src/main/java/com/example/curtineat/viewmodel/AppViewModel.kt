@@ -225,7 +225,7 @@ class AppViewModel(
             perform(
                 fallbackMessage = "Unable to refresh notifications"
             ) {
-                notificationSync.refreshAll()
+                notificationSync.refreshByRecipient(id, type)
             }
         }
     }
@@ -265,8 +265,15 @@ class AppViewModel(
     }
 
     fun refreshNotifications() {
+        val id = recipientId
+        val type = recipientType
+
         execute("Unable to refresh notifications") {
-            notificationSync.refreshAll()
+            if (id != null && type != null) {
+                notificationSync.refreshByRecipient(id, type)
+            } else {
+                notificationSync.refreshAll()
+            }
         }
     }
 

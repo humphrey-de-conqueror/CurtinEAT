@@ -1,3 +1,4 @@
+
 package com.example.curtineat.data.repository.local
 
 import androidx.room.withTransaction
@@ -31,6 +32,23 @@ class NotificationLocalRepository(
 	suspend fun replaceAll(notifications: List<NotificationEntity>) {
 		database.withTransaction {
 			dao.deleteAll()
+			dao.upsertAll(notifications)
+		}
+	}
+
+	suspend fun replaceByRecipient(
+		recipientId: String,
+		recipientType: String,
+		notifications: List<NotificationEntity>
+	) {
+		database.withTransaction {
+			val previousNotifications =
+				dao.getByRecipient(recipientId, recipientType)
+
+			previousNotifications.forEach { notification ->
+				dao.deleteById(notification.notificationId)
+			}
+
 			dao.upsertAll(notifications)
 		}
 	}
