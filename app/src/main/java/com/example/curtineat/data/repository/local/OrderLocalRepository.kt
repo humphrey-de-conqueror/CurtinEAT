@@ -37,10 +37,6 @@ class OrderLocalRepository(
 		order: OrderEntity,
 		products: List<OrderProductEntity>
 	) {
-		require(products.all { it.orderId == order.orderId }) {
-			"Every order product must belong to ${order.orderId}"
-		}
-
 		database.withTransaction {
 			orderDao.upsert(order)
 			productDao.deleteByOrderId(order.orderId)
@@ -52,12 +48,6 @@ class OrderLocalRepository(
 		orders: List<OrderEntity>,
 		products: List<OrderProductEntity>
 	) {
-		val orderIds = orders.map { it.orderId }.toSet()
-
-		require(products.all { it.orderId in orderIds }) {
-			"Every product must belong to an order in this batch"
-		}
-
 		database.withTransaction {
 			orderDao.upsertAll(orders)
 
@@ -65,6 +55,54 @@ class OrderLocalRepository(
 				productDao.deleteByOrderId(order.orderId)
 			}
 
+			productDao.insertAll(products)
+		}
+	}
+
+	suspend fun replaceAll(
+		orders: List<OrderEntity>,
+		products: List<OrderProductEntity>
+	) {
+		database.withTransaction {
+			productDao.deleteAll()
+			orderDao.deleteAll()
+			orderDao.upsertAll(orders)
+			productDao.insertAll(products)
+		}
+	}
+
+	suspend fun replaceByCustomer(
+		customerId: String,
+		orders: List<OrderEntity>,
+		products: List<OrderProductEntity>
+	) {
+		database.withTransaction {
+			val previousOrders = orderDao.getByCustomerId(customerId)
+
+			previousOrders.forEach { order ->
+				productDao.deleteByOrderId(order.orderId)
+			}
+
+			orderDao.deleteByCustomerId(customerId)
+			orderDao.upsertAll(orders)
+			productDao.insertAll(products)
+		}
+	}
+
+	suspend fun replaceByVendor(
+		vendorId: String,
+		orders: List<OrderEntity>,
+		products: List<OrderProductEntity>
+	) {
+		database.withTransaction {
+			val previousOrders = orderDao.getByVendorId(vendorId)
+
+			previousOrders.forEach { order ->
+				productDao.deleteByOrderId(order.orderId)
+			}
+
+			orderDao.deleteByVendorId(vendorId)
+			orderDao.upsertAll(orders)
 			productDao.insertAll(products)
 		}
 	}

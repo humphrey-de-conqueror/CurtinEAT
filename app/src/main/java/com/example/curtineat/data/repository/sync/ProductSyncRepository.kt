@@ -13,22 +13,18 @@ class ProductSyncRepository(
 	fun observeProducts(): Flow<List<ProductEntity>> =
 		local.observeAll()
 
-	fun observeProductsByVendor(
-		vendorId: String
-	): Flow<List<ProductEntity>> =
+	fun observeProductsByVendor(vendorId: String): Flow<List<ProductEntity>> =
 		local.observeByVendorId(vendorId)
 
 	suspend fun refreshAll() {
-		val products = remote.getAllProducts()
-
-		local.deleteAll()
-		local.upsertAll(products.map { it.toEntity() })
+		val products = remote.getAllProducts().map { it.toEntity() }
+		local.replaceAll(products)
 	}
 
 	suspend fun refreshByVendor(vendorId: String) {
 		val products = remote.getProductsByVendorId(vendorId)
+			.map { it.toEntity() }
 
-		local.deleteByVendorId(vendorId)
-		local.upsertAll(products.map { it.toEntity() })
+		local.replaceByVendor(vendorId, products)
 	}
 }

@@ -1,10 +1,13 @@
 package com.example.curtineat.data.repository.local
 
+import androidx.room.withTransaction
+import com.example.curtineat.data.local.room.AppDatabase
 import com.example.curtineat.data.local.room.dao.NotificationDao
 import com.example.curtineat.data.local.room.entity.NotificationEntity
 import kotlinx.coroutines.flow.Flow
 
 class NotificationLocalRepository(
+	private val database: AppDatabase,
 	private val dao: NotificationDao
 ) {
 	fun observeByRecipient(
@@ -25,6 +28,13 @@ class NotificationLocalRepository(
 	suspend fun upsertAll(notifications: List<NotificationEntity>) =
 		dao.upsertAll(notifications)
 
+	suspend fun replaceAll(notifications: List<NotificationEntity>) {
+		database.withTransaction {
+			dao.deleteAll()
+			dao.upsertAll(notifications)
+		}
+	}
+
 	suspend fun markAsRead(notificationId: String) =
 		dao.markAsRead(notificationId)
 
@@ -36,6 +46,5 @@ class NotificationLocalRepository(
 	suspend fun deleteById(notificationId: String) =
 		dao.deleteById(notificationId)
 
-	suspend fun deleteAll() =
-		dao.deleteAll()
+	suspend fun deleteAll() = dao.deleteAll()
 }

@@ -10,15 +10,11 @@ class CustomerSyncRepository(
 	private val remote: FirebaseCustomerRepository,
 	private val local: CustomerLocalRepository
 ) {
-	fun observeCustomer(
-		customerId: String
-	): Flow<CustomerEntity?> =
+	fun observeCustomer(customerId: String): Flow<CustomerEntity?> =
 		local.observeById(customerId)
 
 	suspend fun refresh(customerId: String) {
-		val customer = remote.getCustomerById(customerId)
-			?: return
-
+		val customer = remote.getCustomerById(customerId) ?: return
 		local.upsert(customer.toEntity())
 	}
 

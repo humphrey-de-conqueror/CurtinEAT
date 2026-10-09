@@ -1,6 +1,7 @@
 package com.example.curtineat.data.repository.sync
 
 import com.example.curtineat.data.local.room.entity.OrderEntity
+import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import com.example.curtineat.data.local.room.mapper.toEntity
 import com.example.curtineat.data.local.room.mapper.toProductEntities
 import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
@@ -21,19 +22,36 @@ class OrderSyncRepository(
 	): Flow<List<OrderEntity>> =
 		local.observeByVendorId(vendorId)
 
-	fun observeOrder(
-		orderId: String
-	): Flow<OrderEntity?> =
+	fun observeOrder(orderId: String): Flow<OrderEntity?> =
 		local.observeById(orderId)
 
 	suspend fun refreshAll() {
-		val orders = remote.getAllOrders()
+		val remoteOrders = remote.getAllOrders()
+		val orders: List<OrderEntity> =
+			remoteOrders.map { it.toEntity() }
+		val products: List<OrderProductEntity> =
+			remoteOrders.flatMap { it.toProductEntities() }
 
-		val orderEntities = orders.map { it.toEntity() }
-		val productEntities = orders.flatMap { it.toProductEntities() }
+		local.replaceAll(orders, products)
+	}
 
-		// Replace the local snapshot only after the remote fetch succeeds.
-		local.deleteAll()
-		local.upsertOrders(orderEntities, productEntities)
+	suspend fun refreshByCustomer(customerId: String) {
+		val remoteOrders = remote.getOrdersByCustomerId(customerId)
+		val orders: List<OrderEntity> =
+			remoteOrders.map { it.toEntity() }
+		val products: List<OrderProductEntity> =
+			remoteOrders.flatMap { it.toProductEntities() }
+
+		local.replaceByCustomer(customerId, orders, products)
+	}
+
+	suspend fun refreshByVendor(vendorId: String) {
+		val remoteOrders = remote.getOrdersByVendorId(vendorId)
+		val orders: List<OrderEntity> =
+			remoteOrders.map { it.toEntity() }
+		val products: List<OrderProductEntity> =
+			remoteOrders.flatMap { it.toProductEntities() }
+
+		local.replaceByVendor(vendorId, orders, products)
 	}
 }

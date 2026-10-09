@@ -1,3 +1,4 @@
+
 package com.example.curtineat.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -15,14 +16,11 @@ import com.example.curtineat.data.repository.sync.OrderSyncRepository
 import com.example.curtineat.data.repository.sync.ProductSyncRepository
 import com.example.curtineat.data.repository.sync.VendorSyncRepository
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -67,13 +65,11 @@ class AppViewModel(
     val images: StateFlow<Map<String, ByteArray>> =
         _images.asStateFlow()
 
-    private val _isLoading =
-        MutableStateFlow(false)
+    private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> =
         _isLoading.asStateFlow()
 
-    private val _errorMessage =
-        MutableStateFlow<String?>(null)
+    private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> =
         _errorMessage.asStateFlow()
 
@@ -82,8 +78,15 @@ class AppViewModel(
     private var notificationObservationJob: Job? = null
 
     private var customerId: String? = null
+    private var observedOrderScope: String? = null
     private var recipientId: String? = null
     private var recipientType: RecipientType? = null
+
+    // All ViewModel state mutations occur on the main dispatcher.
+    private var activeOperations = 0
+
+    // Prevent duplicate ViewModel requests for the same image.
+    private val loadingImageIds = mutableSetOf<String>()
 
     init {
         observeVendors()
@@ -111,7 +114,8 @@ class AppViewModel(
     }
 
     fun observeCustomer(customerId: String) {
-        if (this.customerId == customerId &&
+        if (
+            this.customerId == customerId &&
             customerObservationJob?.isActive == true
         ) {
             return
@@ -121,43 +125,84 @@ class AppViewModel(
         customerObservationJob?.cancel()
 
         customerObservationJob = viewModelScope.launch {
-            customerSync.observeCustomer(customerId).collect { result ->
-                _customer.value = result
+            // Start observing Room before refreshing Firebase.
+            launch {
+                customerSync.observeCustomer(customerId).collect { result ->
+                    _customer.value = result
+                }
+            }
+
+            perform(
+                fallbackMessage = "Unable to refresh customer profile"
+            ) {
+                customerSync.refresh(customerId)
             }
         }
-
-        refreshCustomer(customerId)
     }
 
     fun observeOrdersByCustomer(customerId: String) {
+        val scope = "customer:$customerId"
+
+        if (
+            observedOrderScope == scope &&
+            orderObservationJob?.isActive == true
+        ) {
+            return
+        }
+
+        observedOrderScope = scope
         orderObservationJob?.cancel()
 
         orderObservationJob = viewModelScope.launch {
-            orderSync.observeOrdersByCustomer(customerId).collect { result ->
-                _orders.value = result
+            // Room continues emitting cached orders even if refresh fails.
+            launch {
+                orderSync.observeOrdersByCustomer(customerId).collect { result ->
+                    _orders.value = result
+                }
+            }
+
+            perform(
+                fallbackMessage = "Unable to refresh customer orders"
+            ) {
+                orderSync.refreshByCustomer(customerId)
             }
         }
-
-        refreshOrders()
     }
 
     fun observeOrdersByVendor(vendorId: String) {
+        val scope = "vendor:$vendorId"
+
+        if (
+            observedOrderScope == scope &&
+            orderObservationJob?.isActive == true
+        ) {
+            return
+        }
+
+        observedOrderScope = scope
         orderObservationJob?.cancel()
 
         orderObservationJob = viewModelScope.launch {
-            orderSync.observeOrdersByVendor(vendorId).collect { result ->
-                _orders.value = result
+            launch {
+                orderSync.observeOrdersByVendor(vendorId).collect { result ->
+                    _orders.value = result
+                }
+            }
+
+            perform(
+                fallbackMessage = "Unable to refresh vendor orders"
+            ) {
+                orderSync.refreshByVendor(vendorId)
             }
         }
-
-        refreshOrders()
     }
 
     fun observeNotifications(
         id: String,
         type: RecipientType
     ) {
-        if (recipientId == id &&
+        if (
+            recipientId == id &&
             recipientType == type &&
             notificationObservationJob?.isActive == true
         ) {
@@ -169,13 +214,20 @@ class AppViewModel(
         notificationObservationJob?.cancel()
 
         notificationObservationJob = viewModelScope.launch {
-            notificationSync.observeNotifications(id, type)
-                .collect { result ->
-                    _notifications.value = result
-                }
-        }
+            launch {
+                notificationSync
+                    .observeNotifications(id, type.name)
+                    .collect { result ->
+                        _notifications.value = result
+                    }
+            }
 
-        refreshNotifications()
+            perform(
+                fallbackMessage = "Unable to refresh notifications"
+            ) {
+                notificationSync.refreshAll()
+            }
+        }
     }
 
     // ---------------------------------------------------------
@@ -218,10 +270,6 @@ class AppViewModel(
         }
     }
 
-    /**
-     * Refreshes the main remotely sourced datasets.
-     * Each refresh reports its own failure.
-     */
     fun refreshAll() {
         refreshVendors()
         refreshProducts()
@@ -234,7 +282,11 @@ class AppViewModel(
     // ---------------------------------------------------------
 
     fun loadImage(imageId: String) {
-        if (imageId.isBlank() || _images.value.containsKey(imageId)) {
+        if (
+            imageId.isBlank() ||
+            _images.value.containsKey(imageId) ||
+            !loadingImageIds.add(imageId)
+        ) {
             return
         }
 
@@ -249,20 +301,16 @@ class AppViewModel(
                 throw exception
             } catch (exception: Exception) {
                 _errorMessage.value = "Unable to load image"
+            } finally {
+                loadingImageIds.remove(imageId)
             }
         }
     }
 
     fun removeCachedImage(imageId: String) {
-        viewModelScope.launch {
-            try {
-                imageCache.removeCachedImage(imageId)
-                _images.value = _images.value - imageId
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (exception: Exception) {
-                _errorMessage.value = "Unable to remove cached image"
-            }
+        execute("Unable to remove cached image") {
+            imageCache.removeCachedImage(imageId)
+            _images.value = _images.value - imageId
         }
     }
 
@@ -275,23 +323,31 @@ class AppViewModel(
     }
 
     private fun execute(
-        errorMessage: String,
+        fallbackMessage: String,
         action: suspend () -> Unit
     ) {
         viewModelScope.launch {
-            _isLoading.value = true
+            perform(fallbackMessage, action)
+        }
+    }
 
-            try {
-                action()
-                _errorMessage.value = null
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (exception: Exception) {
-                _errorMessage.value =
-                    exception.message ?: errorMessage
-            } finally {
-                _isLoading.value = false
-            }
+    private suspend fun perform(
+        fallbackMessage: String,
+        action: suspend () -> Unit
+    ) {
+        activeOperations++
+        _isLoading.value = true
+
+        try {
+            action()
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            _errorMessage.value =
+                exception.message ?: fallbackMessage
+        } finally {
+            activeOperations--
+            _isLoading.value = activeOperations > 0
         }
     }
 }

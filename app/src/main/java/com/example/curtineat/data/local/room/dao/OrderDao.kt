@@ -13,18 +13,16 @@ interface OrderDao {
 	@Query("SELECT * FROM orders ORDER BY timestamp DESC")
 	fun observeAll(): Flow<List<OrderEntity>>
 
-	@Query("""
-        SELECT * FROM orders
-        WHERE customerId = :customerId
-        ORDER BY timestamp DESC
-    """)
+	@Query(
+		"SELECT * FROM orders " +
+			"WHERE customerId = :customerId ORDER BY timestamp DESC"
+	)
 	fun observeByCustomerId(customerId: String): Flow<List<OrderEntity>>
 
-	@Query("""
-        SELECT * FROM orders
-        WHERE vendorId = :vendorId
-        ORDER BY timestamp DESC
-    """)
+	@Query(
+		"SELECT * FROM orders " +
+			"WHERE vendorId = :vendorId ORDER BY timestamp DESC"
+	)
 	fun observeByVendorId(vendorId: String): Flow<List<OrderEntity>>
 
 	@Query("SELECT * FROM orders WHERE orderId = :orderId LIMIT 1")
@@ -32,6 +30,12 @@ interface OrderDao {
 
 	@Query("SELECT * FROM orders WHERE orderId = :orderId LIMIT 1")
 	suspend fun getById(orderId: String): OrderEntity?
+
+	@Query("SELECT * FROM orders WHERE customerId = :customerId")
+	suspend fun getByCustomerId(customerId: String): List<OrderEntity>
+
+	@Query("SELECT * FROM orders WHERE vendorId = :vendorId")
+	suspend fun getByVendorId(vendorId: String): List<OrderEntity>
 
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun upsert(order: OrderEntity)
@@ -41,6 +45,12 @@ interface OrderDao {
 
 	@Query("DELETE FROM orders WHERE orderId = :orderId")
 	suspend fun deleteById(orderId: String)
+
+	@Query("DELETE FROM orders WHERE customerId = :customerId")
+	suspend fun deleteByCustomerId(customerId: String)
+
+	@Query("DELETE FROM orders WHERE vendorId = :vendorId")
+	suspend fun deleteByVendorId(vendorId: String)
 
 	@Query("DELETE FROM orders")
 	suspend fun deleteAll()
