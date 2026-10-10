@@ -26,6 +26,11 @@ import kotlin.getValue
 import androidx.navigation.toRoute
 import com.example.curtineat.view.OrderHistoryScreen
 import com.example.curtineat.view.OrderDetailScreen
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.example.curtineat.ui.theme.AppThemeMode
 
 class MainActivity : ComponentActivity() {
 
@@ -41,8 +46,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            CurtinEATTheme {
-                ScreenNavigation(vm)
+            var themeModeName by rememberSaveable {
+                mutableStateOf(AppThemeMode.SYSTEM.name)
+            }
+
+            val themeMode = AppThemeMode.valueOf(themeModeName)
+
+            CurtinEATTheme(themeMode = themeMode) {
+                ScreenNavigation(
+                    appViewModel = vm,
+                    themeMode = themeMode,
+                    onThemeModeChange = { selectedMode ->
+                        themeModeName = selectedMode.name
+                    }
+                )
             }
         }
     }
@@ -85,7 +102,9 @@ data class RouteOrderDetailScreen(
 
 @Composable
 fun ScreenNavigation(
-    appViewModel: AppViewModel
+    appViewModel: AppViewModel,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val nav = rememberNavController()
 
@@ -197,16 +216,18 @@ fun ScreenNavigation(
         startDestination = RouteMainScreen
     ) {
         composable<RouteMainScreen> {
-            MainScreen(
-                appViewModel = appViewModel,
-                onCartButtonClick = onCartButtonClick,
-                onProfileClick = onProfileClick,
-                onHomeClick = onHomeClick,
-                onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick,
-                onHistoryClick = onHistoryClick
-            )
-        }
+        MainScreen(
+            appViewModel = appViewModel,
+            onCartButtonClick = onCartButtonClick,
+            onProfileClick = onProfileClick,
+            onHomeClick = onHomeClick,
+            onWalletClick = onWalletClick,
+            onLoginClick = onLoginClick,
+            onHistoryClick = onHistoryClick,
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange
+        )
+    }
 
         composable<RouteCartScreen> {
             CartScreen(
@@ -216,7 +237,9 @@ fun ScreenNavigation(
                 onProfileClick = onProfileClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
-                onHistoryClick = onHistoryClick
+                onHistoryClick = onHistoryClick,
+                themeMode = themeMode,
+                onThemeModeChange = onThemeModeChange
             )
         }
 
@@ -255,7 +278,9 @@ fun ScreenNavigation(
                 onLoginClick = onLoginClick,
                 onHistoryClick = onHistoryClick,
                 onFoodClick = { _ -> },
-                onAddProductClick = onAddProductClick
+                onAddProductClick = onAddProductClick,
+                themeMode = themeMode,
+                onThemeModeChange = onThemeModeChange
             )
         }
         composable<RouteVendorProfileScreen> {
@@ -291,7 +316,9 @@ fun ScreenNavigation(
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onHistoryClick = onHistoryClick,
-                onOrderClick = onOrderClick
+                onOrderClick = onOrderClick,
+                themeMode = themeMode,
+                onThemeModeChange = onThemeModeChange
             )
         }
 

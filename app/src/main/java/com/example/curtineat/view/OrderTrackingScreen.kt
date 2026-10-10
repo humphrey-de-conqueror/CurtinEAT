@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import com.example.curtineat.viewmodel.AppViewModel
+import com.example.curtineat.ui.theme.AppThemeMode
 
 private val orderStages = listOf(
     "Received",
@@ -50,9 +51,11 @@ fun OrderTrackingScreen(
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
-    onLogInClick: () -> Unit = {},
+    onLoginClick: () -> Unit = {},
     onHistoryClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     var order by remember(orderId) {
         mutableStateOf<OrderEntity?>(null)
@@ -87,10 +90,12 @@ fun OrderTrackingScreen(
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
-        onLoginClick = onLogInClick,
+        onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         showSearch = false,
-        showNotifications = false
+        showNotifications = true,
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange
     ) { innerPadding ->
         Column(
             modifier = Modifier

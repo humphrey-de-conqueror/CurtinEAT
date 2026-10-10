@@ -1,4 +1,3 @@
-
 package com.example.curtineat.view
 
 import androidx.compose.foundation.background
@@ -68,6 +67,7 @@ import com.example.curtineat.ui.theme.TextNormal
 import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.viewmodel.AppViewModel
 import kotlinx.coroutines.delay
+import com.example.curtineat.ui.theme.AppThemeMode
 
 @Composable
 fun AppScaffold(
@@ -80,6 +80,8 @@ fun AppScaffold(
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val isLoading by appViewModel.isLoading.collectAsState()
@@ -99,7 +101,9 @@ fun AppScaffold(
         onProfileClick = onProfileClick,
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
-        onHistoryClick = onHistoryClick
+        onHistoryClick = onHistoryClick,
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange
     ) { onMenuClick ->
 
         Scaffold(
@@ -146,7 +150,9 @@ fun MainScreen(
     onHomeClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
 ){
     val cart by appViewModel.cart.collectAsState()
 
@@ -168,7 +174,9 @@ fun MainScreen(
                 onCartButtonClick = onCartButtonClick,
                 totalQuantity = cart.sumOf { it.quantity }
             )
-        }
+        },
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange
     ) { innerPadding ->
         BodyScreen(
             innerPadding = innerPadding,

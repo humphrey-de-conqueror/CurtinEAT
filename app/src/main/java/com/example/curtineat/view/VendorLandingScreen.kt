@@ -41,6 +41,7 @@ import com.example.curtineat.viewmodel.UserRole
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.curtineat.ui.theme.AppThemeMode
 
 @Composable
 fun VendorLandingScreen(
@@ -51,8 +52,10 @@ fun VendorLandingScreen(
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onFoodClick: (String) -> Unit,
-    onAddProductClick: () -> Unit
-){
+    onAddProductClick: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
+) {
     val authenticationState by
     appViewModel.authenticationState.collectAsState()
 
@@ -109,6 +112,8 @@ fun VendorLandingScreen(
         showSearch = false,
         showNotifications = true,
         onProfileClick = onProfileClick,
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddProductClick

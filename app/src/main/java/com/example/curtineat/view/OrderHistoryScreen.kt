@@ -41,6 +41,7 @@ import com.example.curtineat.viewmodel.UserRole
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.curtineat.ui.theme.AppThemeMode
 
 @Composable
 fun OrderHistoryScreen(
@@ -50,7 +51,9 @@ fun OrderHistoryScreen(
 	onWalletClick: () -> Unit,
 	onLoginClick: () -> Unit,
 	onHistoryClick: () -> Unit,
-	onOrderClick: (String) -> Unit
+	onOrderClick: (String) -> Unit,
+	themeMode: AppThemeMode,
+	onThemeModeChange: (AppThemeMode) -> Unit
 ) {
 	val orderState by appViewModel.orderState.collectAsState()
 	val vendorState by appViewModel.vendorState.collectAsState()
@@ -95,7 +98,9 @@ fun OrderHistoryScreen(
 		onLoginClick = onLoginClick,
 		onHistoryClick = onHistoryClick,
 		showSearch = false,
-		showNotifications = true
+		showNotifications = true,
+		themeMode = themeMode,
+		onThemeModeChange = onThemeModeChange
 	) { innerPadding ->
 
 		Column(

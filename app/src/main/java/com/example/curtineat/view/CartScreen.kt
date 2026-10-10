@@ -42,6 +42,7 @@ import com.example.curtineat.ui.theme.mySpacer
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
+import com.example.curtineat.ui.theme.AppThemeMode
 
 // ---------------- CART SCREEN ----------------
 @Composable
@@ -52,8 +53,10 @@ fun CartScreen(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onHistoryClick: () -> Unit
-){
+    onHistoryClick: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
+) {
     val cart by appViewModel.cart.collectAsState()
     val customerState by appViewModel.customerState.collectAsState()
     val vendorState by appViewModel.vendorState.collectAsState()
@@ -101,7 +104,9 @@ fun CartScreen(
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         showSearch = false,
-        showNotifications = true
+        showNotifications = true,
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange
     ) { innerPadding ->
 
         Box(
