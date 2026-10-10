@@ -1,53 +1,79 @@
 package com.example.curtineat.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val WhiteColorScheme = lightColorScheme(
+    primary = WhitePrimary,
+    onPrimary = WhiteOnPrimary,
+    secondary = WhiteSecondary,
+    background = WhiteBackground,
+    surface = WhiteSurface,
+    surfaceVariant = WhiteSurfaceVariant,
+    onSurface = WhiteOnSurface,
+    onSurfaceVariant = WhiteOnSurfaceVariant,
+    outline = WhiteOutline
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val DarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    secondary = DarkSecondary,
+    background = DarkBackground,
+    surface = DarkSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurface = DarkOnSurface,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val WarmColorScheme = lightColorScheme(
+    primary = WarmPrimary,
+    onPrimary = WarmOnPrimary,
+    secondary = WarmSecondary,
+    background = WarmBackground,
+    surface = WarmSurface,
+    surfaceVariant = WarmSurfaceVariant,
+    onSurface = WarmOnSurface,
+    onSurfaceVariant = WarmOnSurfaceVariant,
+    outline = WarmOutline
+)
+
+private val FreshColorScheme = lightColorScheme(
+    primary = FreshPrimary,
+    onPrimary = FreshOnPrimary,
+    secondary = FreshSecondary,
+    background = FreshBackground,
+    surface = FreshSurface,
+    surfaceVariant = FreshSurfaceVariant,
+    onSurface = FreshOnSurface,
+    onSurfaceVariant = FreshOnSurfaceVariant,
+    outline = FreshOutline
 )
 
 @Composable
 fun CurtinEATTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val systemIsDark = isSystemInDarkTheme()
+
+    val colorScheme = when (themeMode) {
+        AppThemeMode.SYSTEM -> {
+            if (systemIsDark) {
+                DarkColorScheme
+            } else {
+                WhiteColorScheme
+            }
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        AppThemeMode.DARK -> DarkColorScheme
+        AppThemeMode.WHITE -> WhiteColorScheme
+        AppThemeMode.WARM -> WarmColorScheme
+        AppThemeMode.FRESH -> FreshColorScheme
     }
 
     MaterialTheme(
