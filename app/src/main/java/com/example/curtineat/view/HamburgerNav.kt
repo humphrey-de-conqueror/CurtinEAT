@@ -139,9 +139,6 @@ fun HamburgerNav(
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
-    var themeMenuExpanded by remember {
-        mutableStateOf(false)
-    }
 
     ModalDrawerSheet(
         drawerShape = RoundedCornerShape(
@@ -313,6 +310,7 @@ fun HamburgerNav(
                     modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
                 )
 
+                Box {
                 // Entire row is clickable, not just the dropdown icon.
                 Row(
                     modifier = Modifier
@@ -476,6 +474,8 @@ fun HamburgerNav(
                         )
                     }
                 }
+
+            }
             }
         }
     }

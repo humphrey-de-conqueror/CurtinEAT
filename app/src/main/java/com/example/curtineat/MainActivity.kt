@@ -2,10 +2,13 @@ package com.example.curtineat
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,9 +31,15 @@ import com.example.curtineat.view.OrderHistoryScreen
 import com.example.curtineat.view.OrderDetailScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.example.curtineat.ui.theme.AppThemeMode
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.first
+import com.example.curtineat.ui.theme.ThemePreferences
 
 class MainActivity : ComponentActivity() {
 
@@ -40,25 +49,45 @@ class MainActivity : ComponentActivity() {
             .appViewModelFactory
     }
 
+    private val themePreferences by lazy { ThemePreferences(applicationContext) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val initialMode = runBlocking { themePreferences.themeMode.first() }
 
         enableEdgeToEdge()
 
         setContent {
-            var themeModeName by rememberSaveable {
-                mutableStateOf(AppThemeMode.SYSTEM.name)
-            }
+//            var themeModeName by rememberSaveable {
+//                mutableStateOf(AppThemeMode.SYSTEM.name)
+//            }
 
-            val themeMode = AppThemeMode.valueOf(themeModeName)
+            val scope = rememberCoroutineScope()
+
+            val themeMode by themePreferences.themeMode
+                .collectAsState(initial = initialMode)
+
+            val systemDark = isSystemInDarkTheme()
+            val darkBackground = themeMode == AppThemeMode.DARK || (themeMode == AppThemeMode.SYSTEM && systemDark)
+
+
+            DisposableEffect(darkBackground) {
+                val transparent = android.graphics.Color.TRANSPARENT
+                val style = if (darkBackground) {
+                    SystemBarStyle.dark(transparent)
+                } else {
+                    SystemBarStyle.light(transparent, transparent)
+                }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose {}
+            }
 
             CurtinEATTheme(themeMode = themeMode) {
                 ScreenNavigation(
                     appViewModel = vm,
                     themeMode = themeMode,
-                    onThemeModeChange = { selectedMode ->
-                        themeModeName = selectedMode.name
-                    }
+                    onThemeModeChange = { scope.launch { themePreferences.setThemeMode(it) } }
                 )
             }
         }
