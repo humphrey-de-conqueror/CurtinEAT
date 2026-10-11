@@ -1,7 +1,16 @@
 package com.example.curtineat.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,23 +29,30 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -47,27 +63,28 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.curtineat.data.local.room.entity.NotificationEntity
 import com.example.curtineat.data.local.room.entity.ProductEntity
 import com.example.curtineat.data.local.room.entity.VendorEntity
-import com.example.curtineat.ui.theme.PrimaryButton
-import com.example.curtineat.ui.theme.PrimaryCard
-import com.example.curtineat.ui.theme.SecondaryCard
-import com.example.curtineat.ui.theme.TextNormal
-import com.example.curtineat.ui.theme.mySpacer
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppText
+import com.example.curtineat.ui.components.EmptyState
+import com.example.curtineat.ui.components.LoadingState
+import com.example.curtineat.ui.components.SectionHeader
+import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
 import kotlinx.coroutines.delay
-import com.example.curtineat.ui.theme.AppThemeMode
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppScaffold(
@@ -118,12 +135,15 @@ fun AppScaffold(
             floatingActionButton = floatingActionButton
         ) { innerPadding ->
 
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 content(innerPadding)
 
-                if (isLoading) {
+                AnimatedVisibility(
+                    visible = isLoading,
+                    enter = fadeIn(animationSpec = tween(180)),
+                    exit = fadeOut(animationSpec = tween(180)),
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -153,7 +173,7 @@ fun MainScreen(
     onHistoryClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
-){
+) {
     val cart by appViewModel.cart.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -167,7 +187,7 @@ fun MainScreen(
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
-        showSearch = true,
+        showSearch = false,
         showNotifications = true,
         floatingActionButton = {
             CartButton(
@@ -193,23 +213,19 @@ fun NotificationItem(
     isClickable: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    SecondaryCard(
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
-        onClick = {
-            if (isClickable) {
-                onClick()
-            }
+        onClick = if (isClickable) onClick else null,
+        containerColor = if (!isRead) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
         },
-        containerColor =
-            if (!isRead) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
         contentPadding = PaddingValues(
             horizontal = 12.dp,
             vertical = 16.dp
-        )
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -228,18 +244,23 @@ fun NotificationItem(
                 Spacer(modifier = Modifier.width(10.dp))
             }
 
-            TextNormal(
+            AppText(
                 text = message,
                 modifier = Modifier.weight(1f),
-                fontSize = 16.sp,
-                fontWeight =
-                    if (!isRead) FontWeight.Bold
-                    else FontWeight.Normal
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (!isRead) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Normal
+                }
             )
 
-            TextNormal(
+            Spacer(modifier = Modifier.width(8.dp))
+
+            AppText(
                 text = time,
-                fontSize = 12.sp
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             if (isClickable) {
@@ -287,10 +308,7 @@ fun TopBarScreen(
                     value = searchText,
                     onValueChange = { searchText = it },
                     placeholder = {
-                        TextNormal(
-                            text = "Search food...",
-                            fontSize = 16.sp
-                        )
+                        Text("Search food...")
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -306,10 +324,10 @@ fun TopBarScreen(
                     )
                 )
             } else {
-                TextNormal(
+                AppText(
                     text = "CurtinEAT",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
             }
         },
@@ -334,50 +352,24 @@ fun TopBarScreen(
                     }
                 ) {
                     Icon(
-                        imageVector =
-                            if (searching) Icons.Default.Close
-                            else Icons.Default.Search,
+                        imageVector = if (searching) {
+                            Icons.Default.Close
+                        } else {
+                            Icons.Default.Search
+                        },
                         contentDescription = "Search"
                     )
                 }
             }
 
             if (showNotifications) {
-                Box {
-                    IconButton(
-                        onClick = {
-                            notificationDrawerLoading = true
-                            notificationsOpen = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications"
-                        )
+                NotificationAction(
+                    unreadCount = unreadCount,
+                    onClick = {
+                        notificationDrawerLoading = true
+                        notificationsOpen = true
                     }
-
-                    if (unreadCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .align(Alignment.TopEnd)
-                                .background(
-                                    color = Color.Red,
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text =
-                                    if (unreadCount > 99) "99+"
-                                    else unreadCount.toString(),
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
+                )
             }
         }
     )
@@ -405,23 +397,21 @@ fun TopBarScreen(
             ) {
                 if (notificationDrawerLoading) {
                     item {
-                        LoadingDots()
+                        LoadingState(
+                            message = "Loading notifications..."
+                        )
                     }
                 } else if (notifications.isEmpty()) {
                     item {
-                        TextNormal(
-                            text = "No notifications",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            textAlign = TextAlign.Center,
-                            fontSize = 16.sp
+                        EmptyState(
+                            title = "No notifications",
+                            description = "You're all caught up."
                         )
                     }
                 } else {
                     groupedNotifications.forEach { (dateLabel, notificationList) ->
-                        item {
-                            TextNormal(
+                        item(key = "date-$dateLabel") {
+                            AppText(
                                 text = dateLabel,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -429,9 +419,9 @@ fun TopBarScreen(
                                         top = 16.dp,
                                         bottom = 8.dp
                                     ),
-                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                                textAlign = TextAlign.Center
                             )
                         }
 
@@ -457,6 +447,76 @@ fun TopBarScreen(
 }
 
 @Composable
+private fun NotificationAction(
+    unreadCount: Int,
+    onClick: () -> Unit
+) {
+    val badgeScale = remember { Animatable(1f) }
+
+    LaunchedEffect(unreadCount) {
+        if (unreadCount > 0) {
+            badgeScale.snapTo(0.75f)
+            badgeScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+        }
+    }
+
+    Box {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications"
+            )
+        }
+
+        AnimatedVisibility(
+            visible = unreadCount > 0,
+            enter = fadeIn(tween(150)) +
+                    slideInVertically(
+                        animationSpec = tween(180),
+                        initialOffsetY = { -it / 3 }
+                    ),
+            exit = fadeOut(tween(120)) +
+                    slideOutVertically(
+                        animationSpec = tween(120),
+                        targetOffsetY = { -it / 3 }
+                    ),
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = badgeScale.value
+                        scaleY = badgeScale.value
+                    }
+                    .size(20.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.error,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (unreadCount > 99) {
+                        "99+"
+                    } else {
+                        unreadCount.toString()
+                    },
+                    color = MaterialTheme.colorScheme.onError,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun LoadingDots() {
     var dots by remember { mutableStateOf(".") }
 
@@ -471,14 +531,14 @@ fun LoadingDots() {
         }
     }
 
-    TextNormal(
+    AppText(
         text = dots,
         modifier = Modifier
             .fillMaxWidth()
             .padding(32.dp),
         textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold,
-        fontSize = 26.sp
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold
     )
 }
 
@@ -538,28 +598,53 @@ fun CartButton(
     onCartButtonClick: () -> Unit,
     totalQuantity: Int
 ) {
+    val badgeScale = remember { Animatable(1f) }
+
+    LaunchedEffect(totalQuantity) {
+        if (totalQuantity > 0) {
+            badgeScale.snapTo(0.65f)
+            badgeScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+        }
+    }
+
     Box {
-        FloatingActionButton(onClick = onCartButtonClick) {
+        FloatingActionButton(
+            onClick = onCartButtonClick
+        ) {
             Icon(
                 imageVector = Icons.Default.ShoppingCart,
                 contentDescription = "Cart"
             )
         }
 
-        if (totalQuantity > 0) {
+        AnimatedVisibility(
+            visible = totalQuantity > 0,
+            enter = fadeIn(tween(120)),
+            exit = fadeOut(tween(100)),
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
             Box(
                 modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = badgeScale.value
+                        scaleY = badgeScale.value
+                    }
                     .size(22.dp)
-                    .align(Alignment.TopEnd)
                     .background(
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.error,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = totalQuantity.toString(),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onError,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -579,9 +664,18 @@ fun BodyScreen(
     val productState by appViewModel.productState.collectAsState()
     val searchQuery by appViewModel.searchQuery.collectAsState()
     val searchVendorId by appViewModel.searchVendorId.collectAsState()
+    val isLoading by appViewModel.isLoading.collectAsState()
+
+    var searchText by rememberSaveable {
+        mutableStateOf(searchQuery)
+    }
 
     val vendors = vendorState.data
     val products = productState.data
+
+    LaunchedEffect(searchQuery) {
+        searchText = searchQuery
+    }
 
     LaunchedEffect(searchVendorId, vendors) {
         if (searchVendorId != null) {
@@ -590,51 +684,136 @@ fun BodyScreen(
             }
 
             if (index >= 0) {
-                // The first LazyColumn item is the Reload button.
-                listState.animateScrollToItem(index + 1)
+                // Search field and section heading occupy the first two positions.
+                listState.animateScrollToItem(index + 2)
             }
         }
     }
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.padding(innerPadding)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding),
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+            vertical = 12.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            PrimaryButton(
-                text = "Reload",
-                onClick = {
-                    appViewModel.loadHomeData()
+        item(key = "search") {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                placeholder = {
+                    Text("Search food...")
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null
+                    )
+                },
+                trailingIcon = {
+                    AnimatedVisibility(
+                        visible = searchText.isNotBlank(),
+                        enter = fadeIn(tween(120)),
+                        exit = fadeOut(tween(120))
+                    ) {
+                        IconButton(
+                            onClick = {
+                                searchText = ""
+                                appViewModel.searchProduct("")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
+                            )
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        appViewModel.searchProduct(searchText.trim())
+                    }
+                )
             )
         }
 
-        items(
-            items = vendors,
-            key = { it.vendorId }
-        ) { vendor ->
-            val vendorProducts = products.filter { product ->
-                product.vendorId == vendor.vendorId &&
-                        product.isAvailable &&
-                        (
-                                searchQuery.isBlank() ||
-                                        product.productName.contains(
-                                            searchQuery,
-                                            ignoreCase = true
-                                        )
-                                )
-            }
+        item(key = "restaurant-heading") {
+            SectionHeader(
+                title = "Restaurants",
+                subtitle = "Explore available food and vendors",
+                actionText = "Refresh",
+                onActionClick = {
+                    appViewModel.loadHomeData()
+                }
+            )
+        }
 
-            if (searchQuery.isBlank() || vendorProducts.isNotEmpty()) {
-                RestaurantCard(
-                    appViewModel = appViewModel,
-                    vendor = vendor,
-                    products = vendorProducts
-                )
+        if (vendors.isEmpty()) {
+            item(key = "empty-restaurants") {
+                if (isLoading) {
+                    LoadingState(
+                        message = "Loading restaurants..."
+                    )
+                } else {
+                    EmptyState(
+                        title = "No restaurants available",
+                        description = if (searchQuery.isBlank()) {
+                            "Please check again later."
+                        } else {
+                            "Try searching for another food item."
+                        },
+                        icon = Icons.Default.Search
+                    )
+                }
             }
+        } else {
+            items(
+                items = vendors,
+                key = { it.vendorId }
+            ) { vendor ->
+                val vendorProducts = products.filter { product ->
+                    product.vendorId == vendor.vendorId &&
+                            product.isAvailable &&
+                            (
+                                    searchQuery.isBlank() ||
+                                            product.productName.contains(
+                                                searchQuery,
+                                                ignoreCase = true
+                                            )
+                                    )
+                }
+
+                if (searchQuery.isBlank() || vendorProducts.isNotEmpty()) {
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(tween(220)) +
+                                slideInVertically(
+                                    animationSpec = tween(220),
+                                    initialOffsetY = { it / 12 }
+                                )
+                    ) {
+                        RestaurantCard(
+                            appViewModel = appViewModel,
+                            vendor = vendor,
+                            products = vendorProducts
+                        )
+                    }
+                }
+            }
+        }
+
+        item(key = "bottom-space") {
+            Spacer(modifier = Modifier.height(72.dp))
         }
     }
 }
@@ -645,64 +824,86 @@ fun RestaurantCard(
     vendor: VendorEntity,
     products: List<ProductEntity>
 ) {
-    PrimaryCard(
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            ),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(16.dp)
     ) {
-        TextNormal(
-            text = vendor.vendorName,
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp
-        )
-
-        mySpacer()
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextNormal(
-                    text = "%.1f".format(vendor.rating),
-                    fontSize = 18.sp
+            AppText(
+                text = vendor.vendorName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Rating",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(17.dp)
+                    )
+
+                    AppText(
+                        text = "%.1f".format(vendor.rating),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                AppText(
+                    text = vendor.category,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
                 )
 
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = Color(0xffEA7422),
-                    modifier = Modifier.size(20.dp)
+                Spacer(modifier = Modifier.weight(1f))
+
+                AppText(
+                    text = "%.1f km".format(vendor.distance),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            TextNormal(text = vendor.category)
+            Spacer(modifier = Modifier.height(2.dp))
 
-            TextNormal(
-                text = "%.1f km".format(vendor.distance)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (products.isEmpty()) {
-            TextNormal(
-                text = "No products available",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 14.sp
-            )
-        } else {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = products,
-                    key = { it.productId }
-                ) { product ->
-                    FoodItem(
-                        appViewModel = appViewModel,
-                        product = product
-                    )
+            if (products.isEmpty()) {
+                AppText(
+                    text = "No products available",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 2.dp)
+                ) {
+                    items(
+                        items = products,
+                        key = { it.productId }
+                    ) { product ->
+                        FoodItem(
+                            appViewModel = appViewModel,
+                            product = product
+                        )
+                    }
                 }
             }
         }
@@ -715,45 +916,93 @@ fun FoodItem(
     product: ProductEntity,
     enabled: Boolean = true
 ) {
-    Column(
-        modifier = Modifier.width(150.dp)
+    val scope = rememberCoroutineScope()
+    val addButtonScale = remember { Animatable(1f) }
+
+    Card(
+        modifier = Modifier.width(156.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        onClick = {
+            if (enabled) {
+                appViewModel.addToCart(product)
+            }
+        },
+        enabled = enabled
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .clickable {
-                    println("IMAGE AREA CLICKED: ${product.productName}")
-                    appViewModel.addToCart(product)
-                }
-        ) {
+        Column {
             CachedImage(
                 imageId = product.productImage,
                 viewModel = appViewModel,
                 contentDescription = product.productName,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(112.dp)
             )
-        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    println("DETAIL AREA CLICKED: ${product.productName}")
-                    appViewModel.addToCart(product)
+            Column(
+                modifier = Modifier.padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                AppText(
+                    text = product.productName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppText(
+                        text = "RM %.2f".format(product.productPrice),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    FilledTonalIconButton(
+                        onClick = {
+                            appViewModel.addToCart(product)
+
+                            scope.launch {
+                                addButtonScale.animateTo(
+                                    targetValue = 0.82f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessHigh
+                                    )
+                                )
+
+                                addButtonScale.animateTo(
+                                    targetValue = 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                )
+                            }
+                        },
+                        enabled = enabled,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .graphicsLayer {
+                                scaleX = addButtonScale.value
+                                scaleY = addButtonScale.value
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add ${product.productName} to cart"
+                        )
+                    }
                 }
-                .padding(8.dp)
-        ) {
-            TextNormal(
-                text = "RM %.2f".format(product.productPrice),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-
-            TextNormal(
-                text = product.productName,
-                fontSize = 14.sp
-            )
+            }
         }
     }
 }

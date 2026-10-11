@@ -3,20 +3,43 @@ package com.example.curtineat.view
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fastfood
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.curtineat.viewmodel.AppViewModel
@@ -41,33 +68,14 @@ fun AddProductScreen(
 	viewModel: AppViewModel,
 	onBackClick: () -> Unit
 ) {
-	var productName by remember {
-		mutableStateOf("")
-	}
+	var productName by remember { mutableStateOf("") }
+	var productPrice by remember { mutableStateOf("") }
+	var productImage by remember { mutableStateOf("") }
 
-	var productPrice by remember {
-		mutableStateOf("")
-	}
-
-	var productImage by remember {
-		mutableStateOf("")
-	}
-
-	var isAvailable by remember {
-		mutableStateOf(true)
-	}
-
-	var uploadingImage by remember {
-		mutableStateOf(false)
-	}
-
-	var saving by remember {
-		mutableStateOf(false)
-	}
-
-	var errorMessage by remember {
-		mutableStateOf<String?>(null)
-	}
+	var isAvailable by remember { mutableStateOf(true) }
+	var uploadingImage by remember { mutableStateOf(false) }
+	var saving by remember { mutableStateOf(false) }
+	var errorMessage by remember { mutableStateOf<String?>(null) }
 
 	val authenticationState by
 	viewModel.authenticationState.collectAsState()
@@ -95,103 +103,320 @@ fun AddProductScreen(
 		}
 	}
 
+	val parsedPrice = productPrice.toDoubleOrNull()
+	val validPrice = parsedPrice != null &&
+		parsedPrice.isFinite() &&
+		parsedPrice >= 0.0
+
 	val scrollState = rememberScrollState()
 
 	Column(
 		modifier = Modifier
-			.fillMaxWidth()
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
+			.windowInsetsPadding(WindowInsets.safeDrawing)
 			.verticalScroll(scrollState)
-			.padding(16.dp),
-		verticalArrangement = Arrangement.spacedBy(12.dp)
+			.padding(
+				horizontal = 20.dp,
+				vertical = 20.dp
+			),
+		verticalArrangement = Arrangement.spacedBy(20.dp)
 	) {
-		Text(
-			text = "Add Food"
-		)
-
-		if (productImage.isBlank()) {
-			Icon(
-				imageVector = Icons.Default.Fastfood,
-				contentDescription = "Default product image",
-				modifier = Modifier.size(120.dp)
+		// Page heading
+		Column(
+			verticalArrangement = Arrangement.spacedBy(5.dp)
+		) {
+			Text(
+				text = "Add Product",
+				style = MaterialTheme.typography.headlineMedium,
+				fontWeight = FontWeight.Bold
 			)
-		} else {
-			AsyncImage(
-				model = IMAGE_BASE_URL + productImage,
-				contentDescription = "Product image",
-				modifier = Modifier.size(120.dp),
-				contentScale = ContentScale.Crop
+
+			Text(
+				text = "Add a new item to your restaurant menu.",
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
 			)
 		}
 
-		OutlinedButton(
-			onClick = {
-				imagePicker.launch("image/*")
-			},
-			enabled = !uploadingImage && !saving,
-			modifier = Modifier.fillMaxWidth()
+		// Product image section
+		Card(
+			modifier = Modifier
+				.fillMaxWidth()
+				.animateContentSize(),
+			shape = RoundedCornerShape(24.dp),
+			colors = CardDefaults.cardColors(
+				containerColor = MaterialTheme.colorScheme.surface
+			),
+			elevation = CardDefaults.cardElevation(
+				defaultElevation = 1.dp
+			)
 		) {
-			Text(
-				if (uploadingImage) {
-					"Uploading..."
-				} else {
-					"Upload Product Picture"
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(16.dp),
+				verticalArrangement = Arrangement.spacedBy(14.dp)
+			) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(10.dp)
+				) {
+					Surface(
+						shape = RoundedCornerShape(12.dp),
+						color = MaterialTheme.colorScheme.secondaryContainer
+					) {
+						Icon(
+							imageVector = Icons.Default.Image,
+							contentDescription = null,
+							modifier = Modifier
+								.size(42.dp)
+								.padding(10.dp),
+							tint = MaterialTheme.colorScheme.onSecondaryContainer
+						)
+					}
+
+					Column(
+						verticalArrangement = Arrangement.spacedBy(3.dp)
+					) {
+						Text(
+							text = "Product Photo",
+							style = MaterialTheme.typography.titleMedium,
+							fontWeight = FontWeight.SemiBold
+						)
+
+						Text(
+							text = "Choose a clear photo of your food.",
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+					}
 				}
-			)
+
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(220.dp)
+						.clip(RoundedCornerShape(18.dp))
+						.background(MaterialTheme.colorScheme.surfaceVariant),
+					contentAlignment = Alignment.Center
+				) {
+					if (productImage.isBlank()) {
+						Column(
+							horizontalAlignment = Alignment.CenterHorizontally,
+							verticalArrangement = Arrangement.spacedBy(10.dp)
+						) {
+							Icon(
+								imageVector = Icons.Default.Fastfood,
+								contentDescription = "Product image placeholder",
+								modifier = Modifier.size(64.dp),
+								tint = MaterialTheme.colorScheme.onSurfaceVariant
+							)
+
+							Text(
+								text = "No image selected",
+								style = MaterialTheme.typography.bodyMedium,
+								color = MaterialTheme.colorScheme.onSurfaceVariant
+							)
+						}
+					} else {
+						AsyncImage(
+							model = IMAGE_BASE_URL + productImage,
+							contentDescription = "Product image preview",
+							modifier = Modifier.fillMaxSize(),
+							contentScale = ContentScale.Crop
+						)
+					}
+
+					if (uploadingImage) {
+						Surface(
+							modifier = Modifier.fillMaxSize(),
+							color = MaterialTheme.colorScheme.scrim.copy(
+								alpha = 0.55f
+							)
+						) {
+							Column(
+								horizontalAlignment = Alignment.CenterHorizontally,
+								verticalArrangement = Arrangement.Center
+							) {
+								CircularProgressIndicator(
+									color = MaterialTheme.colorScheme.inversePrimary
+								)
+
+								Spacer(Modifier.height(12.dp))
+
+								Text(
+									text = "Uploading image...",
+									color = MaterialTheme.colorScheme.inverseOnSurface,
+									style = MaterialTheme.typography.bodyMedium
+								)
+							}
+						}
+					}
+				}
+
+				OutlinedButton(
+					onClick = {
+						imagePicker.launch("image/*")
+					},
+					enabled = !uploadingImage && !saving,
+					modifier = Modifier.fillMaxWidth()
+				) {
+					Text(
+						text = if (uploadingImage) {
+							"Uploading..."
+						} else if (productImage.isBlank()) {
+							"Choose Product Image"
+						} else {
+							"Change Product Image"
+						}
+					)
+				}
+			}
 		}
 
-		OutlinedTextField(
-			value = productName,
-			onValueChange = {
-				productName = it
-				errorMessage = null
-			},
-			label = {
-				Text("Product Name")
-			},
+		// Product details
+		Card(
 			modifier = Modifier.fillMaxWidth(),
-			enabled = !saving
-		)
-
-		OutlinedTextField(
-			value = productPrice,
-			onValueChange = {
-				productPrice = it
-				errorMessage = null
-			},
-			label = {
-				Text("Price")
-			},
-			modifier = Modifier.fillMaxWidth(),
-			enabled = !saving
-		)
-
-		Row(
-			modifier = Modifier.fillMaxWidth(),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.SpaceBetween
+			shape = RoundedCornerShape(24.dp),
+			colors = CardDefaults.cardColors(
+				containerColor = MaterialTheme.colorScheme.surface
+			),
+			elevation = CardDefaults.cardElevation(
+				defaultElevation = 1.dp
+			)
 		) {
-			Text(
-				text = "Available"
-			)
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(18.dp),
+				verticalArrangement = Arrangement.spacedBy(16.dp)
+			) {
+				Text(
+					text = "Product Details",
+					style = MaterialTheme.typography.titleLarge,
+					fontWeight = FontWeight.SemiBold
+				)
 
-			Switch(
-				checked = isAvailable,
-				onCheckedChange = {
-					isAvailable = it
-				},
-				enabled = !saving
-			)
+				OutlinedTextField(
+					value = productName,
+					onValueChange = {
+						productName = it
+						errorMessage = null
+					},
+					label = { Text("Product Name") },
+					placeholder = { Text("e.g. Chicken Rice") },
+					leadingIcon = {
+						Icon(
+							imageVector = Icons.Default.Inventory2,
+							contentDescription = null
+						)
+					},
+					singleLine = true,
+					enabled = !saving,
+					modifier = Modifier.fillMaxWidth()
+				)
+
+				OutlinedTextField(
+					value = productPrice,
+					onValueChange = {
+						productPrice = it
+						errorMessage = null
+					},
+					label = { Text("Price (RM)") },
+					placeholder = { Text("0.00") },
+					leadingIcon = {
+						Icon(
+							imageVector = Icons.Default.Payments,
+							contentDescription = null
+						)
+					},
+					keyboardOptions = KeyboardOptions(
+						keyboardType = KeyboardType.Decimal
+					),
+					singleLine = true,
+					enabled = !saving,
+					isError = productPrice.isNotBlank() && !validPrice,
+					supportingText = {
+						if (productPrice.isNotBlank() && !validPrice) {
+							Text("Enter a valid non-negative price.")
+						} else {
+							Text("Enter the price in Malaysian Ringgit.")
+						}
+					},
+					modifier = Modifier.fillMaxWidth()
+				)
+
+				HorizontalDivider(
+					color = MaterialTheme.colorScheme.outlineVariant
+				)
+
+				// Availability control
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					horizontalArrangement = Arrangement.SpaceBetween,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Column(
+						modifier = Modifier.weight(1f),
+						verticalArrangement = Arrangement.spacedBy(4.dp)
+					) {
+						Text(
+							text = "Available for ordering",
+							style = MaterialTheme.typography.titleSmall,
+							fontWeight = FontWeight.SemiBold
+						)
+
+						Text(
+							text = if (isAvailable) {
+								"Customers can order this product."
+							} else {
+								"This product is currently unavailable."
+							},
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+					}
+
+					Spacer(Modifier.width(12.dp))
+
+					Switch(
+						checked = isAvailable,
+						onCheckedChange = {
+							isAvailable = it
+						},
+						enabled = !saving
+					)
+				}
+			}
 		}
 
-		if (errorMessage != null) {
-			Text(
-				text = errorMessage!!
-			)
+		// Error feedback
+		AnimatedVisibility(
+			visible = errorMessage != null,
+			enter = fadeIn(),
+			exit = fadeOut()
+		) {
+			Surface(
+				modifier = Modifier.fillMaxWidth(),
+				shape = RoundedCornerShape(14.dp),
+				color = MaterialTheme.colorScheme.errorContainer
+			) {
+				Text(
+					text = errorMessage.orEmpty(),
+					modifier = Modifier.padding(14.dp),
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onErrorContainer
+				)
+			}
 		}
 
+		// Actions
 		Row(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.spacedBy(8.dp)
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(bottom = 12.dp),
+			horizontalArrangement = Arrangement.spacedBy(12.dp)
 		) {
 			OutlinedButton(
 				onClick = onBackClick,
@@ -201,22 +426,32 @@ fun AddProductScreen(
 				Text("Cancel")
 			}
 
-			val parsedPrice = productPrice.toDoubleOrNull()
-			val validPrice = parsedPrice != null &&
-				parsedPrice.isFinite() &&
-				parsedPrice >= 0.0
-
 			Button(
 				onClick = {
-					val price = productPrice.toDoubleOrNull()
-
 					if (vendorId == null) {
-						errorMessage = "Please sign in with a vendor account."
+						errorMessage =
+							"Please sign in with a vendor account."
 						return@Button
 					}
 
-					if (price == null || !price.isFinite() || price < 0.0) {
-						errorMessage = "Enter a valid non-negative price."
+					val price = productPrice.toDoubleOrNull()
+
+					if (price == null ||
+						!price.isFinite() ||
+						price < 0.0
+					) {
+						errorMessage =
+							"Enter a valid non-negative price."
+						return@Button
+					}
+
+					if (productName.isBlank()) {
+						errorMessage = "Enter a product name."
+						return@Button
+					}
+
+					if (productImage.isBlank()) {
+						errorMessage = "Please upload a product image."
 						return@Button
 					}
 
@@ -235,7 +470,8 @@ fun AddProductScreen(
 						if (success) {
 							onBackClick()
 						} else {
-							errorMessage = "Unable to save product. Please try again."
+							errorMessage =
+								"Unable to save product. Please try again."
 						}
 					}
 				},
@@ -247,13 +483,19 @@ fun AddProductScreen(
 					productImage.isNotBlank(),
 				modifier = Modifier.weight(1f)
 			) {
-				Text(
-					if (saving) {
-						"Saving..."
-					} else {
-						"Save"
-					}
-				)
+				if (saving) {
+					CircularProgressIndicator(
+						modifier = Modifier.size(18.dp),
+						strokeWidth = 2.dp,
+						color = MaterialTheme.colorScheme.onPrimary
+					)
+
+					Spacer(Modifier.width(8.dp))
+
+					Text("Saving...")
+				} else {
+					Text("Save Product")
+				}
 			}
 		}
 	}

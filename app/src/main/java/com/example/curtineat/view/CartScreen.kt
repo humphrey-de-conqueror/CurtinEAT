@@ -11,14 +11,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,17 +38,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.model.CartItem
-import com.example.curtineat.ui.theme.BackButton
-import com.example.curtineat.ui.theme.PrimaryButton
-import com.example.curtineat.ui.theme.SecondaryCard
-import com.example.curtineat.ui.theme.TextNormal
-import com.example.curtineat.ui.theme.mySpacer
+import com.example.curtineat.ui.components.AppBackButton
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppText
+import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
-import com.example.curtineat.ui.theme.AppThemeMode
 
 // ---------------- CART SCREEN ----------------
+
 @Composable
 fun CartScreen(
     appViewModel: AppViewModel,
@@ -66,12 +69,9 @@ fun CartScreen(
     val checkoutError by appViewModel.checkoutError.collectAsState()
 
     val loggedInCustomerId = authenticationState.userId
-        .takeIf {
-            authenticationState.role == UserRole.CUSTOMER
-        }
+        .takeIf { authenticationState.role == UserRole.CUSTOMER }
 
     val currentCustomer = customerState.data
-
     val vendorId = cart.firstOrNull()?.product?.vendorId
 
     val cartVendor = vendorState.data.find {
@@ -111,78 +111,107 @@ fun CartScreen(
 
         Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
         ) {
-
             if (cart.isEmpty()) {
-
                 EmptyCart(
                     onBackButtonClick = onBackButtonClick,
                     checkoutCompleted = checkoutCompleted
                 )
-
             } else {
-
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-
                     // Customer information
-                    mySpacer()
-
-                    if (loggedInCustomerId != null) {
-                        TextNormal(
-                            text = "Customer ID: $loggedInCustomerId"
+                    AppCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        AppText(
+                            text = "Customer information",
+                            style = androidx.compose.material3.MaterialTheme
+                                .typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
 
-                        TextNormal(
-                            text = "Ordering as: ${currentCustomer?.customerName ?: ""}"
-                        )
-                    } else {
-                        TextNormal(
-                            text = "Not logged in"
-                        )
+                        Spacer(Modifier.height(8.dp))
+
+                        if (loggedInCustomerId != null) {
+                            AppText(
+                                text = "Customer ID: $loggedInCustomerId",
+                                style = androidx.compose.material3.MaterialTheme
+                                    .typography.bodyMedium,
+                                color = androidx.compose.material3.MaterialTheme
+                                    .colorScheme.onSurfaceVariant
+                            )
+
+                            AppText(
+                                text = "Ordering as: ${
+                                    currentCustomer?.customerName
+                                        ?: "Loading customer..."
+                                }",
+                                style = androidx.compose.material3.MaterialTheme
+                                    .typography.bodyMedium
+                            )
+                        } else {
+                            AppText(
+                                text = "You are not logged in. Log in before placing your order.",
+                                style = androidx.compose.material3.MaterialTheme
+                                    .typography.bodyMedium,
+                                color = androidx.compose.material3.MaterialTheme
+                                    .colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
-                    mySpacer()
-
-                    // Vendor
+                    // Vendor header
                     CartHeader(
-                        vendorName = cartVendor?.vendorName ?: "",
+                        vendorName = cartVendor?.vendorName
+                            ?: "Restaurant",
                         distance = cartVendor?.distance ?: 0.0,
                         onBackButtonClick = onBackButtonClick
                     )
 
-                    mySpacer()
-
                     // Cart items
-                    cart.forEach { cartItem ->
-
-                        CartItemRow(
-                            cartItem = cartItem,
-                            appViewModel = appViewModel,
-                            onIncrease = {
-                                appViewModel.increaseQuantity(
-                                    cartItem.product.productId
-                                )
-                            },
-                            onDecrease = {
-                                if (
-                                    cart.size == 1 &&
-                                    cartItem.quantity == 1
-                                ) {
-                                    showEmptyCartDialog = true
-                                } else {
-                                    appViewModel.decreaseQuantity(
-                                        cartItem.product.productId
-                                    )
-                                }
-                            }
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AppText(
+                            text = "Your items",
+                            style = androidx.compose.material3.MaterialTheme
+                                .typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
                         )
 
-                        mySpacer()
+                        cart.forEach { cartItem ->
+                            CartItemRow(
+                                cartItem = cartItem,
+                                appViewModel = appViewModel,
+                                onIncrease = {
+                                    appViewModel.increaseQuantity(
+                                        cartItem.product.productId
+                                    )
+                                },
+                                onDecrease = {
+                                    if (
+                                        cart.size == 1 &&
+                                        cartItem.quantity == 1
+                                    ) {
+                                        showEmptyCartDialog = true
+                                    } else {
+                                        appViewModel.decreaseQuantity(
+                                            cartItem.product.productId
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
 
                     // Payment summary
@@ -190,28 +219,37 @@ fun CartScreen(
                         totalPrice = appViewModel.cartTotalPrice()
                     )
 
-                    mySpacer()
-
+                    // Checkout error
                     if (checkoutError != null) {
-                        TextNormal(
-                            text = checkoutError ?: "",
-                        )
-
-                        TextButton(
-                            onClick = {
-                                appViewModel.clearCheckoutError()
-                            }
+                        AppCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            containerColor = androidx.compose.material3.MaterialTheme
+                                .colorScheme.errorContainer
                         ) {
-                            TextNormal(text = "Dismiss")
+                            AppText(
+                                text = checkoutError.orEmpty(),
+                                color = androidx.compose.material3.MaterialTheme
+                                    .colorScheme.onErrorContainer,
+                                style = androidx.compose.material3.MaterialTheme
+                                    .typography.bodyMedium
+                            )
+
+                            TextButton(
+                                onClick = {
+                                    appViewModel.clearCheckoutError()
+                                }
+                            ) {
+                                AppText(
+                                    text = "Dismiss",
+                                    color = androidx.compose.material3.MaterialTheme
+                                        .colorScheme.onErrorContainer
+                                )
+                            }
                         }
                     }
 
-                    PrimaryButton(
-                        text = if (checkoutInProgress) {
-                            "Placing Order..."
-                        } else {
-                            "Place Order"
-                        },
+                    // Checkout action
+                    Button(
                         onClick = {
                             if (loggedInCustomerId == null) {
                                 onLoginClick()
@@ -221,36 +259,56 @@ fun CartScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !checkoutInProgress,
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        if (checkoutInProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
 
-                    if (checkoutInProgress) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(top = 8.dp)
-                                .size(24.dp)
-                        )
+                            Spacer(Modifier.size(8.dp))
+
+                            AppText(text = "Placing Order...")
+                        } else {
+                            AppText(
+                                text = if (loggedInCustomerId == null) {
+                                    "Log in to Place Order"
+                                } else {
+                                    "Place Order"
+                                },
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
+    // Confirm removal of the final cart item
     if (showEmptyCartDialog) {
         AlertDialog(
             onDismissRequest = {
                 showEmptyCartDialog = false
             },
             title = {
-                TextNormal(
+                AppText(
                     text = "Remove last item?",
-                    fontWeight = FontWeight.Bold
+                    style = androidx.compose.material3.MaterialTheme
+                        .typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
             },
             text = {
-                TextNormal(
-                    text = "Removing this item will empty your cart."
+                AppText(
+                    text = "Removing this item will empty your cart.",
+                    style = androidx.compose.material3.MaterialTheme
+                        .typography.bodyMedium
                 )
             },
             confirmButton = {
@@ -261,7 +319,7 @@ fun CartScreen(
                         onBackButtonClick()
                     }
                 ) {
-                    TextNormal(text = "Remove")
+                    AppText(text = "Remove")
                 }
             },
             dismissButton = {
@@ -270,7 +328,7 @@ fun CartScreen(
                         showEmptyCartDialog = false
                     }
                 ) {
-                    TextNormal(text = "Cancel")
+                    AppText(text = "Cancel")
                 }
             }
         )
@@ -278,42 +336,61 @@ fun CartScreen(
 }
 
 // ---------------- EMPTY CART ----------------
+
 @Composable
 fun EmptyCart(
     onBackButtonClick: () -> Unit,
     checkoutCompleted: Boolean
 ) {
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            AppText(
+                text = if (checkoutCompleted) {
+                    "Order placed successfully!"
+                } else {
+                    "Your cart is empty"
+                },
+                style = androidx.compose.material3.MaterialTheme.typography
+                    .headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
 
-        BackButton(
-            onClick = onBackButtonClick,
-            modifier = Modifier.align(Alignment.TopStart)
-        )
-
-        TextNormal(
-            text = if (checkoutCompleted) {
-                "Order placed successfully!"
-            } else {
-                "Your cart is empty"
-            },
-            modifier = Modifier.align(Alignment.Center),
-            fontWeight = if (checkoutCompleted) {
-                FontWeight.Bold
-            } else {
-                null
-            },
-            fontSize = if (checkoutCompleted) {
-                22.sp
-            } else {
-                20.sp
+            if (!checkoutCompleted) {
+                AppText(
+                    text = "Add food from a restaurant to get started.",
+                    style = androidx.compose.material3.MaterialTheme.typography
+                        .bodyMedium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme
+                        .onSurfaceVariant
+                )
             }
-        )
+
+            OutlinedButton(
+                onClick = onBackButtonClick,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                AppText(
+                    text = if (checkoutCompleted) {
+                        "Continue"
+                    } else {
+                        "Back to restaurants"
+                    }
+                )
+            }
+        }
     }
 }
 
 // ---------------- CART HEADER ----------------
+
 @Composable
 fun CartHeader(
     vendorName: String,
@@ -322,32 +399,39 @@ fun CartHeader(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        BackButton(
+        AppBackButton(
             onClick = onBackButtonClick
         )
 
+        Spacer(Modifier.size(8.dp))
+
         Column(
-            modifier = Modifier.padding(start = 0.dp)
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            TextNormal(
+            AppText(
                 text = vendorName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                style = androidx.compose.material3.MaterialTheme.typography
+                    .headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2
             )
 
-            TextNormal(
-                text = "$distance km away",
-                fontSize = 14.sp
+            AppText(
+                text = "%.1f km away".format(distance),
+                style = androidx.compose.material3.MaterialTheme.typography
+                    .bodyMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme
+                    .onSurfaceVariant
             )
         }
     }
 }
 
 // ---------------- CART ITEM ----------------
+
 @Composable
 fun CartItemRow(
     cartItem: CartItem,
@@ -355,72 +439,87 @@ fun CartItemRow(
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    SecondaryCard(
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(12.dp)
     ) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // Food image
             CachedImage(
                 imageId = cartItem.product.productImage,
                 viewModel = appViewModel,
                 contentDescription = cartItem.product.productName,
                 modifier = Modifier
-                    .size(90.dp)
+                    .size(88.dp)
                     .clip(RoundedCornerShape(12.dp))
             )
 
-            // Food information
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
+            Spacer(Modifier.size(12.dp))
 
-                TextNormal(
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                AppText(
                     text = cartItem.product.productName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    style = androidx.compose.material3.MaterialTheme.typography
+                        .titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2
                 )
 
-                TextNormal(
+                AppText(
                     text = "RM %.2f".format(
                         cartItem.product.productPrice
                     ),
-                    fontSize = 16.sp
+                    style = androidx.compose.material3.MaterialTheme.typography
+                        .bodyLarge,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme
+                        .primary
+                )
+
+                AppText(
+                    text = "Subtotal: RM %.2f".format(
+                        cartItem.product.productPrice * cartItem.quantity
+                    ),
+                    style = androidx.compose.material3.MaterialTheme.typography
+                        .bodySmall,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme
+                        .onSurfaceVariant
                 )
             }
 
-            // Quantity
+            Spacer(Modifier.size(4.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 IconButton(
-                    onClick = onDecrease
+                    onClick = onDecrease,
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
-                        contentDescription = "Decrease"
+                        contentDescription = "Decrease quantity"
                     )
                 }
 
-                TextNormal(
+                AppText(
                     text = cartItem.quantity.toString(),
-                    fontSize = 16.sp
+                    style = androidx.compose.material3.MaterialTheme.typography
+                        .titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 IconButton(
-                    onClick = onIncrease
+                    onClick = onIncrease,
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Increase"
+                        contentDescription = "Increase quantity"
                     )
                 }
             }
@@ -429,50 +528,53 @@ fun CartItemRow(
 }
 
 // ---------------- PAYMENT SUMMARY ----------------
+
 @Composable
 fun CartPaymentSummary(
     totalPrice: Double
 ) {
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp)
     ) {
-
-        TextNormal(
+        AppText(
             text = "Payment",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
+            style = androidx.compose.material3.MaterialTheme.typography
+                .titleLarge,
+            fontWeight = FontWeight.SemiBold
         )
 
-        Spacer(
-            modifier = Modifier.height(6.dp)
-        )
+        Spacer(Modifier.height(8.dp))
 
-        TextNormal(
+        AppText(
             text = "Pay physically at the store when collecting your order.",
-            fontSize = 14.sp
+            style = androidx.compose.material3.MaterialTheme.typography
+                .bodyMedium,
+            color = androidx.compose.material3.MaterialTheme.colorScheme
+                .onSurfaceVariant
         )
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(Modifier.height(20.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            TextNormal(
+            AppText(
                 text = "Total",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                style = androidx.compose.material3.MaterialTheme.typography
+                    .titleMedium,
+                fontWeight = FontWeight.SemiBold
             )
 
-            TextNormal(
+            AppText(
                 text = "RM %.2f".format(totalPrice),
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                style = androidx.compose.material3.MaterialTheme.typography
+                    .titleLarge,
+                color = androidx.compose.material3.MaterialTheme.colorScheme
+                    .primary,
+                fontWeight = FontWeight.Bold
             )
         }
     }

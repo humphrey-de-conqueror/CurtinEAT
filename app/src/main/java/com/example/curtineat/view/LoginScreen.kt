@@ -1,21 +1,34 @@
 package com.example.curtineat.view
 
-import android.R.attr.fontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,16 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.curtineat.ui.theme.BackButton
-import com.example.curtineat.ui.theme.PrimaryButton
-import com.example.curtineat.ui.theme.TextNormal
+import com.example.curtineat.ui.components.AppBackButton
+import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
-import androidx.compose.material3.Text
-import com.example.curtineat.ui.theme.mySpacerWidth
 
 @Composable
 fun LoginScreen(
@@ -44,7 +55,6 @@ fun LoginScreen(
     onHomeClick: () -> Unit,
     onBackButtonClick: () -> Unit
 ) {
-
     var email by remember {
         mutableStateOf("")
     }
@@ -68,192 +78,240 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(24.dp)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-
-        BackButton(
+        AppBackButton(
             onClick = onBackButtonClick,
-            modifier = Modifier.align(
-                Alignment.TopStart
-            )
+            modifier = Modifier.align(Alignment.TopStart)
         )
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.Center),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.Center
+                .align(Alignment.Center)
+                .padding(top = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            TextNormal(
-                text = "Log In",
+            AppText(
+                text = "Welcome back",
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp
+                textAlign = TextAlign.Center
             )
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
+            Spacer(Modifier.height(8.dp))
+
+            AppText(
+                text = "Sign in to continue to CurtinEAT",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
 
-            TextNormal(
-                text = "Welcome back to CurtinEAT",
-                fontSize = 16.sp
-            )
+            Spacer(Modifier.height(28.dp))
 
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = {
-                    email = it
-                    errorMessage = null
-                },
-                label = {
-                    TextNormal(
-                        text = "Email"
-                    )
-                },
-                modifier =
-                    Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                    errorMessage = null
-                },
-                label = {
-                    TextNormal(
-                        text = "Password"
-                    )
-                },
-                modifier =
-                    Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation =
-                    PasswordVisualTransformation()
-            )
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        isVendor = !isVendor
-                        errorMessage = null
-                    },
-                verticalAlignment =
-                    Alignment.CenterVertically
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    AppText(
+                        text = "Log in",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                Checkbox(
-                    checked = isVendor,
-                    onCheckedChange = null
-                )
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = {
+                            email = it
+                            errorMessage = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Email address")
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Mail,
+                                contentDescription = null
+                            )
+                        },
+                        singleLine = true,
+                        enabled = !isLoginLoading,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    )
 
-                mySpacerWidth()
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            errorMessage = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Password")
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null
+                            )
+                        },
+                        singleLine = true,
+                        enabled = !isLoginLoading,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    )
 
-                TextNormal(
-                    text = "Are you a vendor?",
-                    fontSize = 16.sp
-                )
-            }
+                    // Account type selection
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isLoginLoading) {
+                                isVendor = !isVendor
+                                errorMessage = null
+                            }
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isVendor,
+                            onCheckedChange = {
+                                isVendor = it
+                                errorMessage = null
+                            },
+                            enabled = !isLoginLoading
+                        )
 
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
-            PrimaryButton(
-                text = "Login",
-                enabled =
-                    !isLoginLoading &&
-                            email.isNotBlank() &&
-                            password.isNotBlank(),
-                onClick = {
-
-                    errorMessage = null
-                    isLoginLoading = true
-
-                    appViewModel.login(
-                        email = email,
-                        password = password,
-                        isVendor = isVendor
-                    ) { success ->
-
-                        isLoginLoading = false
-
-                        if (success) {
-
-                            onLoginSuccess(
-                                isVendor
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            AppText(
+                                text = "I'm a vendor",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
                             )
 
-                        } else {
-
-                            errorMessage =
-                                if (isVendor) {
-                                    "Invalid login or this account is not registered as a vendor."
-                                } else {
-                                    "Invalid login or this account is not registered as a customer."
-                                }
+                            AppText(
+                                text = "Select this if you manage a restaurant.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
-                },
-                modifier =
-                    Modifier.fillMaxWidth()
-            )
 
-            if (isLoginLoading) {
+                    // Login error
+                    if (errorMessage != null) {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            AppText(
+                                text = errorMessage.orEmpty(),
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
 
-                Spacer(
-                    modifier = Modifier.height(16.dp)
-                )
+                    // Login action
+                    Button(
+                        onClick = {
+                            errorMessage = null
+                            isLoginLoading = true
 
-                CircularProgressIndicator()
-            }
+                            appViewModel.login(
+                                email = email.trim(),
+                                password = password,
+                                isVendor = isVendor
+                            ) { success ->
+                                isLoginLoading = false
 
-            errorMessage?.let { message ->
+                                if (success) {
+                                    onLoginSuccess(isVendor)
+                                } else {
+                                    errorMessage = if (isVendor) {
+                                        "Invalid login or this account is not registered as a vendor."
+                                    } else {
+                                        "Invalid login or this account is not registered as a customer."
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !isLoginLoading &&
+                                email.isNotBlank() &&
+                                password.isNotBlank(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        if (isLoginLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
 
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
+                            Spacer(Modifier.size(10.dp))
 
-                TextNormal(
-                    text = message,
-                    color =
-                        MaterialTheme.colorScheme.error,
-                    fontSize = 14.sp
-                )
-            }
+                            Text("Signing in...")
+                        } else {
+                            Text(
+                                text = "Log in",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
 
-            Text(
-                text = "Don't have an account? Register",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 14.sp,
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable {
-                    onRegistrationClick()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AppText(
+                            text = "Don't have an account?",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        TextButton(
+                            onClick = onRegistrationClick,
+                            enabled = !isLoginLoading
+                        ) {
+                            Text("Register")
+                        }
+                    }
                 }
-            )
+            }
         }
     }
 }

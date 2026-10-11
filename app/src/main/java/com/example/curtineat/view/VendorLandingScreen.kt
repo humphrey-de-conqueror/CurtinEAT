@@ -1,47 +1,63 @@
 package com.example.curtineat.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.ProductEntity
-import com.example.curtineat.ui.theme.PrimaryCard
-import com.example.curtineat.ui.theme.SecondaryCard
-import com.example.curtineat.ui.theme.TextNormal
-import com.example.curtineat.ui.theme.mySpacer
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppText
+import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.curtineat.ui.theme.AppThemeMode
+import com.example.curtineat.view.CachedImage
+
 
 @Composable
 fun VendorLandingScreen(
@@ -109,9 +125,9 @@ fun VendorLandingScreen(
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
+        onProfileClick = onProfileClick,
         showSearch = false,
         showNotifications = true,
-        onProfileClick = onProfileClick,
         themeMode = themeMode,
         onThemeModeChange = onThemeModeChange,
         floatingActionButton = {
@@ -125,24 +141,73 @@ fun VendorLandingScreen(
             }
         }
     ) { innerPadding ->
+
         LazyColumn(
             modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(
+                horizontal = 18.dp,
+                vertical = 20.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
+            // Dashboard heading
             item {
-                TextNormal(
-                    text = currentVendor?.vendorName ?: "Vendor",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    AppText(
+                        text = "Vendor Dashboard",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    AppText(
+                        text = currentVendor?.vendorName?.let {
+                            "Welcome back, $it"
+                        } ?: "Manage your orders and products.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            /*
-	     * ORDERS
-	     */
+            // Dashboard summary
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    VendorSummaryCard(
+                        title = "Active Orders",
+                        value = activeOrders.size.toString(),
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.ReceiptLong,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
 
+                    VendorSummaryCard(
+                        title = "My Products",
+                        value = vendorProducts.size.toString(),
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Inventory2,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Active orders heading
             item {
                 VendorSectionHeader(
                     title = "Active Orders",
@@ -157,30 +222,39 @@ fun VendorLandingScreen(
             if (ordersExpanded) {
                 if (activeOrders.isEmpty()) {
                     item {
-                        TextNormal(
-                            text = "No active orders",
-                            fontSize = 16.sp
-                        )
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() +
+                                    slideInVertically { it / 6 }
+                        ) {
+                            VendorEmptyState(
+                                title = "No active orders",
+                                description = "New customer orders will appear here."
+                            )
+                        }
                     }
                 } else {
                     items(
                         items = activeOrders,
                         key = { it.orderId }
                     ) { order ->
-                        VendorOrderItem(
-                            order = order,
-                            onStatusClick = {
-                                appViewModel.advanceOrderStatus(order)
-                            }
-                        )
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() +
+                                    slideInVertically { it / 8 }
+                        ) {
+                            VendorOrderItem(
+                                order = order,
+                                onStatusClick = {
+                                    appViewModel.advanceOrderStatus(order)
+                                }
+                            )
+                        }
                     }
                 }
             }
 
-            /*
-	     * PRODUCTS
-	     */
-
+            // Products heading
             item {
                 VendorSectionHeader(
                     title = "My Products",
@@ -195,29 +269,91 @@ fun VendorLandingScreen(
             if (productsExpanded) {
                 if (vendorProducts.isEmpty()) {
                     item {
-                        TextNormal(
-                            text = "No products yet",
-                            fontSize = 16.sp
-                        )
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() +
+                                    slideInVertically { it / 6 }
+                        ) {
+                            VendorEmptyState(
+                                title = "No products yet",
+                                description = "Add your first product using the + button."
+                            )
+                        }
                     }
                 } else {
                     items(
                         items = vendorProducts,
                         key = { it.productId }
                     ) { product ->
-                        VendorFoodItem(
-                            product = product,
-                            onClick = {
-                                onFoodClick(product.productId)
-                            },
-                            viewModel = appViewModel
-                        )
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() +
+                                    slideInVertically { it / 8 }
+                        ) {
+                            VendorFoodItem(
+                                product = product,
+                                onClick = {
+                                    onFoodClick(product.productId)
+                                },
+                                viewModel = appViewModel
+                            )
+                        }
                     }
                 }
+            }
+
+            item {
+                Spacer(Modifier.height(72.dp))
             }
         }
     }
 }
+
+// ---------------- SUMMARY CARD ----------------
+
+@Composable
+fun VendorSummaryCard(
+    title: String,
+    value: String,
+    icon: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AppCard(
+        modifier = modifier.animateContentSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Box(
+                    modifier = Modifier.size(42.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    icon()
+                }
+            }
+
+            AppText(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            AppText(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// ---------------- COLLAPSIBLE SECTION HEADER ----------------
 
 @Composable
 fun VendorSectionHeader(
@@ -226,23 +362,38 @@ fun VendorSectionHeader(
     expanded: Boolean,
     onClick: () -> Unit
 ) {
-    PrimaryCard(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            }
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .animateContentSize(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.padding(
+                horizontal = 16.dp,
+                vertical = 15.dp
+            ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextNormal(
-                text = "$title ($count)",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                AppText(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                AppText(
+                    text = "$count ${if (count == 1) "item" else "items"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Icon(
                 imageVector = if (expanded) {
@@ -251,63 +402,152 @@ fun VendorSectionHeader(
                     Icons.Default.ExpandMore
                 },
                 contentDescription = if (expanded) {
-                    "Collapse"
+                    "Collapse $title"
                 } else {
-                    "Expand"
-                }
+                    "Expand $title"
+                },
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
-
 }
+
+// ---------------- EMPTY STATE ----------------
+
+@Composable
+fun VendorEmptyState(
+    title: String,
+    description: String
+) {
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AppText(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            AppText(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// ---------------- ORDER ITEM ----------------
 
 @Composable
 fun VendorOrderItem(
     order: OrderEntity,
     onStatusClick: () -> Unit
 ) {
-    SecondaryCard(
-        modifier = Modifier.fillMaxWidth(),
+    val status = order.status.trim().uppercase()
+
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         contentPadding = PaddingValues(16.dp)
     ) {
-        TextNormal(
-            text = "Order ID: ${order.orderId}",
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            maxLines = 1
-        )
-
-        Spacer(
-            modifier = Modifier.height(6.dp)
-        )
-
-        TextNormal(
-            text = formatOrderTime(Date(order.timestamp)),
-            fontSize = 14.sp
-        )
-
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
-
-        OutlinedButton(
-            onClick = onStatusClick,
-            enabled = order.status.trim().uppercase() != "COMPLETED"
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = order.status.uppercase()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    AppText(
+                        text = "Order",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    AppText(
+                        text = order.orderId,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = when (status) {
+                        "CANCELLED" ->
+                            MaterialTheme.colorScheme.errorContainer
+
+                        "COMPLETED" ->
+                            MaterialTheme.colorScheme.secondaryContainer
+
+                        else ->
+                            MaterialTheme.colorScheme.primaryContainer
+                    }
+                ) {
+                    AppText(
+                        text = status.replace('_', ' '),
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 6.dp
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when (status) {
+                            "CANCELLED" ->
+                                MaterialTheme.colorScheme.onErrorContainer
+
+                            "COMPLETED" ->
+                                MaterialTheme.colorScheme.onSecondaryContainer
+
+                            else ->
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                        },
+                        maxLines = 1
+                    )
+                }
+            }
+
+            AppText(
+                text = formatOrderTime(Date(order.timestamp)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            OutlinedButton(
+                onClick = onStatusClick,
+                enabled = status != "COMPLETED" &&
+                        status != "CANCELLED",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = when (status) {
+                        "COMPLETED" -> "Order completed"
+                        "CANCELLED" -> "Order cancelled"
+                        else -> "Advance order status"
+                    }
+                )
+            }
         }
     }
-
 }
 
-fun formatOrderTime(date: Date): String {
-    return SimpleDateFormat(
-        "d MMM yyyy, h:mm a",
-        Locale.getDefault()
-    ).format(date)
-}
+// ---------------- PRODUCT ITEM ----------------
 
 @Composable
 fun VendorFoodItem(
@@ -315,33 +555,71 @@ fun VendorFoodItem(
     onClick: () -> Unit,
     viewModel: AppViewModel
 ) {
-    SecondaryCard(
-        modifier = Modifier.fillMaxWidth(),
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         onClick = onClick,
         contentPadding = PaddingValues(12.dp)
     ) {
-        ProductImage(
-            product = product,
-            viewModel = viewModel,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp)
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ProductImage(
+                product = product,
+                viewModel = viewModel,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(14.dp))
+            )
 
-        mySpacer()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    AppText(
+                        text = product.productName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-        TextNormal(
-            text = product.productName,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
+                    AppText(
+                        text = if (product.isAvailable) {
+                            "Tap to view product details"
+                        } else {
+                            "Currently unavailable"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-        TextNormal(
-            text = "RM %.2f".format(product.productPrice),
-            fontSize = 16.sp
-        )
+                Spacer(Modifier.width(12.dp))
+
+                AppText(
+                    text = "RM %.2f".format(
+                        Locale.getDefault(),
+                        product.productPrice
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
+
+// ---------------- PRODUCT IMAGE ----------------
 
 @Composable
 fun ProductImage(
@@ -355,4 +633,13 @@ fun ProductImage(
         contentDescription = product.productName,
         modifier = modifier
     )
+}
+
+// ---------------- DATE FORMATTING ----------------
+
+fun formatOrderTime(date: Date): String {
+    return SimpleDateFormat(
+        "d MMM yyyy, h:mm a",
+        Locale.getDefault()
+    ).format(date)
 }

@@ -5,19 +5,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,17 +30,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.curtineat.data.local.room.entity.OrderEntity
-import com.example.curtineat.data.local.room.entity.VendorEntity
-import com.example.curtineat.ui.theme.PrimaryCard
-import com.example.curtineat.ui.theme.TextNormal
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppText
+import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.curtineat.ui.theme.AppThemeMode
+
+// ---------------- ORDER HISTORY SCREEN ----------------
 
 @Composable
 fun OrderHistoryScreen(
@@ -59,9 +58,13 @@ fun OrderHistoryScreen(
 	val vendorState by appViewModel.vendorState.collectAsState()
 	val authenticationState by appViewModel.authenticationState.collectAsState()
 
-	var role by remember { mutableStateOf<UserRole?>(null) }
+	var role by remember {
+		mutableStateOf<UserRole?>(null)
+	}
 
-	val isLoggedIn = role == UserRole.CUSTOMER || role == UserRole.VENDOR
+	val isLoggedIn = role == UserRole.CUSTOMER ||
+		role == UserRole.VENDOR
+
 	val isVendorAccount = role == UserRole.VENDOR
 
 	LaunchedEffect(Unit) {
@@ -105,65 +108,63 @@ fun OrderHistoryScreen(
 
 		Column(
 			modifier = Modifier
-				.padding(innerPadding)
 				.fillMaxSize()
+				.padding(innerPadding)
 		) {
-
-			OrderHistoryTitleCard()
+			OrderHistoryTitleCard(
+				orderCount = sortedOrders.size
+			)
 
 			LazyColumn(
-				modifier = Modifier.weight(1f),
+				modifier = Modifier
+					.fillMaxSize(),
 				contentPadding = PaddingValues(
 					start = 16.dp,
 					end = 16.dp,
-					bottom = 16.dp
+					top = 4.dp,
+					bottom = 24.dp
 				),
 				verticalArrangement = Arrangement.spacedBy(12.dp)
 			) {
+				when {
+					role == null -> {
+						item {
+							LoadingDots()
+						}
+					}
 
-				if (role == null) {
-					item {
-						LoadingDots()
+					!isLoggedIn -> {
+						item {
+							OrderHistoryEmptyState(
+								title = "Log in to view your orders",
+								description = "Your past orders and receipts will appear here after you sign in."
+							)
+						}
 					}
-				} else if (!isLoggedIn) {
-					item {
-						TextNormal(
-							text = "Please log in to see your orders",
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(32.dp),
-							textAlign = TextAlign.Center,
-							fontSize = 16.sp
-						)
-					}
-				} else if (
+
 					orderState.isInitialLoading &&
-					sortedOrders.isEmpty()
-				) {
-					item {
-						LoadingDots()
+						sortedOrders.isEmpty() -> {
+						item {
+							LoadingDots()
+						}
 					}
-				} else if (sortedOrders.isEmpty()) {
-					item {
-						TextNormal(
-							text = "No orders yet",
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(32.dp),
-							textAlign = TextAlign.Center,
-							fontSize = 16.sp
-						)
-					}
-				} else {
-					items(
-						items = sortedOrders,
-						key = { it.orderId }
-					) { order ->
 
-						val counterpartLabel =
-							if (isVendorAccount) {
-								// The current ViewModel exposes one customer
-								// profile, not a list of all customers.
+					sortedOrders.isEmpty() -> {
+						item {
+							OrderHistoryEmptyState(
+								title = "No orders yet",
+								description = "Once you place an order, its status and receipt will appear here."
+							)
+						}
+					}
+
+					else -> {
+						items(
+							items = sortedOrders,
+							key = { it.orderId }
+						) { order ->
+
+							val counterpartLabel = if (isVendorAccount) {
 								"Customer"
 							} else {
 								vendorState.data.firstOrNull {
@@ -171,13 +172,14 @@ fun OrderHistoryScreen(
 								}?.vendorName ?: "Vendor"
 							}
 
-						OrderHistoryCard(
-							order = order,
-							counterpartLabel = counterpartLabel,
-							onClick = {
-								onOrderClick(order.orderId)
-							}
-						)
+							OrderHistoryCard(
+								order = order,
+								counterpartLabel = counterpartLabel,
+								onClick = {
+									onOrderClick(order.orderId)
+								}
+							)
+						}
 					}
 				}
 			}
@@ -185,127 +187,228 @@ fun OrderHistoryScreen(
 	}
 }
 
+// ---------------- TITLE ----------------
+
 @Composable
-fun OrderHistoryTitleCard() {
-	PrimaryCard(
+fun OrderHistoryTitleCard(
+	orderCount: Int = 0
+) {
+	AppCard(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(16.dp)
+			.padding(16.dp),
+		contentPadding = PaddingValues(20.dp)
 	) {
-		Row(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.SpaceBetween,
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			TextNormal(
-				text = "Order History",
-				fontWeight = FontWeight.Bold,
-				fontSize = 24.sp
-			)
+		AppText(
+			text = "Order History",
+			style = MaterialTheme.typography.headlineSmall,
+			fontWeight = FontWeight.Bold
+		)
 
-			IconButton(
-				onClick = { }
-			) {
-				Icon(
-					imageVector = Icons.Default.FilterList,
-					contentDescription = "Sort (coming soon)"
-				)
-			}
-		}
+		Spacer(Modifier.size(4.dp))
+
+		AppText(
+			text = if (orderCount == 1) {
+				"1 order"
+			} else {
+				"$orderCount orders"
+			},
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
 	}
 }
 
-// Tap for receipt
+// ---------------- ORDER CARD ----------------
+
 @Composable
 fun OrderHistoryCard(
 	order: OrderEntity,
 	counterpartLabel: String,
 	onClick: () -> Unit
 ) {
-	PrimaryCard(
-		modifier = Modifier
-			.fillMaxWidth()
-			.clickable { onClick() }
+	AppCard(
+		modifier = Modifier.fillMaxWidth(),
+		onClick = onClick,
+		contentPadding = PaddingValues(16.dp)
 	) {
-
-		// WHO + STATUS
+		// Counterpart and status
 		Row(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween,
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			TextNormal(
-				text = counterpartLabel,
+			Column(
 				modifier = Modifier.weight(1f),
-				fontWeight = FontWeight.Bold,
-				fontSize = 18.sp
+				verticalArrangement = Arrangement.spacedBy(4.dp)
+			) {
+				AppText(
+					text = counterpartLabel,
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.SemiBold,
+					maxLines = 2
+				)
+
+				AppText(
+					text = "Order #${order.orderId.takeLast(8)}",
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+			}
+
+			Spacer(Modifier.size(8.dp))
+
+			OrderStatusBadge(
+				status = order.status
 			)
+		}
+
+		Spacer(Modifier.size(12.dp))
+
+		// Order date
+		AppText(
+			text = formatOrderDateTime(Date(order.timestamp)),
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
+
+		Spacer(Modifier.size(16.dp))
+
+		// Total and receipt navigation
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.SpaceBetween,
+			verticalAlignment = Alignment.CenterVertically
+		) {
+			Column(
+				verticalArrangement = Arrangement.spacedBy(2.dp)
+			) {
+				AppText(
+					text = "Total amount",
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+
+				AppText(
+					text = "RM %.2f".format(order.totalPrice),
+					style = MaterialTheme.typography.titleLarge,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.primary
+				)
+			}
 
 			Row(
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text(
-					text = order.status,
-					color = orderStatusColor(order.status),
-					fontWeight = FontWeight.Bold,
-					fontSize = 14.sp
+				AppText(
+					text = "View receipt",
+					style = MaterialTheme.typography.labelLarge,
+					color = MaterialTheme.colorScheme.primary
 				)
 
-				Icon(
+				Spacer(Modifier.size(4.dp))
+
+				androidx.compose.material3.Icon(
 					imageVector = Icons.Default.ChevronRight,
-					contentDescription = "View receipt"
+					contentDescription = "View receipt",
+					tint = MaterialTheme.colorScheme.primary
 				)
 			}
 		}
+	}
+}
 
-		// DATE
-		TextNormal(
-			text = formatOrderDateTime(Date(order.timestamp)),
-			fontSize = 12.sp
+// ---------------- STATUS BADGE ----------------
+
+@Composable
+fun OrderStatusBadge(
+	status: String
+) {
+	val normalizedStatus = status.trim().uppercase()
+
+	val statusColor = orderStatusColor(normalizedStatus)
+
+	Surface(
+		shape = RoundedCornerShape(50),
+		color = statusColor.copy(alpha = 0.12f)
+	) {
+		AppText(
+			text = normalizedStatus.ifBlank { "UNKNOWN" },
+			modifier = Modifier.padding(
+				horizontal = 10.dp,
+				vertical = 6.dp
+			),
+			style = MaterialTheme.typography.labelMedium,
+			color = statusColor,
+			fontWeight = FontWeight.SemiBold
 		)
+	}
+}
 
-		HorizontalDivider(
-			modifier = Modifier.padding(vertical = 8.dp)
+// ---------------- EMPTY STATE ----------------
+
+@Composable
+fun OrderHistoryEmptyState(
+	title: String,
+	description: String
+) {
+	AppCard(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(top = 8.dp),
+		contentPadding = PaddingValues(
+			horizontal = 24.dp,
+			vertical = 36.dp
 		)
-
-		// PRODUCTS are stored separately in Room.
-		// Their details are displayed on the receipt screen.
-
-		HorizontalDivider(
-			modifier = Modifier.padding(vertical = 8.dp)
-		)
-
-		// TOTAL
-		Row(
+	) {
+		Column(
 			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.SpaceBetween
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.spacedBy(10.dp)
 		) {
-			TextNormal(
-				text = "Total",
-				fontWeight = FontWeight.Bold,
-				fontSize = 16.sp
+			AppText(
+				text = title,
+				style = MaterialTheme.typography.titleLarge,
+				fontWeight = FontWeight.SemiBold,
+				textAlign = TextAlign.Center
 			)
 
-			TextNormal(
-				text = "RM %.2f".format(order.totalPrice),
-				fontWeight = FontWeight.Bold,
-				fontSize = 16.sp
+			AppText(
+				text = description,
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				textAlign = TextAlign.Center
 			)
 		}
 	}
 }
+
+// ---------------- STATUS COLORS ----------------
 
 @Composable
 fun orderStatusColor(status: String): Color {
 	return when (status.trim().uppercase()) {
-		"PENDING" -> Color(0xFFEA7422)
-		"PREPARING" -> Color(0xFF1565C0)
-		"READY" -> Color(0xFF00897B)
-		"COMPLETED" -> Color(0xFF2E7D32)
-		"CANCELLED" -> MaterialTheme.colorScheme.error
-		else -> MaterialTheme.colorScheme.onSurfaceVariant
+		"PENDING" ->
+			MaterialTheme.colorScheme.tertiary
+
+		"PREPARING" ->
+			MaterialTheme.colorScheme.primary
+
+		"READY" ->
+			MaterialTheme.colorScheme.secondary
+
+		"COMPLETED" ->
+			Color(0xFF2E7D32)
+
+		"CANCELLED" ->
+			MaterialTheme.colorScheme.error
+
+		else ->
+			MaterialTheme.colorScheme.onSurfaceVariant
 	}
 }
+
+// ---------------- DATE FORMATTING ----------------
 
 fun formatOrderDateTime(date: Date): String {
 	return SimpleDateFormat(

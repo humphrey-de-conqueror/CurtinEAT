@@ -1,26 +1,44 @@
-
 package com.example.curtineat.view
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,8 +46,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 
@@ -51,43 +75,19 @@ fun VendorProfileScreen(
 	onLoginClick: () -> Unit,
 	onHomeClick: () -> Unit
 ) {
-	val authenticationState by
-	viewModel.authenticationState.collectAsState()
+	val authenticationState by viewModel.authenticationState.collectAsState()
+	val vendorProfileState by viewModel.vendorProfileState.collectAsState()
 
-	val vendorProfileState by
-	viewModel.vendorProfileState.collectAsState()
+	var authChecked by remember { mutableStateOf(false) }
+	var editMode by remember { mutableStateOf(false) }
 
-	var authChecked by remember {
-		mutableStateOf(false)
-	}
+	var vendorName by remember { mutableStateOf("") }
+	var category by remember { mutableStateOf("") }
+	var vendorImage by remember { mutableStateOf("") }
 
-	var editMode by remember {
-		mutableStateOf(false)
-	}
-
-	var vendorName by remember {
-		mutableStateOf("")
-	}
-
-	var category by remember {
-		mutableStateOf("")
-	}
-
-	var vendorImage by remember {
-		mutableStateOf("")
-	}
-
-	var categoryExpanded by remember {
-		mutableStateOf(false)
-	}
-
-	var saving by remember {
-		mutableStateOf(false)
-	}
-
-	var uploadingImage by remember {
-		mutableStateOf(false)
-	}
+	var categoryExpanded by remember { mutableStateOf(false) }
+	var saving by remember { mutableStateOf(false) }
+	var uploadingImage by remember { mutableStateOf(false) }
 
 	val vendorId = authenticationState.userId
 	val userRole = authenticationState.role
@@ -100,10 +100,7 @@ fun VendorProfileScreen(
 
 	LaunchedEffect(authChecked, vendorId, userRole) {
 		if (authChecked) {
-			if (
-				vendorId == null ||
-				userRole != UserRole.VENDOR
-			) {
+			if (vendorId == null || userRole != UserRole.VENDOR) {
 				onLoginClick()
 			} else {
 				viewModel.observeVendorProfile(vendorId)
@@ -113,7 +110,7 @@ fun VendorProfileScreen(
 
 	val vendor = vendorProfileState.data
 
-	LaunchedEffect(vendor) {
+	LaunchedEffect(vendor, editMode) {
 		if (vendor != null && !editMode) {
 			vendorName = vendor.vendorName
 			category = vendor.category
@@ -121,25 +118,43 @@ fun VendorProfileScreen(
 		}
 	}
 
-	val imagePicker =
-		rememberLauncherForActivityResult(
-			contract = ActivityResultContracts.GetContent()
-		) { uri: Uri? ->
-			if (uri != null) {
-				uploadingImage = true
+	val imagePicker = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.GetContent()
+	) { uri: Uri? ->
+		if (uri != null) {
+			uploadingImage = true
 
-				viewModel.uploadImage(uri) { imageId ->
-					if (imageId != null) {
-						vendorImage = imageId
-					}
-
-					uploadingImage = false
+			viewModel.uploadImage(uri) { imageId ->
+				if (imageId != null) {
+					vendorImage = imageId
 				}
+
+				uploadingImage = false
+			}
+		}
+	}
+
+	if (!authChecked || vendorProfileState.isInitialLoading) {
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.background(MaterialTheme.colorScheme.background),
+			contentAlignment = Alignment.Center
+		) {
+			Column(
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.spacedBy(12.dp)
+			) {
+				CircularProgressIndicator()
+
+				AppText(
+					text = "Loading your profile...",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				)
 			}
 		}
 
-	if (!authChecked || vendorProfileState.isInitialLoading) {
-		Text(text = "Loading...")
 		return
 	}
 
@@ -148,7 +163,34 @@ fun VendorProfileScreen(
 	}
 
 	if (vendor == null) {
-		Text(text = "Vendor profile not found.")
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(24.dp),
+			contentAlignment = Alignment.Center
+		) {
+			Column(
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.spacedBy(12.dp)
+			) {
+				AppText(
+					text = "Profile unavailable",
+					style = MaterialTheme.typography.titleLarge,
+					fontWeight = FontWeight.SemiBold
+				)
+
+				AppText(
+					text = "We couldn't find your vendor profile.",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+
+				OutlinedButton(onClick = onHomeClick) {
+					Text("Back to Home")
+				}
+			}
+		}
+
 		return
 	}
 
@@ -157,263 +199,442 @@ fun VendorProfileScreen(
 
 	Column(
 		modifier = Modifier
-			.fillMaxWidth()
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
 			.verticalScroll(scrollState)
-			.padding(16.dp),
-		verticalArrangement = Arrangement.spacedBy(12.dp)
+			.padding(horizontal = 20.dp, vertical = 20.dp),
+		verticalArrangement = Arrangement.spacedBy(20.dp)
 	) {
-		Row(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.SpaceBetween
+		// Page heading
+		Column(
+			verticalArrangement = Arrangement.spacedBy(4.dp)
 		) {
-			Text(text = "Vendor Profile")
-
-			if (!editMode) {
-				Button(
-					onClick = {
-						editMode = true
-						vendorName = currentVendor.vendorName
-						category = currentVendor.category
-						vendorImage = currentVendor.vendorImage
-					}
-				) {
-					Text("Edit")
-				}
-			}
-		}
-
-		if (vendorImage.isBlank()) {
-			Icon(
-				imageVector = Icons.Default.AccountCircle,
-				contentDescription = "Default vendor profile picture",
-				modifier = Modifier.size(120.dp)
+			AppText(
+				text = "My Profile",
+				style = MaterialTheme.typography.headlineMedium,
+				fontWeight = FontWeight.Bold
 			)
-		} else {
-			CachedImage(
-				imageId = vendorImage,
-				viewModel = viewModel,
-				contentDescription = "Vendor profile picture",
-				modifier = Modifier.size(120.dp),
-				retryOnTap = true
+
+			AppText(
+				text = "Manage your restaurant information.",
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
 			)
 		}
 
-		if (editMode) {
-			OutlinedButton(
-				onClick = {
-					imagePicker.launch("image/*")
-				},
-				enabled = !uploadingImage,
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Text(
-					if (uploadingImage) {
-						"Uploading..."
-					} else {
-						"Change Profile Picture"
-					}
-				)
-			}
-		}
-
-		if (editMode) {
-			OutlinedTextField(
-				value = vendorName,
-				onValueChange = {
-					vendorName = it
-				},
-				label = {
-					Text("Vendor Name")
-				},
-				modifier = Modifier.fillMaxWidth()
-			)
-		} else {
-			OutlinedTextField(
-				value = currentVendor.vendorName,
-				onValueChange = {},
-				readOnly = true,
-				label = {
-					Text("Vendor Name")
-				},
-				modifier = Modifier.fillMaxWidth()
-			)
-		}
-
-		OutlinedTextField(
-			value = currentVendor.vendorEmail,
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Email")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		if (editMode) {
+		// Vendor profile header
+		AppCard(
+			modifier = Modifier
+				.fillMaxWidth()
+				.animateContentSize(),
+			shape = RoundedCornerShape(24.dp),
+			contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
+		) {
 			Column(
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth(),
+				verticalArrangement = Arrangement.spacedBy(16.dp),
+				horizontalAlignment = Alignment.CenterHorizontally
 			) {
-				OutlinedTextField(
-					value = category,
-					onValueChange = {},
-					readOnly = true,
-					label = {
-						Text("Category")
-					},
-					modifier = Modifier.fillMaxWidth()
-				)
-
-				DropdownMenu(
-					expanded = categoryExpanded,
-					onDismissRequest = {
-						categoryExpanded = false
-					}
+				Box(
+					modifier = Modifier.size(112.dp),
+					contentAlignment = Alignment.Center
 				) {
-					vendorCategories.forEach { item ->
-						DropdownMenuItem(
-							text = {
-								Text(item)
-							},
-							onClick = {
-								category = item
-								categoryExpanded = false
-							}
+					if (vendorImage.isBlank()) {
+						Surface(
+							modifier = Modifier.fillMaxSize(),
+							shape = CircleShape,
+							color = MaterialTheme.colorScheme.secondaryContainer
+						) {
+							Icon(
+								imageVector = Icons.Default.AccountCircle,
+								contentDescription = "Vendor profile picture",
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(8.dp),
+								tint = MaterialTheme.colorScheme.onSecondaryContainer
+							)
+						}
+					} else {
+						CachedImage(
+							imageId = vendorImage,
+							viewModel = viewModel,
+							contentDescription = "Vendor profile picture",
+							modifier = Modifier
+								.fillMaxSize()
+								.clip(CircleShape),
+							retryOnTap = true
 						)
 					}
 				}
 
-				OutlinedButton(
-					onClick = {
-						categoryExpanded = true
-					},
-					modifier = Modifier.fillMaxWidth()
+				AnimatedVisibility(
+					visible = editMode,
+					enter = fadeIn() + slideInVertically { -it / 3 },
+					exit = fadeOut() + slideOutVertically { -it / 3 }
 				) {
-					Text(
-						if (category.isEmpty()) {
-							"Choose Category"
+					OutlinedButton(
+						onClick = { imagePicker.launch("image/*") },
+						enabled = !uploadingImage,
+						modifier = Modifier.fillMaxWidth()
+					) {
+						if (uploadingImage) {
+							CircularProgressIndicator(
+								modifier = Modifier.size(18.dp),
+								strokeWidth = 2.dp
+							)
+
+							Spacer(Modifier.width(8.dp))
+
+							Text("Uploading image...")
 						} else {
-							category
+							Text("Change Profile Picture")
 						}
+					}
+				}
+
+				if (!editMode) {
+					AppText(
+						text = currentVendor.vendorName,
+						style = MaterialTheme.typography.headlineSmall,
+						fontWeight = FontWeight.Bold,
+						maxLines = 2,
+						overflow = TextOverflow.Ellipsis
 					)
+
+					Surface(
+						shape = RoundedCornerShape(50),
+						color = MaterialTheme.colorScheme.secondaryContainer
+					) {
+						AppText(
+							text = currentVendor.category.ifBlank {
+								"Uncategorized"
+							},
+							modifier = Modifier.padding(
+								horizontal = 14.dp,
+								vertical = 7.dp
+							),
+							style = MaterialTheme.typography.labelLarge,
+							color = MaterialTheme.colorScheme.onSecondaryContainer
+						)
+					}
+
+					AppText(
+						text = currentVendor.vendorEmail,
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+
+					Button(
+						onClick = {
+							vendorName = currentVendor.vendorName
+							category = currentVendor.category
+							vendorImage = currentVendor.vendorImage
+							editMode = true
+						},
+						modifier = Modifier.fillMaxWidth()
+					) {
+						Text("Edit Profile")
+					}
+				} else {
+					AppText(
+						text = "Edit your details",
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.SemiBold
+					)
+
+					OutlinedTextField(
+						value = vendorName,
+						onValueChange = { vendorName = it },
+						label = { Text("Vendor Name") },
+						singleLine = true,
+						modifier = Modifier.fillMaxWidth()
+					)
+
+					OutlinedTextField(
+						value = currentVendor.vendorEmail,
+						onValueChange = {},
+						readOnly = true,
+						label = { Text("Email") },
+						singleLine = true,
+						modifier = Modifier.fillMaxWidth()
+					)
+
+					// Category selector
+					Column(
+						modifier = Modifier.fillMaxWidth(),
+						verticalArrangement = Arrangement.spacedBy(4.dp)
+					) {
+						AppText(
+							text = "Category",
+							style = MaterialTheme.typography.labelMedium,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+
+						Box(modifier = Modifier.fillMaxWidth()) {
+							OutlinedButton(
+								onClick = { categoryExpanded = true },
+								modifier = Modifier.fillMaxWidth()
+							) {
+								Text(
+									text = category.ifBlank {
+										"Choose Category"
+									},
+									modifier = Modifier.weight(1f)
+								)
+
+								Text("⌄")
+							}
+
+							DropdownMenu(
+								expanded = categoryExpanded,
+								onDismissRequest = {
+									categoryExpanded = false
+								},
+								modifier = Modifier.background(
+									MaterialTheme.colorScheme.surface
+								)
+							) {
+								vendorCategories.forEach { item ->
+									DropdownMenuItem(
+										text = { Text(item) },
+										onClick = {
+											category = item
+											categoryExpanded = false
+										}
+									)
+								}
+							}
+						}
+					}
+
+					HorizontalDivider(
+						color = MaterialTheme.colorScheme.outlineVariant
+					)
+
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.spacedBy(10.dp)
+					) {
+						OutlinedButton(
+							onClick = {
+								vendorName = currentVendor.vendorName
+								category = currentVendor.category
+								vendorImage = currentVendor.vendorImage
+								categoryExpanded = false
+								editMode = false
+							},
+							enabled = !saving,
+							modifier = Modifier.weight(1f)
+						) {
+							Text("Cancel")
+						}
+
+						Button(
+							onClick = {
+								saving = true
+
+								viewModel.updateVendorProfile(
+									vendorId = currentVendor.vendorId,
+									vendorName = vendorName.trim(),
+									category = category,
+									vendorImage = vendorImage
+								) { success ->
+									if (success) {
+										editMode = false
+									}
+
+									saving = false
+								}
+							},
+							enabled = !saving &&
+								!uploadingImage &&
+								vendorName.isNotBlank() &&
+								category.isNotBlank(),
+							modifier = Modifier.weight(1f)
+						) {
+							if (saving) {
+								CircularProgressIndicator(
+									modifier = Modifier.size(18.dp),
+									strokeWidth = 2.dp,
+									color = MaterialTheme.colorScheme.onPrimary
+								)
+
+								Spacer(Modifier.width(8.dp))
+
+								Text("Saving")
+							} else {
+								Text("Save Changes")
+							}
+						}
+					}
 				}
 			}
-		} else {
-			OutlinedTextField(
-				value = currentVendor.category,
-				onValueChange = {},
-				readOnly = true,
-				label = {
-					Text("Category")
-				},
-				modifier = Modifier.fillMaxWidth()
+		}
+
+		// Overview
+		AppText(
+			text = "Overview",
+			style = MaterialTheme.typography.titleLarge,
+			fontWeight = FontWeight.SemiBold
+		)
+
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.spacedBy(10.dp)
+		) {
+			VendorStatCard(
+				title = "Rating",
+				value = currentVendor.rating.toString(),
+				modifier = Modifier.weight(1f)
+			)
+
+			VendorStatCard(
+				title = "Distance",
+				value = currentVendor.distance.toString(),
+				modifier = Modifier.weight(1f)
+			)
+
+			VendorStatCard(
+				title = "Balance",
+				value = currentVendor.moneyBalance.toString(),
+				modifier = Modifier.weight(1f)
 			)
 		}
 
-		OutlinedTextField(
-			value = currentVendor.rating.toString(),
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Rating")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		OutlinedTextField(
-			value = currentVendor.distance.toString(),
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Distance")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		OutlinedTextField(
-			value = currentVendor.moneyBalance.toString(),
-			onValueChange = {},
-			readOnly = true,
-			label = {
-				Text("Balance")
-			},
-			modifier = Modifier.fillMaxWidth()
-		)
-
-		if (editMode) {
-			Row(
+		// Account information
+		AppCard(
+			modifier = Modifier.fillMaxWidth(),
+			shape = RoundedCornerShape(20.dp),
+			contentPadding = androidx.compose.foundation.layout.PaddingValues(18.dp)
+		) {
+			Column(
 				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.spacedBy(8.dp)
+				verticalArrangement = Arrangement.spacedBy(14.dp)
 			) {
-				OutlinedButton(
-					onClick = {
-						vendorName = currentVendor.vendorName
-						category = currentVendor.category
-						vendorImage = currentVendor.vendorImage
-						editMode = false
-					},
-					modifier = Modifier.weight(1f)
-				) {
-					Text("Cancel")
-				}
+				AppText(
+					text = "Account Information",
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.SemiBold
+				)
 
-				Button(
-					onClick = {
-						saving = true
+				ProfileInfoRow(
+					label = "Vendor ID",
+					value = currentVendor.vendorId
+				)
 
-						viewModel.updateVendorProfile(
-							vendorId = currentVendor.vendorId,
-							vendorName = vendorName.trim(),
-							category = category,
-							vendorImage = vendorImage
-						) { success ->
-							if (success) {
-								editMode = false
-							}
+				HorizontalDivider(
+					color = MaterialTheme.colorScheme.outlineVariant
+				)
 
-							saving = false
-						}
-					},
-					enabled = !saving &&
-						!uploadingImage &&
-						vendorName.isNotBlank() &&
-						category.isNotBlank(),
-					modifier = Modifier.weight(1f)
-				) {
-					Text(
-						if (saving) {
-							"Saving..."
-						} else {
-							"Save"
-						}
-					)
-				}
-			}
-		} else {
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp),
-				horizontalArrangement = Arrangement.spacedBy(8.dp)
-			) {
-				Button(
-					onClick = {
-						onHomeClick()
-					},
-					modifier = Modifier.weight(1f)
-				) {
-					Text("Back")
-				}
+				ProfileInfoRow(
+					label = "Email Address",
+					value = currentVendor.vendorEmail
+				)
 
-				Button(
-					onClick = {
-						viewModel.signOut()
-						onHomeClick()
-					},
-					modifier = Modifier.weight(1f)
-				) {
-					Text("Logout")
-				}
+				HorizontalDivider(
+					color = MaterialTheme.colorScheme.outlineVariant
+				)
+
+				ProfileInfoRow(
+					label = "Category",
+					value = currentVendor.category
+				)
 			}
 		}
+
+		// Navigation and sign-out actions
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(top = 4.dp, bottom = 12.dp),
+			horizontalArrangement = Arrangement.spacedBy(12.dp)
+		) {
+			OutlinedButton(
+				onClick = onHomeClick,
+				modifier = Modifier.weight(1f)
+			) {
+				Text("Back to Home")
+			}
+
+			Button(
+				onClick = {
+					viewModel.signOut()
+					onHomeClick()
+				},
+				modifier = Modifier.weight(1f),
+				colors = ButtonDefaults.buttonColors(
+					containerColor = MaterialTheme.colorScheme.error,
+					contentColor = MaterialTheme.colorScheme.onError
+				)
+			) {
+				Text("Logout")
+			}
+		}
+	}
+}
+
+@Composable
+private fun VendorStatCard(
+	title: String,
+	value: String,
+	modifier: Modifier = Modifier
+) {
+	AppCard(
+		modifier = modifier
+			.height(106.dp)
+			.animateContentSize(),
+		shape = RoundedCornerShape(18.dp),
+		containerColor = MaterialTheme.colorScheme.secondaryContainer,
+		contentPadding = androidx.compose.foundation.layout.PaddingValues(
+			horizontal = 8.dp,
+			vertical = 14.dp
+		)
+	) {
+		Column(
+			modifier = Modifier.fillMaxSize(),
+			verticalArrangement = Arrangement.Center,
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			AppText(
+				text = title,
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onSecondaryContainer,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis
+			)
+
+			Spacer(Modifier.height(8.dp))
+
+			AppText(
+				text = value,
+				style = MaterialTheme.typography.titleMedium,
+				fontWeight = FontWeight.Bold,
+				color = MaterialTheme.colorScheme.onSecondaryContainer,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis
+			)
+		}
+	}
+}
+
+@Composable
+private fun ProfileInfoRow(
+	label: String,
+	value: String
+) {
+	Column(
+		verticalArrangement = Arrangement.spacedBy(4.dp)
+	) {
+		AppText(
+			text = label,
+			style = MaterialTheme.typography.labelMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
+
+		AppText(
+			text = value.ifBlank { "Not provided" },
+			style = MaterialTheme.typography.bodyLarge,
+			fontWeight = FontWeight.Medium
+		)
 	}
 }

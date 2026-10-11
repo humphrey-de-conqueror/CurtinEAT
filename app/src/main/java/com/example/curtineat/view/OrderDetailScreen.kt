@@ -46,15 +46,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.OrderProductEntity
+import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
 
 private val PaperColor = Color(0xFFFFFDF7)
 private val InkColor = Color(0xFF222222)
 private val FaintInkColor = Color(0xFF9E9E9E)
 
-// Rectangle with a zigzag (torn) bottom edge
+// Rectangle with a zigzag (torn) bottom edge.
 private val ReceiptShape = GenericShape { size, _ ->
-
 	val tooth = 16f
 	val teeth = (size.width / (tooth * 2)).toInt().coerceAtLeast(1)
 	val step = size.width / teeth / 2f
@@ -113,17 +113,16 @@ fun OrderDetailScreen(
 
 	Scaffold(
 		containerColor = MaterialTheme.colorScheme.surfaceVariant,
-
-		// TOP WALL
 		topBar = {
 			TopAppBar(
 				title = {
-					Text("Order Details")
+					AppText(
+						text = "Order Details",
+						style = MaterialTheme.typography.titleLarge
+					)
 				},
 				navigationIcon = {
-					IconButton(
-						onClick = onBackButtonClick
-					) {
+					IconButton(onClick = onBackButtonClick) {
 						Icon(
 							imageVector = Icons.AutoMirrored.Filled.ArrowBack,
 							contentDescription = "Go back"
@@ -132,30 +131,26 @@ fun OrderDetailScreen(
 				}
 			)
 		},
-
-		// BOTTOM WALL
 		bottomBar = {
 			BottomAppBar {
-				Text(
+				AppText(
 					text = "Thank you for ordering with CurtinEAT",
 					modifier = Modifier.fillMaxWidth(),
 					textAlign = TextAlign.Center,
-					style = MaterialTheme.typography.bodyMedium
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurface
 				)
 			}
 		}
-
 	) { innerPadding ->
-
 		Box(
 			modifier = Modifier
 				.padding(innerPadding)
 				.fillMaxSize(),
 			contentAlignment = Alignment.TopCenter
 		) {
-
 			if (order == null) {
-				Text(
+				AppText(
 					text = if (loadFinished) {
 						"Order not found"
 					} else {
@@ -163,23 +158,23 @@ fun OrderDetailScreen(
 					},
 					modifier = Modifier
 						.align(Alignment.Center)
-						.padding(32.dp)
+						.padding(32.dp),
+					style = MaterialTheme.typography.bodyLarge,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					textAlign = TextAlign.Center
 				)
 			} else {
-
 				val currentOrder = order!!
 
-				val vendorName =
-					vendorState.data.firstOrNull {
-						it.vendorId == currentOrder.vendorId
-					}?.vendorName ?: "Vendor"
+				val vendorName = vendorState.data.firstOrNull {
+					it.vendorId == currentOrder.vendorId
+				}?.vendorName ?: "Vendor"
 
-				val customerName =
-					customerState.data
-						?.takeIf {
-							it.customerId == currentOrder.customerId
-						}
-						?.customerName
+				val customerName = customerState.data
+					?.takeIf {
+						it.customerId == currentOrder.customerId
+					}
+					?.customerName
 
 				Column(
 					modifier = Modifier
@@ -220,8 +215,7 @@ private fun ReceiptPaper(
 				.padding(horizontal = 20.dp)
 				.padding(top = 24.dp, bottom = 36.dp)
 		) {
-
-			// HEADER
+			// Header
 			ReceiptText(
 				text = "CURTINEAT",
 				modifier = Modifier.fillMaxWidth(),
@@ -246,7 +240,7 @@ private fun ReceiptPaper(
 
 			DashedDivider()
 
-			// ORDER INFO
+			// Order information
 			ReceiptRow(
 				left = "Order",
 				right = "#${order.orderId.take(8).uppercase()}"
@@ -273,7 +267,7 @@ private fun ReceiptPaper(
 
 			DashedDivider()
 
-			// ITEMS
+			// Items
 			ReceiptRow(
 				left = "ITEM",
 				right = "AMOUNT",
@@ -281,7 +275,6 @@ private fun ReceiptPaper(
 			)
 
 			products.forEach { product ->
-
 				ReceiptText(
 					text = product.productName.uppercase(),
 					modifier = Modifier.padding(top = 8.dp)
@@ -297,15 +290,13 @@ private fun ReceiptPaper(
 
 			DashedDivider()
 
-			// TOTALS
+			// Totals
 			ReceiptRow(
 				left = "Items",
 				right = products.sumOf { it.quantity }.toString()
 			)
 
-			Spacer(
-				modifier = Modifier.height(4.dp)
-			)
+			Spacer(Modifier.height(4.dp))
 
 			ReceiptRow(
 				left = "TOTAL",
@@ -316,14 +307,9 @@ private fun ReceiptPaper(
 
 			DashedDivider()
 
-			// FOOTER
-			Barcode(
-				seed = order.orderId
-			)
+			Barcode(seed = order.orderId)
 
-			Spacer(
-				modifier = Modifier.height(12.dp)
-			)
+			Spacer(Modifier.height(12.dp))
 
 			ReceiptText(
 				text = "THANK YOU!",
@@ -403,11 +389,9 @@ private fun DashedDivider() {
 	}
 }
 
-// Decorative barcode, drawn from the order id so each receipt looks different
+// Decorative barcode generated from the order ID.
 @Composable
-private fun Barcode(
-	seed: String
-) {
+private fun Barcode(seed: String) {
 	val chars = seed.ifEmpty { "0" }
 
 	Canvas(
