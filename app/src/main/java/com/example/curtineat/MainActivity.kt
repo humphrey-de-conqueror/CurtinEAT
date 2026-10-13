@@ -9,6 +9,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -136,6 +137,11 @@ fun ScreenNavigation(
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val nav = rememberNavController()
+
+    // tracks the log state
+    LaunchedEffect(Unit) {
+        appViewModel.checkCurrentUserRole { }
+    }
 
     val onCartButtonClick: () -> Unit = {
         nav.navigate(RouteCartScreen)

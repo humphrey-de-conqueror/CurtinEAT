@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Spa
@@ -72,6 +73,8 @@ fun MainDrawer(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    isLoggedIn: Boolean,
+    onLogOutClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit,
     content: @Composable (onMenuClick: () -> Unit) -> Unit
@@ -115,6 +118,11 @@ fun MainDrawer(
                     closeDrawer()
                     onLoginClick()
                 },
+                isLoggedIn = isLoggedIn,
+                onLogOutClick = {
+                    closeDrawer()
+                    onLogOutClick()
+                },
                 themeMode = themeMode,
                 onThemeModeChange = onThemeModeChange
             )
@@ -136,6 +144,8 @@ fun HamburgerNav(
     onHistoryClick: () -> Unit,
     onSettingClick: () -> Unit,
     onLogInClick: () -> Unit,
+    isLoggedIn: Boolean,
+    onLogOutClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
@@ -272,15 +282,19 @@ fun HamburgerNav(
             )
 
             NavigationDrawerItem(
-                label = { Text("Log In") },
+                label = { Text(if (isLoggedIn) "Log Out" else "Log In") },
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.Login,
+                        imageVector = if (isLoggedIn) {
+                            Icons.Default.Logout
+                        } else {
+                            Icons.Default.Login
+                        },
                         contentDescription = null
                     )
                 },
                 selected = false,
-                onClick = onLogInClick
+                onClick = if (isLoggedIn) onLogOutClick else onLogInClick
             )
 
             Spacer(modifier = Modifier.weight(1f))

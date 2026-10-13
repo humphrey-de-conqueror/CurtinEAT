@@ -903,6 +903,7 @@ class AppViewModel(
     }
 
     fun signOut() {
+
         authenticationRepository.signOut()
 
         _authenticationState.value = AuthenticationUiState()
