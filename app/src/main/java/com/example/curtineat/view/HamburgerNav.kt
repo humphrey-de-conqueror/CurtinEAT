@@ -48,7 +48,9 @@ import com.example.curtineat.ui.theme.AppThemeMode
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.ExpandMore
@@ -60,21 +62,26 @@ import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.example.curtineat.viewmodel.AppViewModel
+import com.example.curtineat.viewmodel.UserRole
 
 @Composable
 fun MainDrawer(
+    viewModel: AppViewModel,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onWalletClick: () -> Unit,
+//    onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
     isLoggedIn: Boolean,
     onLogOutClick: () -> Unit,
+    isVendor: Boolean,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit,
     content: @Composable (onMenuClick: () -> Unit) -> Unit
@@ -91,6 +98,19 @@ fun MainDrawer(
         }
     }
 
+    val authenticationState by
+    viewModel.authenticationState.collectAsState()
+
+    val customerState by
+    viewModel.customerState.collectAsState()
+
+    val customer = customerState.data
+
+    val vendorProfileState by
+    viewModel.vendorProfileState.collectAsState()
+
+    val vendor = vendorProfileState.data
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -103,17 +123,17 @@ fun MainDrawer(
                     closeDrawer()
                     onProfileClick()
                 },
-                onWalletClick = {
-                    closeDrawer()
-                    onWalletClick()
-                },
+//                onWalletClick = {
+//                    closeDrawer()
+//                    onWalletClick()
+//                },
                 onHistoryClick = {
                     closeDrawer()
                     onHistoryClick()
                 },
-                onSettingClick = {
-                    closeDrawer()
-                },
+//                onSettingClick = {
+//                    closeDrawer()
+//                },
                 onLogInClick = {
                     closeDrawer()
                     onLoginClick()
@@ -123,6 +143,23 @@ fun MainDrawer(
                     closeDrawer()
                     onLogOutClick()
                 },
+
+                viewModel = viewModel,
+
+                profileName = if (isVendor) {
+                    vendor?.vendorName.orEmpty()
+                } else {
+                    customer?.customerName.orEmpty()
+                },
+
+                profileImage = if (isVendor) {
+                    vendor?.vendorImage.orEmpty()
+                } else {
+                    customer?.customerImage.orEmpty()
+                },
+
+                isVendor = authenticationState.role == UserRole.VENDOR,
+
                 themeMode = themeMode,
                 onThemeModeChange = onThemeModeChange
             )
@@ -138,14 +175,18 @@ fun MainDrawer(
 
 @Composable
 fun HamburgerNav(
+    viewModel: AppViewModel,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onWalletClick: () -> Unit,
+//    onWalletClick: () -> Unit,
     onHistoryClick: () -> Unit,
-    onSettingClick: () -> Unit,
+//    onSettingClick: () -> Unit,
     onLogInClick: () -> Unit,
     isLoggedIn: Boolean,
     onLogOutClick: () -> Unit,
+    profileName: String,
+    profileImage: String,
+    isVendor: Boolean,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
@@ -156,6 +197,9 @@ fun HamburgerNav(
             bottomEnd = 28.dp
         )
     ) {
+
+
+
         Column(
             modifier = Modifier
                 .fillMaxHeight()
@@ -170,7 +214,9 @@ fun HamburgerNav(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Row(
-                    modifier = Modifier.padding(
+                    modifier = Modifier
+//                        .fillMaxWidth()
+                        .padding(
                         horizontal = 18.dp,
                         vertical = 24.dp
                     ),
@@ -178,37 +224,57 @@ fun HamburgerNav(
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        modifier = Modifier.size(56.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(12.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        if (profileImage.isBlank()) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Default profile picture",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(4.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            CachedImage(
+                                imageId = profileImage,
+                                viewModel = viewModel,
+                                contentDescription = "Profile picture",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                retryOnTap = true
+                            )
+                        }
                     }
 
                     Column(
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "CurtinEAT",
-                            style = MaterialTheme.typography.headlineSmall,
+                            text = profileName.ifBlank { "My Account" },
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1
                         )
 
                         Text(
-                            text = "Your campus food hub",
+                            text = "Welcome to CurtinEAT",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
             }
+
+
+
+
+
 
             Text(
                 text = "MENU",
@@ -245,17 +311,17 @@ fun HamburgerNav(
                 onClick = onProfileClick
             )
 
-            NavigationDrawerItem(
-                label = { Text("Wallet") },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Wallet,
-                        contentDescription = null
-                    )
-                },
-                selected = false,
-                onClick = onWalletClick
-            )
+//            NavigationDrawerItem(
+//                label = { Text("Wallet") },
+//                icon = {
+//                    Icon(
+//                        imageVector = Icons.Default.Wallet,
+//                        contentDescription = null
+//                    )
+//                },
+//                selected = false,
+//                onClick = onWalletClick
+//            )
 
             NavigationDrawerItem(
                 label = { Text("History") },
@@ -269,17 +335,17 @@ fun HamburgerNav(
                 onClick = onHistoryClick
             )
 
-            NavigationDrawerItem(
-                label = { Text("Settings") },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null
-                    )
-                },
-                selected = false,
-                onClick = onSettingClick
-            )
+//            NavigationDrawerItem(
+//                label = { Text("Settings") },
+//                icon = {
+//                    Icon(
+//                        imageVector = Icons.Default.Settings,
+//                        contentDescription = null
+//                    )
+//                },
+//                selected = false,
+//                onClick = onSettingClick
+//            )
 
             NavigationDrawerItem(
                 label = { Text(if (isLoggedIn) "Log Out" else "Log In") },
@@ -398,7 +464,12 @@ fun HamburgerNav(
                             color = MaterialTheme.colorScheme.outlineVariant,
                             shape = RoundedCornerShape(20.dp)
                         )
-                        .padding(6.dp)
+                        .padding(6.dp),
+
+                    shape = RoundedCornerShape(20.dp),
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp
+
                 ) {
                     Text(
                         text = "Choose your style",

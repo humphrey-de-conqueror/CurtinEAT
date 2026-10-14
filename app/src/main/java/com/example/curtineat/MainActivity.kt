@@ -15,7 +15,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.AddProductScreen
-import com.example.curtineat.view.BalanceScreen
 import com.example.curtineat.view.CartScreen
 import com.example.curtineat.view.CustomerProfileScreen
 import com.example.curtineat.view.LoginScreen
@@ -297,12 +296,6 @@ fun ScreenNavigation(
             )
         }
 
-        composable<RouteBalanceScreen> {
-            BalanceScreen(
-                appViewModel = appViewModel,
-                onBackButtonClick = onBackButtonClick
-            )
-        }
 
         composable<RouteVendorLandingScreen> {
             VendorLandingScreen(

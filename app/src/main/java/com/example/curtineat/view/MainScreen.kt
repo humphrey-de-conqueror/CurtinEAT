@@ -83,6 +83,7 @@ import com.example.curtineat.ui.components.LoadingState
 import com.example.curtineat.ui.components.SectionHeader
 import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
+import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -114,9 +115,10 @@ fun AppScaffold(
     }
 
     MainDrawer(
+        viewModel = appViewModel,
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
-        onWalletClick = onWalletClick,
+//        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         isLoggedIn = currentUserId != null,
@@ -124,6 +126,9 @@ fun AppScaffold(
             appViewModel.signOut()
             onLoginClick()
         },
+
+        isVendor = authenticationState.role == UserRole.VENDOR,
+
         themeMode = themeMode,
         onThemeModeChange = onThemeModeChange
     ) { onMenuClick ->
@@ -880,11 +885,12 @@ fun RestaurantCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                AppText(
-                    text = "%.1f km".format(vendor.distance),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // will be replaced will location address
+//                AppText(
+//                    text = "%.1f km".format(vendor.distance),
+//                    style = MaterialTheme.typography.bodySmall,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
             }
 
             Spacer(modifier = Modifier.height(2.dp))
