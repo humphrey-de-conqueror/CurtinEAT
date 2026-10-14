@@ -66,8 +66,9 @@ fun VendorLandingScreen(
     onProfileClick: () -> Unit,
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     onHistoryClick: () -> Unit,
-    onFoodClick: (String) -> Unit,
+    onFoodClick :(String) -> Unit,
     onAddProductClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
@@ -129,6 +130,7 @@ fun VendorLandingScreen(
         showSearch = false,
         showNotifications = true,
         themeMode = themeMode,
+        onLogoutClick = onLogoutClick,
         onThemeModeChange = onThemeModeChange,
         floatingActionButton = {
             FloatingActionButton(

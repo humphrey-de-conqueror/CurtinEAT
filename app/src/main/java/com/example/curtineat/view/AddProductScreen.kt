@@ -59,444 +59,681 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.curtineat.ui.components.ConfirmDialog
 
 private const val IMAGE_BASE_URL =
-	"https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
+    "https://curtineat-image-api.work-gordonyewyangliew.workers.dev/images/"
 
 @Composable
 fun AddProductScreen(
-	viewModel: AppViewModel,
-	onBackClick: () -> Unit
+    viewModel: AppViewModel,
+    productId: String? = null,
+    onBackClick: () -> Unit
 ) {
-	var productName by remember { mutableStateOf("") }
-	var productPrice by remember { mutableStateOf("") }
-	var productImage by remember { mutableStateOf("") }
+    val productState by
+    viewModel.productState.collectAsState()
 
-	var isAvailable by remember { mutableStateOf(true) }
-	var uploadingImage by remember { mutableStateOf(false) }
-	var saving by remember { mutableStateOf(false) }
-	var errorMessage by remember { mutableStateOf<String?>(null) }
+    val existingProduct =
+        productId?.let { id ->
+            productState.data.firstOrNull {
+                it.productId == id
+            }
+        }
 
-	val authenticationState by
-	viewModel.authenticationState.collectAsState()
+    val isExistingProduct =
+        productId != null
 
-	val vendorId = authenticationState.userId.takeIf {
-		authenticationState.role == UserRole.VENDOR
-	}
+    var editMode by rememberSaveable(productId) {
+        mutableStateOf(!isExistingProduct)
+    }
 
-	val imagePicker = rememberLauncherForActivityResult(
-		contract = ActivityResultContracts.GetContent()
-	) { uri: Uri? ->
-		if (uri != null) {
-			uploadingImage = true
-			errorMessage = null
+    var showDeleteDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-			viewModel.uploadImage(uri) { imageId ->
-				if (imageId != null) {
-					productImage = imageId
-				} else {
-					errorMessage = "Unable to upload product image."
-				}
+    var productName by rememberSaveable(productId) {
+        mutableStateOf("")
+    }
 
-				uploadingImage = false
-			}
-		}
-	}
+    var productPrice by rememberSaveable(productId) {
+        mutableStateOf("")
+    }
 
-	val parsedPrice = productPrice.toDoubleOrNull()
-	val validPrice = parsedPrice != null &&
-		parsedPrice.isFinite() &&
-		parsedPrice >= 0.0
+    var productImage by rememberSaveable(productId) {
+        mutableStateOf("")
+    }
 
-	val scrollState = rememberScrollState()
+    var isAvailable by rememberSaveable(productId) {
+        mutableStateOf(true)
+    }
 
-	Column(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.background)
-			.windowInsetsPadding(WindowInsets.safeDrawing)
-			.verticalScroll(scrollState)
-			.padding(
-				horizontal = 20.dp,
-				vertical = 20.dp
-			),
-		verticalArrangement = Arrangement.spacedBy(20.dp)
-	) {
-		// Page heading
-		Column(
-			verticalArrangement = Arrangement.spacedBy(5.dp)
-		) {
-			Text(
-				text = "Add Product",
-				style = MaterialTheme.typography.headlineMedium,
-				fontWeight = FontWeight.Bold
-			)
+    var uploadingImage by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-			Text(
-				text = "Add a new item to your restaurant menu.",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant
-			)
-		}
+    val authenticationState by
+    viewModel.authenticationState.collectAsState()
 
-		// Product image section
-		Card(
-			modifier = Modifier
-				.fillMaxWidth()
-				.animateContentSize(),
-			shape = RoundedCornerShape(24.dp),
-			colors = CardDefaults.cardColors(
-				containerColor = MaterialTheme.colorScheme.surface
-			),
-			elevation = CardDefaults.cardElevation(
-				defaultElevation = 1.dp
-			)
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp),
-				verticalArrangement = Arrangement.spacedBy(14.dp)
-			) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(10.dp)
-				) {
-					Surface(
-						shape = RoundedCornerShape(12.dp),
-						color = MaterialTheme.colorScheme.secondaryContainer
-					) {
-						Icon(
-							imageVector = Icons.Default.Image,
-							contentDescription = null,
-							modifier = Modifier
-								.size(42.dp)
-								.padding(10.dp),
-							tint = MaterialTheme.colorScheme.onSecondaryContainer
-						)
-					}
+    val vendorId = authenticationState.userId.takeIf {
+        authenticationState.role == UserRole.VENDOR
+    }
 
-					Column(
-						verticalArrangement = Arrangement.spacedBy(3.dp)
-					) {
-						Text(
-							text = "Product Photo",
-							style = MaterialTheme.typography.titleMedium,
-							fontWeight = FontWeight.SemiBold
-						)
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            uploadingImage = true
+            errorMessage = null
 
-						Text(
-							text = "Choose a clear photo of your food.",
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
-					}
-				}
+            viewModel.uploadImage(uri) { imageId ->
+                if (imageId != null) {
+                    productImage = imageId
+                } else {
+                    errorMessage = "Unable to upload product image."
+                }
 
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(220.dp)
-						.clip(RoundedCornerShape(18.dp))
-						.background(MaterialTheme.colorScheme.surfaceVariant),
-					contentAlignment = Alignment.Center
-				) {
-					if (productImage.isBlank()) {
-						Column(
-							horizontalAlignment = Alignment.CenterHorizontally,
-							verticalArrangement = Arrangement.spacedBy(10.dp)
-						) {
-							Icon(
-								imageVector = Icons.Default.Fastfood,
-								contentDescription = "Product image placeholder",
-								modifier = Modifier.size(64.dp),
-								tint = MaterialTheme.colorScheme.onSurfaceVariant
-							)
+                uploadingImage = false
+            }
+        }
+    }
 
-							Text(
-								text = "No image selected",
-								style = MaterialTheme.typography.bodyMedium,
-								color = MaterialTheme.colorScheme.onSurfaceVariant
-							)
-						}
-					} else {
-						AsyncImage(
-							model = IMAGE_BASE_URL + productImage,
-							contentDescription = "Product image preview",
-							modifier = Modifier.fillMaxSize(),
-							contentScale = ContentScale.Crop
-						)
-					}
+    val parsedPrice = productPrice.toDoubleOrNull()
+    val validPrice = parsedPrice != null &&
+            parsedPrice.isFinite() &&
+            parsedPrice >= 0.0
 
-					if (uploadingImage) {
-						Surface(
-							modifier = Modifier.fillMaxSize(),
-							color = MaterialTheme.colorScheme.scrim.copy(
-								alpha = 0.55f
-							)
-						) {
-							Column(
-								horizontalAlignment = Alignment.CenterHorizontally,
-								verticalArrangement = Arrangement.Center
-							) {
-								CircularProgressIndicator(
-									color = MaterialTheme.colorScheme.inversePrimary
-								)
+    val scrollState = rememberScrollState()
 
-								Spacer(Modifier.height(12.dp))
+    LaunchedEffect(
+        existingProduct,
+        editMode
+    ) {
+        if (existingProduct != null && !editMode) {
+            productName = existingProduct.productName
+            productPrice = existingProduct.productPrice.toString()
+            productImage = existingProduct.productImage
+            isAvailable = existingProduct.isAvailable
+        }
+    }
 
-								Text(
-									text = "Uploading image...",
-									color = MaterialTheme.colorScheme.inverseOnSurface,
-									style = MaterialTheme.typography.bodyMedium
-								)
-							}
-						}
-					}
-				}
+    if (
+        isExistingProduct && existingProduct == null
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
 
-				OutlinedButton(
-					onClick = {
-						imagePicker.launch("image/*")
-					},
-					enabled = !uploadingImage && !saving,
-					modifier = Modifier.fillMaxWidth()
-				) {
-					Text(
-						text = if (uploadingImage) {
-							"Uploading..."
-						} else if (productImage.isBlank()) {
-							"Choose Product Image"
-						} else {
-							"Change Product Image"
-						}
-					)
-				}
-			}
-		}
+        return
+    }
 
-		// Product details
-		Card(
-			modifier = Modifier.fillMaxWidth(),
-			shape = RoundedCornerShape(24.dp),
-			colors = CardDefaults.cardColors(
-				containerColor = MaterialTheme.colorScheme.surface
-			),
-			elevation = CardDefaults.cardElevation(
-				defaultElevation = 1.dp
-			)
-		) {
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(18.dp),
-				verticalArrangement = Arrangement.spacedBy(16.dp)
-			) {
-				Text(
-					text = "Product Details",
-					style = MaterialTheme.typography.titleLarge,
-					fontWeight = FontWeight.SemiBold
-				)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(scrollState)
+            .padding(
+                horizontal = 20.dp,
+                vertical = 20.dp
+            ),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // Page heading
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-				OutlinedTextField(
-					value = productName,
-					onValueChange = {
-						productName = it
-						errorMessage = null
-					},
-					label = { Text("Product Name") },
-					placeholder = { Text("e.g. Chicken Rice") },
-					leadingIcon = {
-						Icon(
-							imageVector = Icons.Default.Inventory2,
-							contentDescription = null
-						)
-					},
-					singleLine = true,
-					enabled = !saving,
-					modifier = Modifier.fillMaxWidth()
-				)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    text =
+                        if (isExistingProduct) {
+                            "Product Details"
+                        } else {
+                            "Add Product"
+                        },
+                    style =
+                        MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-				OutlinedTextField(
-					value = productPrice,
-					onValueChange = {
-						productPrice = it
-						errorMessage = null
-					},
-					label = { Text("Price (RM)") },
-					placeholder = { Text("0.00") },
-					leadingIcon = {
-						Icon(
-							imageVector = Icons.Default.Payments,
-							contentDescription = null
-						)
-					},
-					keyboardOptions = KeyboardOptions(
-						keyboardType = KeyboardType.Decimal
-					),
-					singleLine = true,
-					enabled = !saving,
-					isError = productPrice.isNotBlank() && !validPrice,
-					supportingText = {
-						if (productPrice.isNotBlank() && !validPrice) {
-							Text("Enter a valid non-negative price.")
-						} else {
-							Text("Enter the price in Malaysian Ringgit.")
-						}
-					},
-					modifier = Modifier.fillMaxWidth()
-				)
+                Text(
+                    text =
+                        if (isExistingProduct) {
+                            "View and manage this menu item."
+                        } else {
+                            "Add a new item to your restaurant menu."
+                        },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-				HorizontalDivider(
-					color = MaterialTheme.colorScheme.outlineVariant
-				)
+            if (
+                isExistingProduct && !editMode) {
+                OutlinedButton(
+                    onClick = {
+                        editMode = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit product"
+                    )
 
-				// Availability control
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceBetween,
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Column(
-						modifier = Modifier.weight(1f),
-						verticalArrangement = Arrangement.spacedBy(4.dp)
-					) {
-						Text(
-							text = "Available for ordering",
-							style = MaterialTheme.typography.titleSmall,
-							fontWeight = FontWeight.SemiBold
-						)
+                    Spacer(
+                        Modifier.width(6.dp)
+                    )
 
-						Text(
-							text = if (isAvailable) {
-								"Customers can order this product."
-							} else {
-								"This product is currently unavailable."
-							},
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
-					}
+                    Text("Edit Product")
+                }
+            }
+        }
 
-					Spacer(Modifier.width(12.dp))
+        // Product image section
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 1.dp
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .padding(10.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
 
-					Switch(
-						checked = isAvailable,
-						onCheckedChange = {
-							isAvailable = it
-						},
-						enabled = !saving
-					)
-				}
-			}
-		}
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "Product Photo",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
 
-		// Error feedback
-		AnimatedVisibility(
-			visible = errorMessage != null,
-			enter = fadeIn(),
-			exit = fadeOut()
-		) {
-			Surface(
-				modifier = Modifier.fillMaxWidth(),
-				shape = RoundedCornerShape(14.dp),
-				color = MaterialTheme.colorScheme.errorContainer
-			) {
-				Text(
-					text = errorMessage.orEmpty(),
-					modifier = Modifier.padding(14.dp),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onErrorContainer
-				)
-			}
-		}
+                        Text(
+                            text = "Choose a clear photo of your food.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
-		// Actions
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(bottom = 12.dp),
-			horizontalArrangement = Arrangement.spacedBy(12.dp)
-		) {
-			OutlinedButton(
-				onClick = onBackClick,
-				enabled = !saving && !uploadingImage,
-				modifier = Modifier.weight(1f)
-			) {
-				Text("Cancel")
-			}
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (productImage.isBlank()) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Fastfood,
+                                contentDescription = "Product image placeholder",
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
 
-			Button(
-				onClick = {
-					if (vendorId == null) {
-						errorMessage =
-							"Please sign in with a vendor account."
-						return@Button
-					}
+                            Text(
+                                text = "No image selected",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        AsyncImage(
+                            model = IMAGE_BASE_URL + productImage,
+                            contentDescription = "Product image preview",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
 
-					val price = productPrice.toDoubleOrNull()
+                    if (uploadingImage) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.scrim.copy(
+                                alpha = 0.55f
+                            )
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.inversePrimary
+                                )
 
-					if (price == null ||
-						!price.isFinite() ||
-						price < 0.0
-					) {
-						errorMessage =
-							"Enter a valid non-negative price."
-						return@Button
-					}
+                                Spacer(Modifier.height(12.dp))
 
-					if (productName.isBlank()) {
-						errorMessage = "Enter a product name."
-						return@Button
-					}
+                                Text(
+                                    text = "Uploading image...",
+                                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
 
-					if (productImage.isBlank()) {
-						errorMessage = "Please upload a product image."
-						return@Button
-					}
+                if (editMode) {
+                    OutlinedButton(
+                        onClick = {
+                            imagePicker.launch("image/*")
+                        },
+                        enabled = !uploadingImage && !saving,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
 
-					saving = true
-					errorMessage = null
+                        Text(
+                            text = if (uploadingImage) {
+                                "Uploading..."
+                            } else if (productImage.isBlank()) {
+                                "Choose Product Image"
+                            } else {
+                                "Change Product Image"
+                            }
+                        )
+                    }
+                }
+            }
+        }
 
-					viewModel.addProduct(
-						vendorId = vendorId,
-						productName = productName.trim(),
-						productPrice = price,
-						productImage = productImage,
-						isAvailable = isAvailable
-					) { success ->
-						saving = false
+        // Product details
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 1.dp
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Product Details",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-						if (success) {
-							onBackClick()
-						} else {
-							errorMessage =
-								"Unable to save product. Please try again."
-						}
-					}
-				},
-				enabled = !saving &&
-					!uploadingImage &&
-					vendorId != null &&
-					productName.isNotBlank() &&
-					validPrice &&
-					productImage.isNotBlank(),
-				modifier = Modifier.weight(1f)
-			) {
-				if (saving) {
-					CircularProgressIndicator(
-						modifier = Modifier.size(18.dp),
-						strokeWidth = 2.dp,
-						color = MaterialTheme.colorScheme.onPrimary
-					)
+                OutlinedTextField(
+                    value = productName,
+                    onValueChange = {
+                        if (editMode) {
+                            productName = it
+                            errorMessage = null
+                        }
+                    },
+                    readOnly = !editMode,
+                    label = { Text("Product Name") },
+                    placeholder = { Text("e.g. Chicken Rice") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Inventory2,
+                            contentDescription = null
+                        )
+                    },
+                    singleLine = true,
+                    enabled = !saving,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-					Spacer(Modifier.width(8.dp))
+                OutlinedTextField(
+                    value = productPrice,
+                    onValueChange = {
+                        if (editMode) {
+                            productPrice = it
+                            errorMessage = null
+                        }
+                    },
+                    readOnly = !editMode,
+                    label = { Text("Price (RM)") },
+                    placeholder = { Text("0.00") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Payments,
+                            contentDescription = null
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                    singleLine = true,
+                    enabled = !saving,
+                    isError = productPrice.isNotBlank() && !validPrice,
+                    supportingText = {
+                        if (productPrice.isNotBlank() && !validPrice) {
+                            Text("Enter a valid non-negative price.")
+                        } else {
+                            Text("Enter the price in Malaysian Ringgit.")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-					Text("Saving...")
-				} else {
-					Text("Save Product")
-				}
-			}
-		}
-	}
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                // Availability control
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Available for ordering",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        Text(
+                            text = if (isAvailable) {
+                                "Customers can order this product."
+                            } else {
+                                "This product is currently unavailable."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    Switch(
+                        checked = isAvailable,
+                        onCheckedChange = {
+                            isAvailable = it
+                        },
+                        enabled = editMode && !saving
+                    )
+                }
+            }
+        }
+
+        // Error feedback
+        AnimatedVisibility(
+            visible = errorMessage != null,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.errorContainer
+            ) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    modifier = Modifier.padding(14.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+
+        // Actions
+        if (isExistingProduct && !editMode) {
+
+            // VIEW EXISTING PRODUCT
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                OutlinedButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Back")
+                }
+
+                Button(
+                    onClick = {
+                        showDeleteDialog = true
+                    },
+                    enabled = !saving,
+                    modifier = Modifier.weight(1f),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete product",
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Spacer(Modifier.width(6.dp))
+
+                    Text("Delete")
+                }
+            }
+
+        } else {
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                OutlinedButton(
+                    onClick = {
+                        if (isExistingProduct) {
+                            editMode = false
+                            errorMessage = null
+
+                        } else {
+                            onBackClick()
+                        }
+                    },
+                    enabled = !saving && !uploadingImage,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+
+                        if (vendorId == null) {
+                            errorMessage = "Please sign in with a vendor account."
+                            return@Button
+                        }
+
+                        val price =
+                            productPrice.toDoubleOrNull()
+
+                        if (
+                            price == null ||
+                            !price.isFinite() ||
+                            price < 0.0
+                        ) {
+                            errorMessage = "Enter a valid non-negative price."
+                            return@Button
+                        }
+
+                        if (productName.isBlank()) {
+                            errorMessage = "Enter a product name."
+                            return@Button
+                        }
+
+                        if (productImage.isBlank()) {
+                            errorMessage = "Please upload a product image."
+                            return@Button
+                        }
+
+                        saving = true
+                        errorMessage = null
+
+                        if (
+                            isExistingProduct &&
+                            existingProduct != null
+                        ) {
+
+                            // UPDATE EXISTING PRODUCT
+                            viewModel.updateProduct(
+                                productId = existingProduct.productId,
+                                vendorId = existingProduct.vendorId,
+                                productName = productName.trim(),
+                                productPrice = price,
+                                productImage = productImage,
+                                isAvailable = isAvailable
+                            ) { success ->
+
+                                saving = false
+
+                                if (success) {
+                                    editMode = false
+
+                                } else {
+                                    errorMessage = "Unable to update product. Please try again."
+                                }
+                            }
+
+                        } else {
+
+                            // ADD NEW PRODUCT
+                            viewModel.addProduct(
+                                vendorId = vendorId,
+                                productName = productName.trim(),
+                                productPrice = price,
+                                productImage = productImage,
+                                isAvailable = isAvailable
+                            ) { success ->
+
+                                saving = false
+
+                                if (success) {
+                                    onBackClick()
+
+                                } else {
+                                    errorMessage = "Unable to save product. Please try again."
+                                }
+                            }
+                        }
+                    },
+                    enabled = !saving && !uploadingImage && vendorId != null &&
+                                productName.isNotBlank() && validPrice && productImage.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    if (saving) {
+
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Text("Saving...")
+
+                    } else {
+
+                        Text(
+                            if (isExistingProduct) {
+                                "Save Changes"
+                            } else {
+                                "Save Product"
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+
+    }
+
+    if (
+        showDeleteDialog &&
+        existingProduct != null
+    ) {
+        ConfirmDialog(
+            title = "Delete Product",
+            message =
+                "Are you sure you want to delete ${existingProduct.productName}?",
+            confirmText = "Delete",
+            destructive = true,
+            onDismiss = {
+                showDeleteDialog = false
+            },
+            onConfirm = {
+
+                showDeleteDialog = false
+                saving = true
+
+                viewModel.deleteProduct(
+                    productId =
+                        existingProduct.productId,
+                    vendorId =
+                        existingProduct.vendorId
+                ) { success ->
+
+                    saving = false
+
+                    if (success) {
+                        onBackClick()
+                    } else {
+                        errorMessage =
+                            "Unable to delete product. Please try again."
+                    }
+                }
+            }
+        )
+    }
 }

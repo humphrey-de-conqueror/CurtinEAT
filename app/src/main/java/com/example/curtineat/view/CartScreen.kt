@@ -57,6 +57,7 @@ fun CartScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
@@ -106,7 +107,8 @@ fun CartScreen(
         showSearch = false,
         showNotifications = true,
         themeMode = themeMode,
-        onThemeModeChange = onThemeModeChange
+        onThemeModeChange = onThemeModeChange,
+        onLogoutClick = onLogoutClick,
     ) { innerPadding ->
 
         Box(

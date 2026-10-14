@@ -116,7 +116,9 @@ object RouteVendorLandingScreen
 object RouteProfileScreen
 
 @Serializable
-object RouteAddProductScreen
+data class RouteAddProductScreen(
+    val productId: String? = null
+)
 
 @Serializable
 object RouteOrderHistoryScreen
@@ -190,6 +192,19 @@ fun ScreenNavigation(
         nav.navigate(RouteRegistrationScreen)
     }
 
+    val onLogoutClick: () -> Unit = {
+
+        appViewModel.signOut()
+
+        nav.navigate(RouteStartupScreen) {
+            popUpTo(nav.graph.id) {
+                inclusive = true
+            }
+
+            launchSingleTop = true
+        }
+    }
+
     val onLoginSuccess: (Boolean) -> Unit = { isVendor ->
         if (isVendor) {
             nav.navigate(RouteVendorLandingScreen) {
@@ -253,7 +268,16 @@ fun ScreenNavigation(
     }
 
     val onAddProductClick: () -> Unit = {
-        nav.navigate(RouteAddProductScreen)
+        nav.navigate(
+            RouteAddProductScreen()
+        )
+    }
+    val onProductClick: (String) -> Unit = { productId ->
+        nav.navigate(
+            RouteAddProductScreen(
+                productId = productId
+            )
+        )
     }
 
     val onHistoryClick: () -> Unit = {
@@ -311,7 +335,8 @@ fun ScreenNavigation(
             onLoginClick = onLoginClick,
             onHistoryClick = onHistoryClick,
             themeMode = themeMode,
-            onThemeModeChange = onThemeModeChange
+            onThemeModeChange = onThemeModeChange,
+            onLogoutClick = onLogoutClick,
         )
     }
 
@@ -325,7 +350,8 @@ fun ScreenNavigation(
                 onLoginClick = onLoginClick,
                 onHistoryClick = onHistoryClick,
                 themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange
+                onThemeModeChange = onThemeModeChange,
+                onLogoutClick = onLogoutClick,
             )
         }
 
@@ -357,10 +383,11 @@ fun ScreenNavigation(
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onHistoryClick = onHistoryClick,
-                onFoodClick = { _ -> },
+                onFoodClick = onProductClick,
                 onAddProductClick = onAddProductClick,
                 themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange
+                onThemeModeChange = onThemeModeChange,
+                onLogoutClick = onLogoutClick,
             )
         }
 
@@ -372,9 +399,14 @@ fun ScreenNavigation(
             )
         }
 
-        composable<RouteAddProductScreen> {
+        composable<RouteAddProductScreen> { backStackEntry ->
+
+            val route =
+                backStackEntry.toRoute<RouteAddProductScreen>()
+
             AddProductScreen(
                 viewModel = appViewModel,
+                productId = route.productId,
                 onBackClick = {
                     nav.popBackStack()
                 }
@@ -391,7 +423,8 @@ fun ScreenNavigation(
                 onHistoryClick = onHistoryClick,
                 onOrderClick = onOrderClick,
                 themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange
+                onThemeModeChange = onThemeModeChange,
+                onLogoutClick = onLogoutClick,
             )
         }
 

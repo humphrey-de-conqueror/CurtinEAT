@@ -96,6 +96,7 @@ fun AppScaffold(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
     loadingOverride: Boolean? = null,
@@ -104,7 +105,7 @@ fun AppScaffold(
     onThemeModeChange: (AppThemeMode) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 
-) {
+    ) {
     val isLoading by appViewModel.isLoading.collectAsState()
     val showLoading = loadingOverride ?: isLoading
     val authenticationState by appViewModel.authenticationState.collectAsState()
@@ -126,10 +127,7 @@ fun AppScaffold(
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         isLoggedIn = currentUserId != null,
-        onLogOutClick = {
-            appViewModel.signOut()
-            onLoginClick()
-        },
+        onLogOutClick = onLogoutClick,
 
         isVendor = authenticationState.role == UserRole.VENDOR,
 
@@ -185,6 +183,7 @@ fun MainScreen(
     onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
@@ -212,6 +211,7 @@ fun MainScreen(
             )
         },
         themeMode = themeMode,
+        onLogoutClick = onLogoutClick,
         onThemeModeChange = onThemeModeChange
     ) { innerPadding ->
         BodyScreen(
@@ -689,6 +689,15 @@ fun BodyScreen(
     val vendors = vendorState.data
     val products = productState.data
 
+    val visibleVendors =
+        vendors.filter { vendor ->
+            products.any { product ->
+                product.vendorId == vendor.vendorId && product.isAvailable &&
+                        (searchQuery.isBlank() || product.productName
+                            .contains(searchQuery, ignoreCase = true))
+            }
+        }
+
     LaunchedEffect(searchQuery) {
         searchText = searchQuery
     }
@@ -774,7 +783,7 @@ fun BodyScreen(
             )
         }
 
-        if (vendors.isEmpty()) {
+        if (visibleVendors.isEmpty()) {
             item(key = "empty-restaurants") {
                 if (isLoading) {
                     LoadingState(
@@ -782,19 +791,25 @@ fun BodyScreen(
                     )
                 } else {
                     EmptyState(
-                        title = "No restaurants available",
-                        description = if (searchQuery.isBlank()) {
-                            "Please check again later."
-                        } else {
-                            "Try searching for another food item."
-                        },
+                        title =
+                            if (searchQuery.isBlank()) {
+                                "No food available"
+                            } else {
+                                "No matching food"
+                            },
+                        description =
+                            if (searchQuery.isBlank()) {
+                                "There are currently no products available for ordering."
+                            } else {
+                                "Try searching for another food item."
+                            },
                         icon = Icons.Default.Search
                     )
                 }
             }
         } else {
             items(
-                items = vendors,
+                items = visibleVendors,
                 key = { it.vendorId }
             ) { vendor ->
                 val vendorProducts = products.filter { product ->
@@ -809,22 +824,21 @@ fun BodyScreen(
                                     )
                 }
 
-                if (searchQuery.isBlank() || vendorProducts.isNotEmpty()) {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn(tween(220)) +
-                                slideInVertically(
-                                    animationSpec = tween(220),
-                                    initialOffsetY = { it / 12 }
-                                )
-                    ) {
-                        RestaurantCard(
-                            appViewModel = appViewModel,
-                            vendor = vendor,
-                            products = vendorProducts
-                        )
-                    }
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(tween(220)) +
+                            slideInVertically(
+                                animationSpec = tween(220),
+                                initialOffsetY = { it / 12 }
+                            )
+                ) {
+                    RestaurantCard(
+                        appViewModel = appViewModel,
+                        vendor = vendor,
+                        products = vendorProducts
+                    )
                 }
+
             }
         }
 

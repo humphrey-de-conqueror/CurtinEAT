@@ -562,6 +562,81 @@ class AppViewModel(
         }
     }
 
+    fun updateProduct(
+        productId: String,
+        vendorId: String,
+        productName: String,
+        productPrice: Double,
+        productImage: String,
+        isAvailable: Boolean,
+        onResult: (Boolean) -> Unit
+    ) {
+        if (
+            productId.isBlank() ||
+            vendorId.isBlank() ||
+            productName.isBlank() ||
+            productPrice < 0.0 ||
+            productImage.isBlank()
+        ) {
+            onResult(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+
+                val product = FirebaseProductData(
+                    productId = productId,
+                    vendorId = vendorId,
+                    productName = productName.trim(),
+                    productPrice = productPrice,
+                    productImage = productImage,
+                    isAvailable = isAvailable
+                )
+
+                productSync.updateProduct(product)
+
+                onResult(true)
+
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteProduct(
+        productId: String,
+        vendorId: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        if (
+            productId.isBlank() ||
+            vendorId.isBlank()
+        ) {
+            onResult(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+
+                productSync.deleteProduct(
+                    productId = productId,
+                    vendorId = vendorId
+                )
+
+                onResult(true)
+
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
     // ---------------------------------------------------------
     // Profile operations
     // ---------------------------------------------------------

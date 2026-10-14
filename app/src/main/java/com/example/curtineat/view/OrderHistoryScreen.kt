@@ -52,7 +52,8 @@ fun OrderHistoryScreen(
 	onHistoryClick: () -> Unit,
 	onOrderClick: (String) -> Unit,
 	themeMode: AppThemeMode,
-	onThemeModeChange: (AppThemeMode) -> Unit
+	onThemeModeChange: (AppThemeMode) -> Unit,
+	onLogoutClick: () -> Unit,
 ) {
 	val orderState by appViewModel.orderState.collectAsState()
 	val vendorState by appViewModel.vendorState.collectAsState()
@@ -103,7 +104,8 @@ fun OrderHistoryScreen(
 		showSearch = false,
 		showNotifications = true,
 		themeMode = themeMode,
-		onThemeModeChange = onThemeModeChange
+		onThemeModeChange = onThemeModeChange,
+		onLogoutClick = onLogoutClick,
 	) { innerPadding ->
 
 		Column(

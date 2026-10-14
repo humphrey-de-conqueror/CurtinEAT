@@ -55,7 +55,8 @@ fun OrderTrackingScreen(
     onHistoryClick: () -> Unit,
     onBackClick: () -> Unit,
     themeMode: AppThemeMode,
-    onThemeModeChange: (AppThemeMode) -> Unit
+    onThemeModeChange: (AppThemeMode) -> Unit,
+    onLogoutClick: () ->Unit
 ) {
     var order by remember(orderId) {
         mutableStateOf<OrderEntity?>(null)
@@ -95,7 +96,8 @@ fun OrderTrackingScreen(
         showSearch = false,
         showNotifications = true,
         themeMode = themeMode,
-        onThemeModeChange = onThemeModeChange
+        onThemeModeChange = onThemeModeChange,
+        onLogoutClick = onLogoutClick
     ) { innerPadding ->
         Column(
             modifier = Modifier

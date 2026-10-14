@@ -38,4 +38,27 @@ class ProductSyncRepository(
 		return productId
 	}
 
+	suspend fun updateProduct(
+		product: FirebaseProductData
+	) {
+		remote.updateProductProfile(
+			productId = product.productId,
+			productName = product.productName,
+			productPrice = product.productPrice,
+			productImage = product.productImage,
+			isAvailable = product.isAvailable
+		)
+
+		refreshByVendor(product.vendorId)
+	}
+
+	suspend fun deleteProduct(
+		productId: String,
+		vendorId: String
+	) {
+		remote.deleteProduct(productId)
+
+		refreshByVendor(vendorId)
+	}
+
 }
