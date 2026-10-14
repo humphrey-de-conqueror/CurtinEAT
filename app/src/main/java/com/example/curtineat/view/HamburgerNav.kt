@@ -70,6 +70,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
+import androidx.compose.material3.CircularProgressIndicator
 
 @Composable
 fun MainDrawer(
@@ -254,16 +255,45 @@ fun HamburgerNav(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            text = profileName.ifBlank { "My Account" },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            maxLines = 1
-                        )
+                        if (isLoggedIn && profileName.isBlank()) {
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp
+                                )
+
+                                Text(
+                                    text = "Loading profile...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+
+                        } else {
+
+                            Text(
+                                text = if (isLoggedIn) {
+                                    profileName
+                                } else {
+                                    "Hi, Guest"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1
+                            )
+                        }
 
                         Text(
-                            text = "Welcome to CurtinEAT",
+                            text = if (isLoggedIn) {
+                                "Welcome back to CurtinEAT"
+                            } else {
+                                "Log in to access your account"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )

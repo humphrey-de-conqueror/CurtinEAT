@@ -46,6 +46,11 @@ import androidx.compose.ui.unit.dp
 import com.example.curtineat.ui.components.AppBackButton
 import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -59,8 +64,12 @@ fun LoginScreen(
         mutableStateOf("")
     }
 
-    var password by remember {
+    var password by rememberSaveable {
         mutableStateOf("")
+    }
+
+    var passwordVisible by rememberSaveable {
+        mutableStateOf(false)
     }
 
     var isVendor by remember {
@@ -174,9 +183,33 @@ fun LoginScreen(
                                 contentDescription = null
                             )
                         },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    passwordVisible = !passwordVisible
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = if (passwordVisible) {
+                                        "Hide password"
+                                    } else {
+                                        "Show password"
+                                    }
+                                )
+                            }
+                        },
                         singleLine = true,
                         enabled = !isLoginLoading,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done

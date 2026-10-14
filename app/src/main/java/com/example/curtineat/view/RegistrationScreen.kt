@@ -46,6 +46,13 @@ import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.RegisterResult
 import kotlinx.coroutines.delay
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
+import com.example.curtineat.ui.components.VendorCategoryDropdown
 
 @Composable
 fun RegistrationScreen(
@@ -64,6 +71,14 @@ fun RegistrationScreen(
 
     var confirmPassword by rememberSaveable {
         mutableStateOf("")
+    }
+
+    var passwordVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var confirmPasswordVisible by rememberSaveable {
+        mutableStateOf(false)
     }
 
     var isVendor by rememberSaveable {
@@ -238,9 +253,33 @@ fun RegistrationScreen(
                         label = {
                             Text("Password")
                         },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    passwordVisible = !passwordVisible
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = if (passwordVisible) {
+                                        "Hide password"
+                                    } else {
+                                        "Show password"
+                                    }
+                                )
+                            }
+                        },
                         singleLine = true,
                         enabled = !isRegistering,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Next
@@ -262,9 +301,34 @@ fun RegistrationScreen(
                         label = {
                             Text("Confirm password")
                         },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    confirmPasswordVisible = !confirmPasswordVisible
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = if (confirmPasswordVisible) {
+                                        "Hide confirm password"
+                                    } else {
+                                        "Show confirm password"
+                                    }
+                                )
+                            }
+                        },
+                        visualTransformation = if (confirmPasswordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         singleLine = true,
                         enabled = !isRegistering,
-                        visualTransformation = PasswordVisualTransformation(),
+//                        visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
@@ -274,22 +338,13 @@ fun RegistrationScreen(
 
                     // Vendor-only category
                     if (isVendor) {
-                        OutlinedTextField(
-                            value = category,
-                            onValueChange = {
+                        VendorCategoryDropdown(
+                            selectedCategory = category,
+                            onCategorySelected = {
                                 category = it
                                 message = null
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = {
-                                Text("Restaurant category")
-                            },
-                            singleLine = true,
-                            enabled = !isRegistering,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            shape = RoundedCornerShape(14.dp)
+                            enabled = !isRegistering
                         )
                     }
 

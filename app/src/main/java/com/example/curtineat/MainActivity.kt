@@ -9,7 +9,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -30,16 +29,14 @@ import androidx.navigation.toRoute
 import com.example.curtineat.view.OrderHistoryScreen
 import com.example.curtineat.view.OrderDetailScreen
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import com.example.curtineat.ui.theme.AppThemeMode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.first
 import com.example.curtineat.ui.theme.ThemePreferences
+import com.example.curtineat.view.StartupScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -93,6 +90,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+@Serializable
+object RouteStartupScreen
 
 @Serializable
 object RouteMainScreen
@@ -137,11 +136,6 @@ fun ScreenNavigation(
 ) {
     val nav = rememberNavController()
 
-    // tracks the log state
-    LaunchedEffect(Unit) {
-        appViewModel.checkCurrentUserRole { }
-    }
-
     val onCartButtonClick: () -> Unit = {
         nav.navigate(RouteCartScreen)
     }
@@ -150,9 +144,28 @@ fun ScreenNavigation(
         nav.popBackStack()
     }
 
+//    val onHomeClick: () -> Unit = {
+//        nav.navigate(RouteMainScreen) {
+//            launchSingleTop = true
+//        }
+//    }
+
     val onHomeClick: () -> Unit = {
-        nav.navigate(RouteMainScreen) {
-            launchSingleTop = true
+
+        when (appViewModel.authenticationState.value.role) {
+
+            UserRole.VENDOR -> {
+                nav.navigate(RouteVendorLandingScreen) {
+                    launchSingleTop = true
+                }
+            }
+
+            UserRole.CUSTOMER,
+            UserRole.NONE -> {
+                nav.navigate(RouteMainScreen) {
+                    launchSingleTop = true
+                }
+            }
         }
     }
 
@@ -203,12 +216,6 @@ fun ScreenNavigation(
         }
     }
 
-    val onVendorHomeClick: () -> Unit = {
-        nav.navigate(RouteVendorLandingScreen) {
-            launchSingleTop = true
-        }
-    }
-
     val onVendorProfileClick: () -> Unit = {
         nav.navigate(RouteVendorProfileScreen) {
             launchSingleTop = true
@@ -247,8 +254,39 @@ fun ScreenNavigation(
 
     NavHost(
         navController = nav,
-        startDestination = RouteMainScreen
+        startDestination = RouteStartupScreen
     ) {
+        composable<RouteStartupScreen> {
+
+            StartupScreen(
+                appViewModel = appViewModel,
+                onRoleResolved = { role ->
+
+                    when (role) {
+
+                        UserRole.VENDOR -> {
+                            nav.navigate(RouteVendorLandingScreen) {
+                                popUpTo(RouteStartupScreen) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+
+                        UserRole.CUSTOMER,
+                        UserRole.NONE -> {
+                            nav.navigate(RouteMainScreen) {
+                                popUpTo(RouteStartupScreen) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
         composable<RouteMainScreen> {
         MainScreen(
             appViewModel = appViewModel,
@@ -300,7 +338,7 @@ fun ScreenNavigation(
         composable<RouteVendorLandingScreen> {
             VendorLandingScreen(
                 appViewModel = appViewModel,
-                onHomeClick = onVendorHomeClick,
+                onHomeClick = onHomeClick,
                 onProfileClick = onProfileClick,
                 onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,

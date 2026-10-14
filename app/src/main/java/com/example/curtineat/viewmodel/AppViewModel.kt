@@ -1315,6 +1315,7 @@ class AppViewModel(
                     "REALTIME_SESSION",
                     "Starting CUSTOMER listeners for $userId"
                 )
+                observeCustomer(userId)
 
                 orderRealtimeListener =
                     orderSync.startRealtimeCustomerOrders(
@@ -1335,6 +1336,8 @@ class AppViewModel(
                     "REALTIME_SESSION",
                     "Starting VENDOR listeners for $userId"
                 )
+
+                observeVendorProfile(userId)
 
                 orderRealtimeListener =
                     orderSync.startRealtimeVendorOrders(

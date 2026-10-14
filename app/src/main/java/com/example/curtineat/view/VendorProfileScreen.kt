@@ -30,8 +30,6 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,18 +57,7 @@ import com.example.curtineat.viewmodel.UserRole
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-
-private val vendorCategories = listOf(
-	"Western",
-	"Japanese",
-	"Chinese",
-	"Korean",
-	"Local",
-	"Fast Food",
-	"Dessert",
-	"Beverage",
-	"Other"
-)
+import com.example.curtineat.ui.components.VendorCategoryDropdown
 
 @Composable
 fun VendorProfileScreen(
@@ -82,13 +69,13 @@ fun VendorProfileScreen(
 	val vendorProfileState by viewModel.vendorProfileState.collectAsState()
 
 	var authChecked by remember { mutableStateOf(false) }
+	var isLoggingOut by remember { mutableStateOf(false) }
 	var editMode by remember { mutableStateOf(false) }
 
 	var vendorName by remember { mutableStateOf("") }
 	var category by remember { mutableStateOf("") }
 	var vendorImage by remember { mutableStateOf("") }
 
-	var categoryExpanded by remember { mutableStateOf(false) }
 	var saving by remember { mutableStateOf(false) }
 	var uploadingImage by remember { mutableStateOf(false) }
 
@@ -101,10 +88,14 @@ fun VendorProfileScreen(
 		}
 	}
 
-	LaunchedEffect(authChecked, vendorId, userRole) {
+	LaunchedEffect(authChecked, vendorId, userRole, isLoggingOut
+	) {
 		if (authChecked) {
-			if (vendorId == null || userRole != UserRole.VENDOR) {
-				onLoginClick()
+			if (vendorId == null || userRole != UserRole.VENDOR
+			) {
+				if (!isLoggingOut) {
+					onLoginClick()
+				}
 			} else {
 				viewModel.observeVendorProfile(vendorId)
 			}
@@ -377,41 +368,13 @@ fun VendorProfileScreen(
 							color = MaterialTheme.colorScheme.onSurfaceVariant
 						)
 
-						Box(modifier = Modifier.fillMaxWidth()) {
-							OutlinedButton(
-								onClick = { categoryExpanded = true },
-								modifier = Modifier.fillMaxWidth()
-							) {
-								Text(
-									text = category.ifBlank {
-										"Choose Category"
-									},
-									modifier = Modifier.weight(1f)
-								)
-
-								Text("⌄")
-							}
-
-							DropdownMenu(
-								expanded = categoryExpanded,
-								onDismissRequest = {
-									categoryExpanded = false
-								},
-								modifier = Modifier.background(
-									MaterialTheme.colorScheme.surface
-								)
-							) {
-								vendorCategories.forEach { item ->
-									DropdownMenuItem(
-										text = { Text(item) },
-										onClick = {
-											category = item
-											categoryExpanded = false
-										}
-									)
-								}
-							}
-						}
+						VendorCategoryDropdown(
+							selectedCategory = category,
+							onCategorySelected = {
+								category = it
+							},
+							enabled = !saving
+						)
 					}
 
 					HorizontalDivider(
@@ -427,7 +390,6 @@ fun VendorProfileScreen(
 								vendorName = currentVendor.vendorName
 								category = currentVendor.category
 								vendorImage = currentVendor.vendorImage
-								categoryExpanded = false
 								editMode = false
 							},
 							enabled = !saving,
@@ -565,6 +527,7 @@ fun VendorProfileScreen(
 
 			Button(
 				onClick = {
+					isLoggingOut = true
 					viewModel.signOut()
 					onHomeClick()
 				},

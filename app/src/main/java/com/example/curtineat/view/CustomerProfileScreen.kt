@@ -47,7 +47,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
+import androidx.compose.material3.ButtonDefaults
 
 @Composable
 fun CustomerProfileScreen(
@@ -76,6 +76,10 @@ fun CustomerProfileScreen(
 	viewModel.customerState.collectAsState()
 
 	var authChecked by remember {
+		mutableStateOf(false)
+	}
+
+	var isLoggingOut by remember {
 		mutableStateOf(false)
 	}
 
@@ -112,13 +116,13 @@ fun CustomerProfileScreen(
 		}
 	}
 
-	LaunchedEffect(authChecked, customerId, userRole) {
+	LaunchedEffect(authChecked, customerId, userRole, isLoggingOut) {
 		if (authChecked) {
-			if (
-				customerId == null ||
-				userRole != UserRole.CUSTOMER
+			if (customerId == null || userRole != UserRole.CUSTOMER
 			) {
-				onLoginClick()
+				if (!isLoggingOut) {
+					onLoginClick()
+				}
 			} else {
 				viewModel.observeCustomer(customerId)
 			}
@@ -593,19 +597,26 @@ fun CustomerProfileScreen(
 				Text("Back to Home")
 			}
 
-			OutlinedButton(
+			Button(
 				onClick = {
+					isLoggingOut = true
 					viewModel.signOut()
 					onHomeClick()
 				},
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth(),
+				colors = ButtonDefaults.buttonColors(
+					containerColor = MaterialTheme.colorScheme.error,
+					contentColor = MaterialTheme.colorScheme.onError
+				)
 			) {
 				Icon(
 					imageVector = Icons.Default.Logout,
 					contentDescription = null,
 					modifier = Modifier.size(18.dp)
 				)
+
 				Spacer(Modifier.width(8.dp))
+
 				Text("Logout")
 			}
 		}
