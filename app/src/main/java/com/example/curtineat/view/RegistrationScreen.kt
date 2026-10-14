@@ -92,10 +92,6 @@ fun RegistrationScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        AppBackButton(
-            onClick = onBackButtonClick,
-            modifier = Modifier.align(Alignment.TopStart)
-        )
 
         Column(
             modifier = Modifier
@@ -435,5 +431,10 @@ fun RegistrationScreen(
                 )
             }
         }
+
+        AppBackButton(
+            onClick = onBackButtonClick,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
     }
 }
