@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.first
 import android.util.Log
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.delay
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -136,6 +137,11 @@ class AppViewModel(
         started = SharingStarted.Eagerly,
         initialValue = true
     )
+
+    private val _homeLoading = MutableStateFlow(true)
+
+    val homeLoading: StateFlow<Boolean> =
+        _homeLoading.asStateFlow()
 
     // ---------------------------------------------------------
     // Observation jobs and scopes
@@ -477,8 +483,42 @@ class AppViewModel(
     }
 
     fun loadHomeData() {
-        refreshVendors()
-        refreshProducts()
+        viewModelScope.launch {
+
+            _homeLoading.value = true
+
+            val startTime = System.currentTimeMillis()
+
+            try {
+                perform(
+                    getState = { _vendorState.value },
+                    setState = { _vendorState.value = it },
+                    fallbackMessage = "Unable to refresh vendors"
+                ) {
+                    vendorSync.refresh()
+                }
+
+                perform(
+                    getState = { _productState.value },
+                    setState = { _productState.value = it },
+                    fallbackMessage = "Unable to refresh products"
+                ) {
+                    productSync.refreshAll()
+                }
+
+            } finally {
+
+                val elapsed = System.currentTimeMillis() - startTime
+
+                val minimumLoadingTime = 350L
+
+                if (elapsed < minimumLoadingTime) {
+                    delay(minimumLoadingTime - elapsed)
+                }
+
+                _homeLoading.value = false
+            }
+        }
     }
 
     // ---------------------------------------------------------

@@ -98,12 +98,15 @@ fun AppScaffold(
     onHistoryClick: () -> Unit,
     showSearch: Boolean = true,
     showNotifications: Boolean = true,
+    loadingOverride: Boolean? = null,
     floatingActionButton: @Composable () -> Unit = {},
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
+
 ) {
     val isLoading by appViewModel.isLoading.collectAsState()
+    val showLoading = loadingOverride ?: isLoading
     val authenticationState by appViewModel.authenticationState.collectAsState()
 
     val currentUserId = authenticationState.userId
@@ -150,7 +153,7 @@ fun AppScaffold(
                 content(innerPadding)
 
                 AnimatedVisibility(
-                    visible = isLoading,
+                    visible = showLoading,
                     enter = fadeIn(animationSpec = tween(180)),
                     exit = fadeOut(animationSpec = tween(180)),
                     modifier = Modifier.fillMaxSize()
@@ -186,6 +189,7 @@ fun MainScreen(
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val cart by appViewModel.cart.collectAsState()
+    val homeLoading by appViewModel.homeLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         appViewModel.loadHomeData()
@@ -200,6 +204,7 @@ fun MainScreen(
         onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true,
+        loadingOverride = homeLoading,
         floatingActionButton = {
             CartButton(
                 onCartButtonClick = onCartButtonClick,
@@ -675,7 +680,7 @@ fun BodyScreen(
     val productState by appViewModel.productState.collectAsState()
     val searchQuery by appViewModel.searchQuery.collectAsState()
     val searchVendorId by appViewModel.searchVendorId.collectAsState()
-    val isLoading by appViewModel.isLoading.collectAsState()
+    val isLoading by appViewModel.homeLoading.collectAsState()
 
     var searchText by rememberSaveable {
         mutableStateOf(searchQuery)
