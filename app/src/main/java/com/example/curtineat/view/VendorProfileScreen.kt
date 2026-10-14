@@ -56,6 +56,9 @@ import com.example.curtineat.ui.components.AppCard
 import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 private val vendorCategories = listOf(
 	"Western",
@@ -138,7 +141,8 @@ fun VendorProfileScreen(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background),
+				.background(MaterialTheme.colorScheme.background)
+				.windowInsetsPadding(WindowInsets.safeDrawing),
 			contentAlignment = Alignment.Center
 		) {
 			Column(
@@ -166,6 +170,7 @@ fun VendorProfileScreen(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
+				.windowInsetsPadding(WindowInsets.safeDrawing)
 				.padding(24.dp),
 			contentAlignment = Alignment.Center
 		) {
@@ -201,10 +206,12 @@ fun VendorProfileScreen(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.background)
+			.windowInsetsPadding(WindowInsets.safeDrawing)
 			.verticalScroll(scrollState)
 			.padding(horizontal = 20.dp, vertical = 20.dp),
 		verticalArrangement = Arrangement.spacedBy(20.dp)
 	) {
+
 		// Page heading
 		Column(
 			verticalArrangement = Arrangement.spacedBy(4.dp)

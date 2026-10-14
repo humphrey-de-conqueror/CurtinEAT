@@ -129,46 +129,46 @@ fun CartScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Customer information
-                    AppCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        AppText(
-                            text = "Customer information",
-                            style = androidx.compose.material3.MaterialTheme
-                                .typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Spacer(Modifier.height(8.dp))
-
-                        if (loggedInCustomerId != null) {
-                            AppText(
-                                text = "Customer ID: $loggedInCustomerId",
-                                style = androidx.compose.material3.MaterialTheme
-                                    .typography.bodyMedium,
-                                color = androidx.compose.material3.MaterialTheme
-                                    .colorScheme.onSurfaceVariant
-                            )
-
-                            AppText(
-                                text = "Ordering as: ${
-                                    currentCustomer?.customerName
-                                        ?: "Loading customer..."
-                                }",
-                                style = androidx.compose.material3.MaterialTheme
-                                    .typography.bodyMedium
-                            )
-                        } else {
-                            AppText(
-                                text = "You are not logged in. Log in before placing your order.",
-                                style = androidx.compose.material3.MaterialTheme
-                                    .typography.bodyMedium,
-                                color = androidx.compose.material3.MaterialTheme
-                                    .colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+//                    AppCard(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        contentPadding = PaddingValues(16.dp)
+//                    ) {
+//                        AppText(
+//                            text = "Customer information",
+//                            style = androidx.compose.material3.MaterialTheme
+//                                .typography.titleMedium,
+//                            fontWeight = FontWeight.SemiBold
+//                        )
+//
+//                        Spacer(Modifier.height(8.dp))
+//
+//                        if (loggedInCustomerId != null) {
+//                            AppText(
+//                                text = "Customer ID: $loggedInCustomerId",
+//                                style = androidx.compose.material3.MaterialTheme
+//                                    .typography.bodyMedium,
+//                                color = androidx.compose.material3.MaterialTheme
+//                                    .colorScheme.onSurfaceVariant
+//                            )
+//
+//                            AppText(
+//                                text = "Ordering as: ${
+//                                    currentCustomer?.customerName
+//                                        ?: "Loading customer..."
+//                                }",
+//                                style = androidx.compose.material3.MaterialTheme
+//                                    .typography.bodyMedium
+//                            )
+//                        } else {
+//                            AppText(
+//                                text = "You are not logged in. Log in before placing your order.",
+//                                style = androidx.compose.material3.MaterialTheme
+//                                    .typography.bodyMedium,
+//                                color = androidx.compose.material3.MaterialTheme
+//                                    .colorScheme.onSurfaceVariant
+//                            )
+//                        }
+//                    }
 
                     // Vendor header
                     CartHeader(
