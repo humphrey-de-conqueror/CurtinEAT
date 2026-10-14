@@ -125,7 +125,7 @@ fun AppScaffold(
         isLoggedIn = currentUserId != null,
         onLogOutClick = {
             appViewModel.signOut()
-            onHomeClick()
+            onLoginClick()
         },
 
         isVendor = authenticationState.role == UserRole.VENDOR,
