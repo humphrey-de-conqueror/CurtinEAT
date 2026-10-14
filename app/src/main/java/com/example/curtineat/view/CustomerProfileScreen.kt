@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import androidx.compose.material3.ButtonDefaults
+import com.example.curtineat.ui.components.AppCard
 
 @Composable
 fun CustomerProfileScreen(
@@ -230,10 +231,10 @@ fun CustomerProfileScreen(
 			horizontalArrangement = Arrangement.SpaceBetween,
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			Column(
-				modifier = Modifier.weight(1f),
-				verticalArrangement = Arrangement.spacedBy(4.dp)
-			) {
+//			Column(
+//				modifier = Modifier.weight(1f),
+//				verticalArrangement = Arrangement.spacedBy(4.dp)
+//			) {
 				Text(
 					text = if (editMode) {
 						"Edit Profile"
@@ -244,16 +245,16 @@ fun CustomerProfileScreen(
 					fontWeight = FontWeight.Bold
 				)
 
-				Text(
-					text = if (editMode) {
-						"Update your personal information."
-					} else {
-						"Manage your account and personal details."
-					},
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurfaceVariant
-				)
-			}
+//				Text(
+//					text = if (editMode) {
+//						"Update your personal information."
+//					} else {
+//						"Manage your account and personal details."
+//					},
+//					style = MaterialTheme.typography.bodyMedium,
+//					color = MaterialTheme.colorScheme.onSurfaceVariant
+//				)
+//			}
 
 			if (!editMode) {
 				OutlinedButton(
@@ -276,14 +277,12 @@ fun CustomerProfileScreen(
 		}
 
 		// Profile summary
-		Card(
+		AppCard(
 			modifier = Modifier
 				.fillMaxWidth()
 				.animateContentSize(),
 			shape = RoundedCornerShape(24.dp),
-			colors = CardDefaults.cardColors(
-				containerColor = MaterialTheme.colorScheme.primaryContainer
-			)
+			contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
 		) {
 			Column(
 				modifier = Modifier
@@ -450,48 +449,48 @@ fun CustomerProfileScreen(
 					modifier = Modifier.fillMaxWidth()
 				)
 
-				HorizontalDivider(
-					color = MaterialTheme.colorScheme.outlineVariant
-				)
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(14.dp)
-				) {
-					Surface(
-						shape = RoundedCornerShape(14.dp),
-						color = MaterialTheme.colorScheme.secondaryContainer
-					) {
-						Icon(
-							imageVector = Icons.Default.Payments,
-							contentDescription = null,
-							modifier = Modifier
-								.size(48.dp)
-								.padding(12.dp),
-							tint = MaterialTheme.colorScheme.onSecondaryContainer
-						)
-					}
-
-					Column(
-						modifier = Modifier.weight(1f),
-						verticalArrangement = Arrangement.spacedBy(4.dp)
-					) {
-						Text(
-							text = "Account Balance",
-							style = MaterialTheme.typography.titleSmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
-
-						Text(
-							text = "RM %.2f".format(
-								currentCustomer.moneyBalance
-							),
-							style = MaterialTheme.typography.headlineSmall,
-							fontWeight = FontWeight.Bold
-						)
-					}
-				}
+//				HorizontalDivider(
+//					color = MaterialTheme.colorScheme.outlineVariant
+//				)
+//
+//				Row(
+//					modifier = Modifier.fillMaxWidth(),
+//					verticalAlignment = Alignment.CenterVertically,
+//					horizontalArrangement = Arrangement.spacedBy(14.dp)
+//				) {
+//					Surface(
+//						shape = RoundedCornerShape(14.dp),
+//						color = MaterialTheme.colorScheme.secondaryContainer
+//					) {
+//						Icon(
+//							imageVector = Icons.Default.Payments,
+//							contentDescription = null,
+//							modifier = Modifier
+//								.size(48.dp)
+//								.padding(12.dp),
+//							tint = MaterialTheme.colorScheme.onSecondaryContainer
+//						)
+//					}
+//
+//					Column(
+//						modifier = Modifier.weight(1f),
+//						verticalArrangement = Arrangement.spacedBy(4.dp)
+//					) {
+//						Text(
+//							text = "Account Balance",
+//							style = MaterialTheme.typography.titleSmall,
+//							color = MaterialTheme.colorScheme.onSurfaceVariant
+//						)
+//
+//						Text(
+//							text = "RM %.2f".format(
+//								currentCustomer.moneyBalance
+//							),
+//							style = MaterialTheme.typography.headlineSmall,
+//							fontWeight = FontWeight.Bold
+//						)
+//					}
+//				}
 			}
 		}
 
