@@ -24,7 +24,7 @@ class FirebaseVendorSource {
 				vendorEmail = document.getString("vendorEmail") ?: "",
 				rating = document.getDouble("rating") ?: 0.0,
 				category = document.getString("category") ?: "",
-				distance = document.getDouble("distance") ?: 0.0,
+				location = document.getString("location") ?: "",
 				moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
 				vendorImage = document.getString("vendorImage") ?: "",
 //				isOpen = document.getBoolean("isOpen") ?:true,
@@ -51,7 +51,7 @@ class FirebaseVendorSource {
 			vendorEmail = document.getString("vendorEmail") ?: "",
 			rating = document.getDouble("rating") ?: 0.0,
 			category = document.getString("category") ?: "",
-			distance = document.getDouble("distance") ?: 0.0,
+			location = document.getString("location") ?: "",
 			moneyBalance = document.getDouble("moneyBalance") ?: 0.0,
 			vendorImage = document.getString("vendorImage") ?: "",
 //			isOpen = document.getBoolean("isOpen") ?:true,
@@ -70,7 +70,7 @@ class FirebaseVendorSource {
 					"vendorEmail" to vendor.vendorEmail,
 					"rating" to vendor.rating,
 					"category" to vendor.category,
-					"distance" to vendor.distance,
+					"location" to vendor.location,
 					"moneyBalance" to vendor.moneyBalance,
 					"vendorImage" to vendor.vendorImage,
 //					"isOpen" to vendor.isOpen
@@ -91,7 +91,7 @@ class FirebaseVendorSource {
 					"vendorEmail" to vendor.vendorEmail,
 					"rating" to vendor.rating,
 					"category" to vendor.category,
-					"distance" to vendor.distance,
+					"location" to vendor.location,
 					"moneyBalance" to vendor.moneyBalance,
 //					"isOpen" to vendor.isOpen
 				)

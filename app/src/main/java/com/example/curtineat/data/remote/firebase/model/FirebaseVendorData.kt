@@ -6,7 +6,7 @@ data class FirebaseVendorData(
 	val vendorEmail: String = "",
 	val rating: Double = 0.0,
 	val category: String = "",
-	val distance: Double = 0.0,
+	val location: String = "",
 	val moneyBalance: Double = 0.0,
 	val vendorImage: String = ""
 	// val isOpen:Boolean = false

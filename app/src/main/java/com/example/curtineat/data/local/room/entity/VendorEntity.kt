@@ -12,7 +12,7 @@ data class VendorEntity(
 	val vendorEmail: String,
 	val rating: Double,
 	val category: String,
-	val distance: Double,
+	val location: String,
 	val moneyBalance: Double,
 
 	// Image API identifier, not the image binary.

@@ -10,7 +10,7 @@ fun FirebaseVendorData.toEntity(): VendorEntity {
 		vendorEmail = vendorEmail,
 		rating = rating,
 		category = category,
-		distance = distance,
+		location = location,
 		moneyBalance = moneyBalance,
 		vendorImage = vendorImage
 	)
@@ -23,7 +23,7 @@ fun VendorEntity.toFirebaseModel(): FirebaseVendorData {
 		vendorEmail = vendorEmail,
 		rating = rating,
 		category = category,
-		distance = distance,
+		location = location,
 		moneyBalance = moneyBalance,
 		vendorImage = vendorImage
 	)

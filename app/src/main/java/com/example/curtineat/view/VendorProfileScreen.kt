@@ -458,8 +458,10 @@ fun VendorProfileScreen(
 			)
 
 			VendorStatCard(
-				title = "Distance",
-				value = currentVendor.distance.toString(),
+				title = "Location",
+				value = currentVendor.location.ifBlank {
+					"Not provided"
+				},
 				modifier = Modifier.weight(1f)
 			)
 

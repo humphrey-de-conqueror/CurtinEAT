@@ -174,7 +174,7 @@ fun CartScreen(
                     CartHeader(
                         vendorName = cartVendor?.vendorName
                             ?: "Restaurant",
-                        distance = cartVendor?.distance ?: 0.0,
+                        location = cartVendor?.location.orEmpty(),
                         onBackButtonClick = onBackButtonClick
                     )
 
@@ -394,7 +394,7 @@ fun EmptyCart(
 @Composable
 fun CartHeader(
     vendorName: String,
-    distance: Double,
+    location: String,
     onBackButtonClick: () -> Unit
 ) {
     Row(
@@ -420,11 +420,9 @@ fun CartHeader(
             )
 
             AppText(
-                text = "%.1f km away".format(distance),
-                style = androidx.compose.material3.MaterialTheme.typography
-                    .bodyMedium,
-                color = androidx.compose.material3.MaterialTheme.colorScheme
-                    .onSurfaceVariant
+                text = location.ifBlank { "Location not provided" },
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

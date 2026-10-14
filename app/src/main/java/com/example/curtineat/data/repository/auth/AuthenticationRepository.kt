@@ -116,7 +116,7 @@ class AuthenticationRepository(
 						vendorEmail = email.trim(),
 						rating = 0.0,
 						category = category.trim(),
-						distance = 0.0,
+						location = "",
 						moneyBalance = 0.0,
 						vendorImage = ""
 					)
