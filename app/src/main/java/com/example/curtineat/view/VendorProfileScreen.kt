@@ -57,6 +57,7 @@ import com.example.curtineat.viewmodel.UserRole
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.text.style.TextAlign
 import com.example.curtineat.ui.components.VendorCategoryDropdown
 
 @Composable
@@ -468,6 +469,16 @@ fun VendorProfileScreen(
 				ProfileInfoRow(
 					label = "Email Address",
 					value = currentVendor.vendorEmail
+				)
+
+				HorizontalDivider(
+					color = MaterialTheme.colorScheme.outlineVariant
+				)
+
+				// address goes here
+				ProfileInfoRow(
+					label = "Address",
+					value = currentVendor.location
 				)
 
 				HorizontalDivider(

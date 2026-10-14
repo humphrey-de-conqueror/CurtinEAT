@@ -101,6 +101,10 @@ fun RegistrationScreen(
         mutableStateOf(false)
     }
 
+    var location by rememberSaveable {
+        mutableStateOf("")
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -335,6 +339,35 @@ fun RegistrationScreen(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     )
+
+                    // vendor address
+                    if (isVendor) {
+                        OutlinedTextField(
+                            value = location,
+                            onValueChange = {
+                                location = it
+                                message = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = {
+                                Text("Restaurant address")
+                            },
+                            placeholder = {
+                                Text("Enter your restaurant address")
+                            },
+                            singleLine = false,
+                            minLines = 2,
+                            maxLines = 3,
+                            enabled = !isRegistering,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                    }
+
+
 
                     // Vendor-only category
                     if (isVendor) {
