@@ -106,8 +106,7 @@ fun AppScaffold(
     content: @Composable (PaddingValues) -> Unit,
 
     ) {
-    val isLoading by appViewModel.isLoading.collectAsState()
-    val showLoading = loadingOverride ?: isLoading
+    val showLoading = loadingOverride ?: false
     val authenticationState by appViewModel.authenticationState.collectAsState()
 
     val currentUserId = authenticationState.userId
@@ -191,7 +190,19 @@ fun MainScreen(
     val homeLoading by appViewModel.homeLoading.collectAsState()
 
     LaunchedEffect(Unit) {
-        appViewModel.loadHomeData()
+        appViewModel.ensureHomeDataLoaded()
+    }
+
+    if (homeLoading) {
+
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+
+        return
     }
 
     AppScaffold(
@@ -203,7 +214,6 @@ fun MainScreen(
         onHistoryClick = onHistoryClick,
         showSearch = false,
         showNotifications = true,
-        loadingOverride = homeLoading,
         floatingActionButton = {
             CartButton(
                 onCartButtonClick = onCartButtonClick,
@@ -680,7 +690,6 @@ fun BodyScreen(
     val productState by appViewModel.productState.collectAsState()
     val searchQuery by appViewModel.searchQuery.collectAsState()
     val searchVendorId by appViewModel.searchVendorId.collectAsState()
-    val isLoading by appViewModel.homeLoading.collectAsState()
 
     var searchText by rememberSaveable {
         mutableStateOf(searchQuery)
@@ -778,67 +787,28 @@ fun BodyScreen(
                 subtitle = "Explore available food and vendors",
                 actionText = "Refresh",
                 onActionClick = {
-                    appViewModel.loadHomeData()
+                    appViewModel.refreshHomeData()
                 }
             )
         }
 
         if (visibleVendors.isEmpty()) {
             item(key = "empty-restaurants") {
-                if (isLoading) {
-                    LoadingState(
-                        message = "Loading restaurants..."
-                    )
-                } else {
-                    EmptyState(
-                        title =
-                            if (searchQuery.isBlank()) {
-                                "No food available"
-                            } else {
-                                "No matching food"
-                            },
-                        description =
-                            if (searchQuery.isBlank()) {
-                                "There are currently no products available for ordering."
-                            } else {
-                                "Try searching for another food item."
-                            },
-                        icon = Icons.Default.Search
-                    )
-                }
-            }
-        } else {
-            items(
-                items = visibleVendors,
-                key = { it.vendorId }
-            ) { vendor ->
-                val vendorProducts = products.filter { product ->
-                    product.vendorId == vendor.vendorId &&
-                            product.isAvailable &&
-                            (
-                                    searchQuery.isBlank() ||
-                                            product.productName.contains(
-                                                searchQuery,
-                                                ignoreCase = true
-                                            )
-                                    )
-                }
-
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(tween(220)) +
-                            slideInVertically(
-                                animationSpec = tween(220),
-                                initialOffsetY = { it / 12 }
-                            )
-                ) {
-                    RestaurantCard(
-                        appViewModel = appViewModel,
-                        vendor = vendor,
-                        products = vendorProducts
-                    )
-                }
-
+                EmptyState(
+                    title =
+                        if (searchQuery.isBlank()) {
+                            "No food available"
+                        } else {
+                            "No matching food"
+                        },
+                    description =
+                        if (searchQuery.isBlank()) {
+                            "There are currently no products available for ordering."
+                        } else {
+                            "Try searching for another food item."
+                        },
+                    icon = Icons.Default.Search
+                )
             }
         }
 

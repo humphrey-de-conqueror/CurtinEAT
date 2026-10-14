@@ -140,8 +140,11 @@ class AppViewModel(
 
     private val _homeLoading = MutableStateFlow(true)
 
-    val homeLoading: StateFlow<Boolean> =
-        _homeLoading.asStateFlow()
+    val homeLoading: StateFlow<Boolean> = _homeLoading.asStateFlow()
+
+    private var homeLoadedOnce = false
+
+    private var homeLoadRunning = false
 
     // ---------------------------------------------------------
     // Observation jobs and scopes
@@ -482,40 +485,84 @@ class AppViewModel(
         refreshNotifications()
     }
 
-    fun loadHomeData() {
+    fun ensureHomeDataLoaded() {
+        if (homeLoadedOnce || homeLoadRunning) {
+            return
+        }
+
+        performHomeLoad()
+    }
+
+    fun refreshHomeData() {
+        if (homeLoadRunning) {
+            return
+        }
+
+        performHomeLoad()
+    }
+
+    private fun performHomeLoad() {
+
+        if (homeLoadRunning) {
+            return
+        }
+
+        homeLoadRunning = true
+
         viewModelScope.launch {
 
             _homeLoading.value = true
 
-            val startTime = System.currentTimeMillis()
+            val startTime =
+                System.currentTimeMillis()
 
             try {
+
                 perform(
-                    getState = { _vendorState.value },
-                    setState = { _vendorState.value = it },
-                    fallbackMessage = "Unable to refresh vendors"
+                    getState = {
+                        _vendorState.value
+                    },
+                    setState = {
+                        _vendorState.value = it
+                    },
+                    fallbackMessage =
+                        "Unable to refresh vendors"
                 ) {
                     vendorSync.refresh()
                 }
 
                 perform(
-                    getState = { _productState.value },
-                    setState = { _productState.value = it },
-                    fallbackMessage = "Unable to refresh products"
+                    getState = {
+                        _productState.value
+                    },
+                    setState = {
+                        _productState.value = it
+                    },
+                    fallbackMessage =
+                        "Unable to refresh products"
                 ) {
                     productSync.refreshAll()
                 }
 
             } finally {
 
-                val elapsed = System.currentTimeMillis() - startTime
+                // Prevent the loading spinner from appearing
+                // for only a tiny flicker.
+                val elapsed =
+                    System.currentTimeMillis() -
+                            startTime
 
-                val minimumLoadingTime = 350L
+                val minimumLoadingTime =
+                    350L
 
                 if (elapsed < minimumLoadingTime) {
-                    delay(minimumLoadingTime - elapsed)
+                    delay(
+                        minimumLoadingTime - elapsed
+                    )
                 }
 
+                homeLoadedOnce = true
+                homeLoadRunning = false
                 _homeLoading.value = false
             }
         }
