@@ -119,6 +119,11 @@ fun AppScaffold(
         onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
+        isLoggedIn = currentUserId != null,
+        onLogOutClick = {
+            appViewModel.signOut()
+            onLoginClick()
+        },
         themeMode = themeMode,
         onThemeModeChange = onThemeModeChange
     ) { onMenuClick ->

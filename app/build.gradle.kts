@@ -95,6 +95,9 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
+    //Color Theme Persistence
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
     //for display image
 //    implementation("io.coil-kt:coil-compose:2.7.0")
 

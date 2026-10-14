@@ -24,7 +24,10 @@ private val WhiteColorScheme = lightColorScheme(
     onSurfaceVariant = WhiteOnSurfaceVariant,
     outline = WhiteOutline,
     error = WhiteError,
-    onError = WhiteOnError
+    onError = WhiteOnError,
+    surfaceContainerLow = WhiteSurface,
+    surfaceContainer = WhiteSurfaceVariant,
+    outlineVariant = WhiteOutline
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -45,7 +48,10 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
     error = DarkError,
-    onError = DarkOnError
+    onError = DarkOnError,
+    surfaceContainerLow = DarkSurface,
+    surfaceContainer = DarkSurfaceVariant,
+    outlineVariant = DarkOutline
 )
 
 private val WarmColorScheme = lightColorScheme(
@@ -66,7 +72,10 @@ private val WarmColorScheme = lightColorScheme(
     onSurfaceVariant = WarmOnSurfaceVariant,
     outline = WarmOutline,
     error = WarmError,
-    onError = WarmOnError
+    onError = WarmOnError,
+    surfaceContainerLow = WarmSurface,
+    surfaceContainer = WarmSurfaceVariant,
+    outlineVariant = WarmOutline
 )
 
 private val FreshColorScheme = lightColorScheme(
@@ -87,7 +96,10 @@ private val FreshColorScheme = lightColorScheme(
     onSurfaceVariant = FreshOnSurfaceVariant,
     outline = FreshOutline,
     error = FreshError,
-    onError = FreshOnError
+    onError = FreshOnError,
+    surfaceContainerLow = FreshSurface,
+    surfaceContainer = FreshSurfaceVariant,
+    outlineVariant = FreshOutline
 )
 
 @Composable
