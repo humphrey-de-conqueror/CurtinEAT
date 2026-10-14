@@ -207,27 +207,6 @@ fun RegistrationScreen(
                         shape = RoundedCornerShape(14.dp)
                     )
 
-                    // Vendor-only category
-                    if (isVendor) {
-                        OutlinedTextField(
-                            value = category,
-                            onValueChange = {
-                                category = it
-                                message = null
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = {
-                                Text("Restaurant category")
-                            },
-                            singleLine = true,
-                            enabled = !isRegistering,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                    }
-
                     // Email
                     OutlinedTextField(
                         value = email,
@@ -292,6 +271,27 @@ fun RegistrationScreen(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     )
+
+                    // Vendor-only category
+                    if (isVendor) {
+                        OutlinedTextField(
+                            value = category,
+                            onValueChange = {
+                                category = it
+                                message = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = {
+                                Text("Restaurant category")
+                            },
+                            singleLine = true,
+                            enabled = !isRegistering,
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Next
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                    }
 
                     // Registration action
                     Button(
