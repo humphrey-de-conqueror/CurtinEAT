@@ -89,7 +89,7 @@ fun OrderTrackingScreen(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
-        onWalletClick = onWalletClick,
+//        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         showSearch = false,
