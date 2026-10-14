@@ -440,36 +440,6 @@ fun VendorProfileScreen(
 			}
 		}
 
-		// Overview
-		AppText(
-			text = "Overview",
-			style = MaterialTheme.typography.titleLarge,
-			fontWeight = FontWeight.SemiBold
-		)
-
-		Row(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.spacedBy(10.dp)
-		) {
-			VendorStatCard(
-				title = "Rating",
-				value = currentVendor.rating.toString(),
-				modifier = Modifier.weight(1f)
-			)
-
-			VendorStatCard(
-				title = "Distance",
-				value = currentVendor.distance.toString(),
-				modifier = Modifier.weight(1f)
-			)
-
-			VendorStatCard(
-				title = "Balance",
-				value = currentVendor.moneyBalance.toString(),
-				modifier = Modifier.weight(1f)
-			)
-		}
-
 		// Account information
 		AppCard(
 			modifier = Modifier.fillMaxWidth(),

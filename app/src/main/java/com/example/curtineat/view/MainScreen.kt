@@ -92,7 +92,7 @@ fun AppScaffold(
     appViewModel: AppViewModel,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit,
-//    onWalletClick: () -> Unit,
+    onWalletClick: () -> Unit,
     onLoginClick: () -> Unit,
     onHistoryClick: () -> Unit,
     showSearch: Boolean = true,
@@ -124,7 +124,7 @@ fun AppScaffold(
         isLoggedIn = currentUserId != null,
         onLogOutClick = {
             appViewModel.signOut()
-            onHomeClick()
+            onLoginClick()
         },
 
         isVendor = authenticationState.role == UserRole.VENDOR,
@@ -194,7 +194,7 @@ fun MainScreen(
         appViewModel = appViewModel,
         onHomeClick = onHomeClick,
         onProfileClick = onProfileClick,
-//        onWalletClick = onWalletClick,
+        onWalletClick = onWalletClick,
         onLoginClick = onLoginClick,
         onHistoryClick = onHistoryClick,
         showSearch = false,

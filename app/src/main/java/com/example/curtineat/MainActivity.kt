@@ -307,7 +307,7 @@ fun ScreenNavigation(
                 onBackButtonClick = onBackButtonClick,
                 onHomeClick = onHomeClick,
                 onProfileClick = onProfileClick,
-//                onWalletClick = onWalletClick,
+                onWalletClick = onWalletClick,
                 onLoginClick = onLoginClick,
                 onHistoryClick = onHistoryClick,
                 themeMode = themeMode,
