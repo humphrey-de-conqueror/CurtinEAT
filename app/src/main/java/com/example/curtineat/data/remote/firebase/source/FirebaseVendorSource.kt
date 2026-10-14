@@ -104,7 +104,8 @@ class FirebaseVendorSource {
 		vendorId: String,
 		vendorName: String,
 		category: String,
-		vendorImage: String
+		vendorImage: String,
+		location: String
 	) {
 
 		vendorCollection
@@ -113,7 +114,8 @@ class FirebaseVendorSource {
 				mapOf(
 					"vendorName" to vendorName,
 					"category" to category,
-					"vendorImage" to vendorImage
+					"vendorImage" to vendorImage,
+					"location" to location,
 				)
 			)
 			.await()

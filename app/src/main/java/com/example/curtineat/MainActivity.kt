@@ -36,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.first
 import com.example.curtineat.ui.theme.ThemePreferences
+import com.example.curtineat.view.ProfileScreen
 import com.example.curtineat.view.StartupScreen
 
 class MainActivity : ComponentActivity() {
@@ -116,6 +117,9 @@ object RouteVendorProfileScreen
 
 @Serializable
 object RouteCustomerProfileScreen
+
+@Serializable
+object RouteProfileScreen
 
 @Serializable
 object RouteAddProductScreen
@@ -228,12 +232,30 @@ fun ScreenNavigation(
         }
     }
 
+//    val onProfileClick: () -> Unit = {
+//        appViewModel.checkCurrentUserRole { role ->
+//            when (role) {
+//                UserRole.VENDOR -> onVendorProfileClick()
+//                UserRole.CUSTOMER -> onCustomerProfileClick()
+//                UserRole.NONE -> onLoginClick()
+//            }
+//        }
+//    }
+
     val onProfileClick: () -> Unit = {
         appViewModel.checkCurrentUserRole { role ->
+
             when (role) {
-                UserRole.VENDOR -> onVendorProfileClick()
-                UserRole.CUSTOMER -> onCustomerProfileClick()
-                UserRole.NONE -> onLoginClick()
+                UserRole.CUSTOMER,
+                UserRole.VENDOR -> {
+                    nav.navigate(RouteProfileScreen) {
+                        launchSingleTop = true
+                    }
+                }
+
+                UserRole.NONE -> {
+                    onLoginClick()
+                }
             }
         }
     }
@@ -349,16 +371,24 @@ fun ScreenNavigation(
                 onThemeModeChange = onThemeModeChange
             )
         }
-        composable<RouteVendorProfileScreen> {
-            VendorProfileScreen(
-                viewModel = appViewModel,
-                onLoginClick = onLoginClick,
-                onHomeClick = onHomeClick
-            )
-        }
+//        composable<RouteVendorProfileScreen> {
+//            VendorProfileScreen(
+//                viewModel = appViewModel,
+//                onLoginClick = onLoginClick,
+//                onHomeClick = onHomeClick
+//            )
+//        }
 
-        composable<RouteCustomerProfileScreen> {
-            CustomerProfileScreen(
+//        composable<RouteCustomerProfileScreen> {
+//            CustomerProfileScreen(
+//                viewModel = appViewModel,
+//                onLoginClick = onLoginClick,
+//                onHomeClick = onHomeClick
+//            )
+//        }
+
+        composable<RouteProfileScreen> {
+            ProfileScreen(
                 viewModel = appViewModel,
                 onLoginClick = onLoginClick,
                 onHomeClick = onHomeClick

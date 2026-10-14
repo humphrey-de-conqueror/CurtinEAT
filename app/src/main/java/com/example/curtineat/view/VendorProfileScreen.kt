@@ -403,18 +403,19 @@ fun VendorProfileScreen(
 							onClick = {
 								saving = true
 
-								viewModel.updateVendorProfile(
-									vendorId = currentVendor.vendorId,
-									vendorName = vendorName.trim(),
-									category = category,
-									vendorImage = vendorImage
-								) { success ->
-									if (success) {
-										editMode = false
-									}
-
-									saving = false
-								}
+//								viewModel.updateVendorProfile(
+//									vendorId = currentVendor.vendorId,
+//									vendorName = vendorName.trim(),
+//									category = category,
+//									vendorImage = vendorImage,
+//									location = location,
+//								) { success ->
+//									if (success) {
+//										editMode = false
+//									}
+//
+//									saving = false
+//								}
 							},
 							enabled = !saving &&
 								!uploadingImage &&

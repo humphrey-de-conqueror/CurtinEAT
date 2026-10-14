@@ -554,6 +554,7 @@ class AppViewModel(
         vendorName: String,
         category: String,
         vendorImage: String,
+        location: String,
         onResult: (Boolean) -> Unit
     ) {
         viewModelScope.launch {
@@ -562,7 +563,8 @@ class AppViewModel(
                     vendorId = vendorId,
                     vendorName = vendorName,
                     category = category,
-                    vendorImage = vendorImage
+                    vendorImage = vendorImage,
+                    location = location
                 )
 
                 onResult(true)

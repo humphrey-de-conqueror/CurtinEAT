@@ -37,13 +37,15 @@ class FirebaseVendorRepository(
 		vendorId: String,
 		vendorName: String,
 		category: String,
-		vendorImage: String
+		vendorImage: String,
+		location:String
 	) {
 		source.updateVendorProfile(
 			vendorId,
 			vendorName,
 			category,
-			vendorImage
+			vendorImage,
+			location
 		)
 	}
 

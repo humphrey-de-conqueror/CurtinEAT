@@ -26,13 +26,15 @@ class VendorSyncRepository(
 		vendorId: String,
 		vendorName: String,
 		category: String,
-		vendorImage: String
+		vendorImage: String,
+		location: String
 	) {
 		remote.updateVendorProfile(
 			vendorId = vendorId,
 			vendorName = vendorName,
 			category = category,
-			vendorImage = vendorImage
+			vendorImage = vendorImage,
+			location = location
 		)
 
 		// Refresh Room so all observers receive the updated profile.
