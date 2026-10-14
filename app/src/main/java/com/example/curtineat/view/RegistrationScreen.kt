@@ -381,6 +381,8 @@ fun RegistrationScreen(
                         )
                     }
 
+                    Spacer(Modifier.height(10.dp))
+
                     // Registration action
                     Button(
                         onClick = {

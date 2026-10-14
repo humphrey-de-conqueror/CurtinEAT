@@ -793,6 +793,7 @@ fun BodyScreen(
         }
 
         if (visibleVendors.isEmpty()) {
+
             item(key = "empty-restaurants") {
                 EmptyState(
                     title =
@@ -810,10 +811,52 @@ fun BodyScreen(
                     icon = Icons.Default.Search
                 )
             }
+
+        } else {
+
+            items(
+                items = visibleVendors,
+                key = { it.vendorId }
+            ) { vendor ->
+
+                val vendorProducts =
+                    products.filter { product ->
+
+                        product.vendorId == vendor.vendorId &&
+                                product.isAvailable &&
+                                (
+                                        searchQuery.isBlank() ||
+                                                product.productName.contains(
+                                                    searchQuery,
+                                                    ignoreCase = true
+                                                )
+                                        )
+                    }
+
+                AnimatedVisibility(
+                    visible = true,
+                    enter =
+                        fadeIn(tween(220)) +
+                                slideInVertically(
+                                    animationSpec = tween(220),
+                                    initialOffsetY = {
+                                        it / 12
+                                    }
+                                )
+                ) {
+                    RestaurantCard(
+                        appViewModel = appViewModel,
+                        vendor = vendor,
+                        products = vendorProducts
+                    )
+                }
+            }
         }
 
         item(key = "bottom-space") {
-            Spacer(modifier = Modifier.height(72.dp))
+            Spacer(
+                modifier = Modifier.height(72.dp)
+            )
         }
     }
 }

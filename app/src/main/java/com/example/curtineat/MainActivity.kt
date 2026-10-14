@@ -15,12 +15,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.curtineat.ui.theme.CurtinEATTheme
 import com.example.curtineat.view.AddProductScreen
 import com.example.curtineat.view.CartScreen
-import com.example.curtineat.view.CustomerProfileScreen
 import com.example.curtineat.view.LoginScreen
 import com.example.curtineat.view.MainScreen
 import com.example.curtineat.view.RegistrationScreen
 import com.example.curtineat.view.VendorLandingScreen
-import com.example.curtineat.view.VendorProfileScreen
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.serialization.Serializable

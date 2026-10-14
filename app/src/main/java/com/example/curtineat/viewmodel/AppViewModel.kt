@@ -544,6 +544,28 @@ class AppViewModel(
                     productSync.refreshAll()
                 }
 
+                val refreshedVendors =
+                    vendorSync.observeVendors().first()
+
+                val refreshedProducts =
+                    productSync.observeProducts().first()
+
+                _vendorState.value =
+                    _vendorState.value.copy(
+                        data = refreshedVendors,
+                        hasLoaded = true,
+                        isInitialLoading = false,
+                        isRefreshing = false
+                    )
+
+                _productState.value =
+                    _productState.value.copy(
+                        data = refreshedProducts,
+                        hasLoaded = true,
+                        isInitialLoading = false,
+                        isRefreshing = false
+                    )
+
             } finally {
 
                 // Prevent the loading spinner from appearing
