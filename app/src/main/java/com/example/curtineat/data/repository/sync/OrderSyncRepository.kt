@@ -1,5 +1,6 @@
 package com.example.curtineat.data.repository.sync
 
+import android.util.Log
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import com.example.curtineat.data.local.room.mapper.toEntity
@@ -8,6 +9,9 @@ import com.example.curtineat.data.repository.firebase.FirebaseOrderRepository
 import com.example.curtineat.data.repository.local.OrderLocalRepository
 import kotlinx.coroutines.flow.Flow
 import com.example.curtineat.data.remote.firebase.model.FirebaseOrderData
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class OrderSyncRepository(
 	private val remote: FirebaseOrderRepository,
@@ -20,8 +24,7 @@ class OrderSyncRepository(
 
 	fun observeOrdersByVendor(
 		vendorId: String
-	): Flow<List<OrderEntity>> =
-		local.observeByVendorId(vendorId)
+	): Flow<List<OrderEntity>> = local.observeByVendorId(vendorId)
 
 	fun observeOrder(orderId: String): Flow<OrderEntity?> =
 		local.observeById(orderId)
@@ -85,5 +88,81 @@ class OrderSyncRepository(
 		orderId: String
 	): List<OrderProductEntity> {
 		return local.getProductsByOrderId(orderId)
+	}
+
+	fun startRealtimeVendorOrders(
+		vendorId: String,
+		scope: CoroutineScope
+	): ListenerRegistration {
+
+		return remote.listenToOrdersByVendorId(vendorId) { remoteOrders ->
+
+			Log.d(
+				"ORDER_REALTIME",
+				"Vendor $vendorId received ${remoteOrders.size} orders"
+			)
+
+			scope.launch {
+				try {
+					val orders = remoteOrders.map {
+						it.toEntity()
+					}
+
+					val products = remoteOrders.flatMap {
+						it.toProductEntities()
+					}
+
+					local.replaceByVendor(
+						vendorId = vendorId,
+						orders = orders,
+						products = products
+					)
+				} catch (exception: Exception) {
+					Log.e(
+						"ORDER_REALTIME",
+						"Failed to sync vendor orders into Room",
+						exception
+					)
+				}
+			}
+		}
+	}
+
+	fun startRealtimeCustomerOrders(
+		customerId: String,
+		scope: CoroutineScope
+	): ListenerRegistration {
+
+		return remote.listenToOrdersByCustomerId(customerId) { remoteOrders ->
+
+			Log.d(
+				"ORDER_REALTIME",
+				"Customer $customerId received ${remoteOrders.size} orders"
+			)
+
+			scope.launch {
+				try {
+					val orders = remoteOrders.map {
+						it.toEntity()
+					}
+
+					val products = remoteOrders.flatMap {
+						it.toProductEntities()
+					}
+
+					local.replaceByCustomer(
+						customerId = customerId,
+						orders = orders,
+						products = products
+					)
+				} catch (exception: Exception) {
+					Log.e(
+						"ORDER_REALTIME",
+						"Failed to sync customer orders into Room",
+						exception
+					)
+				}
+			}
+		}
 	}
 }

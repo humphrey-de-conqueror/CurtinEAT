@@ -41,6 +41,7 @@ import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import kotlinx.coroutines.flow.first
 import android.util.Log
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
+import com.google.firebase.firestore.ListenerRegistration
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -150,6 +151,8 @@ class AppViewModel(
     private var observedOrderScope: String? = null
     private var observedRecipientId: String? = null
     private var observedRecipientType: RecipientType? = null
+    private var orderRealtimeListener: ListenerRegistration? = null
+    private var notificationRealtimeListener: ListenerRegistration? = null
 
     init {
         observeVendors()
@@ -254,8 +257,21 @@ class AppViewModel(
     }
 
     fun observeOrdersByCustomer(customerId: String) {
+
+        val scope = "customer:$customerId"
+
+        if (observedOrderScope != scope) {
+            orderRealtimeListener?.remove()
+
+            orderRealtimeListener =
+                orderSync.startRealtimeCustomerOrders(
+                    customerId = customerId,
+                    scope = viewModelScope
+                )
+        }
+
         observeOrderScope(
-            scope = "customer:$customerId",
+            scope = scope,
             observe = {
                 orderSync.observeOrdersByCustomer(customerId)
             },
@@ -337,6 +353,7 @@ class AppViewModel(
 
         observedRecipientId = recipientId
         observedRecipientType = type
+
         notificationObservationJob?.cancel()
 
         _notificationState.value = DataUiState(
@@ -740,6 +757,11 @@ class AppViewModel(
                             )
                         }
 
+                        startRealtimeSession(
+                            userId = result.userId,
+                            role = result.role
+                        )
+
                         when (result.role) {
                             UserRole.CUSTOMER ->
                                 refreshCustomer(result.userId)
@@ -835,6 +857,15 @@ class AppViewModel(
                     }
 
                     if (userId != null) {
+
+                        val role = if (isVendor) {
+                            UserRole.VENDOR
+                        } else {
+                            UserRole.CUSTOMER
+                        }
+
+                        startRealtimeSession(userId = userId, role = role)
+
                         if (isVendor) {
                             refreshVendors()
                         } else {
@@ -884,6 +915,13 @@ class AppViewModel(
                     )
                 }
 
+                if (userId != null && role != UserRole.NONE) {
+                    startRealtimeSession(
+                        userId = userId,
+                        role = role
+                    )
+                }
+
                 onResult(role)
             } catch (exception: CancellationException) {
                 throw exception
@@ -919,6 +957,12 @@ class AppViewModel(
 
         notificationObservationJob?.cancel()
         notificationObservationJob = null
+
+        orderRealtimeListener?.remove()
+        orderRealtimeListener = null
+
+        notificationRealtimeListener?.remove()
+        notificationRealtimeListener = null
 
         observedCustomerId = null
         observedVendorId = null
@@ -1110,7 +1154,6 @@ class AppViewModel(
                     timestamp = Timestamp.now()
                 )
 
-                orderSync.createOrder(order)
 
                 val orderId = orderSync.createOrder(order)
 
@@ -1176,6 +1219,7 @@ class AppViewModel(
     // ---------------------------------------------------------
 
     fun advanceOrderStatus(order: OrderEntity) {
+
         val nextStatus = when (order.status.trim().uppercase()) {
             "PENDING" -> "Preparing"
             "PREPARING" -> "Ready"
@@ -1183,12 +1227,43 @@ class AppViewModel(
             else -> return
         }
 
+        val notificationMessage = when (nextStatus) {
+            "Preparing" -> "Your order is being prepared."
+            "Ready" -> "Your order is ready for pickup!"
+            "Completed" -> "Your order has been completed."
+            else -> return
+        }
+
         viewModelScope.launch {
             try {
+                // Update the actual order status.
                 orderSync.updateOrderStatus(
                     orderId = order.orderId,
                     status = nextStatus
                 )
+
+                // Notify the customer about the new status.
+                try {
+                    notificationSync.createNotification(
+                        FirebaseNotificationData(
+                            recipientId = order.customerId,
+                            recipientType = RecipientType.CUSTOMER,
+                            message = notificationMessage,
+                            orderId = order.orderId,
+                            timestamp = Timestamp.now(),
+                            isRead = false
+                        )
+                    )
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    Log.e(
+                        "ORDER_NOTIFICATION",
+                        "Failed to create order status notification",
+                        exception
+                    )
+                }
+
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
@@ -1217,6 +1292,65 @@ class AppViewModel(
             } catch (exception: Exception) {
                 onResult(null, emptyList())
             }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Seession Listener
+    // ---------------------------------------------------------
+    private fun startRealtimeSession(
+        userId: String,
+        role: UserRole
+    ) {
+        // Stop listeners from any previous account/session.
+        orderRealtimeListener?.remove()
+        orderRealtimeListener = null
+
+        notificationRealtimeListener?.remove()
+        notificationRealtimeListener = null
+
+        when (role) {
+            UserRole.CUSTOMER -> {
+                Log.d(
+                    "REALTIME_SESSION",
+                    "Starting CUSTOMER listeners for $userId"
+                )
+
+                orderRealtimeListener =
+                    orderSync.startRealtimeCustomerOrders(
+                        customerId = userId,
+                        scope = viewModelScope
+                    )
+
+                notificationRealtimeListener =
+                    notificationSync.startRealtimeNotifications(
+                        recipientId = userId,
+                        recipientType = RecipientType.CUSTOMER,
+                        scope = viewModelScope
+                    )
+            }
+
+            UserRole.VENDOR -> {
+                Log.d(
+                    "REALTIME_SESSION",
+                    "Starting VENDOR listeners for $userId"
+                )
+
+                orderRealtimeListener =
+                    orderSync.startRealtimeVendorOrders(
+                        vendorId = userId,
+                        scope = viewModelScope
+                    )
+
+                notificationRealtimeListener =
+                    notificationSync.startRealtimeNotifications(
+                        recipientId = userId,
+                        recipientType = RecipientType.VENDOR,
+                        scope = viewModelScope
+                    )
+            }
+
+            UserRole.NONE -> Unit
         }
     }
 

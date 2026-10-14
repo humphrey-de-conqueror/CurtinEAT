@@ -1,6 +1,7 @@
 
 package com.example.curtineat.data.repository.sync
 
+import android.util.Log
 import com.example.curtineat.data.local.room.entity.NotificationEntity
 import com.example.curtineat.data.local.room.mapper.toEntity
 import com.example.curtineat.data.remote.firebase.model.RecipientType
@@ -8,6 +9,9 @@ import com.example.curtineat.data.repository.firebase.FirebaseNotificationReposi
 import com.example.curtineat.data.repository.local.NotificationLocalRepository
 import kotlinx.coroutines.flow.Flow
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class NotificationSyncRepository(
 	private val remote: FirebaseNotificationRepository,
@@ -68,5 +72,46 @@ class NotificationSyncRepository(
 		)
 
 		return notificationId
+	}
+
+	fun startRealtimeNotifications(
+		recipientId: String,
+		recipientType: RecipientType,
+		scope: CoroutineScope
+	): ListenerRegistration {
+
+		return remote.listenToNotificationsByRecipientId(
+			recipientId
+		) { remoteNotifications ->
+
+			Log.d(
+				"NOTIFICATION_REALTIME",
+				"$recipientType $recipientId received ${remoteNotifications.size} notifications"
+			)
+
+			scope.launch {
+				try {
+					val notifications = remoteNotifications
+						.filter {
+							it.recipientType == recipientType
+						}
+						.map {
+							it.toEntity()
+						}
+
+					local.replaceByRecipient(
+						recipientId = recipientId,
+						recipientType = recipientType.name,
+						notifications = notifications
+					)
+				} catch (exception: Exception) {
+					Log.e(
+						"NOTIFICATION_REALTIME",
+						"Failed to sync notifications into Room",
+						exception
+					)
+				}
+			}
+		}
 	}
 }
