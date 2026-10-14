@@ -836,13 +836,9 @@ fun ProfileScreen(
             }
 
         } else {
-
-            // Same side-by-side layout as vendor profile
             Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
                 OutlinedButton(

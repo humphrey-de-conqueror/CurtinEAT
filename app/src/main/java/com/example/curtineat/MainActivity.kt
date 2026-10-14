@@ -113,12 +113,6 @@ object RouteBalanceScreen
 object RouteVendorLandingScreen
 
 @Serializable
-object RouteVendorProfileScreen
-
-@Serializable
-object RouteCustomerProfileScreen
-
-@Serializable
 object RouteProfileScreen
 
 @Serializable
@@ -147,12 +141,6 @@ fun ScreenNavigation(
     val onBackButtonClick: () -> Unit = {
         nav.popBackStack()
     }
-
-//    val onHomeClick: () -> Unit = {
-//        nav.navigate(RouteMainScreen) {
-//            launchSingleTop = true
-//        }
-//    }
 
     val onHomeClick: () -> Unit = {
 
@@ -220,27 +208,6 @@ fun ScreenNavigation(
         }
     }
 
-    val onVendorProfileClick: () -> Unit = {
-        nav.navigate(RouteVendorProfileScreen) {
-            launchSingleTop = true
-        }
-    }
-
-    val onCustomerProfileClick: () -> Unit = {
-        nav.navigate(RouteCustomerProfileScreen) {
-            launchSingleTop = true
-        }
-    }
-
-//    val onProfileClick: () -> Unit = {
-//        appViewModel.checkCurrentUserRole { role ->
-//            when (role) {
-//                UserRole.VENDOR -> onVendorProfileClick()
-//                UserRole.CUSTOMER -> onCustomerProfileClick()
-//                UserRole.NONE -> onLoginClick()
-//            }
-//        }
-//    }
 
     val onProfileClick: () -> Unit = {
         appViewModel.checkCurrentUserRole { role ->
@@ -255,6 +222,31 @@ fun ScreenNavigation(
 
                 UserRole.NONE -> {
                     onLoginClick()
+                }
+            }
+        }
+    }
+
+    val onProfileHomeClick: () -> Unit = {
+
+        when (appViewModel.authenticationState.value.role) {
+
+            UserRole.VENDOR -> {
+                nav.navigate(RouteVendorLandingScreen) {
+                    popUpTo(RouteProfileScreen) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
+            }
+
+            UserRole.CUSTOMER,
+            UserRole.NONE -> {
+                nav.navigate(RouteMainScreen) {
+                    popUpTo(RouteProfileScreen) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
                 }
             }
         }
@@ -371,27 +363,12 @@ fun ScreenNavigation(
                 onThemeModeChange = onThemeModeChange
             )
         }
-//        composable<RouteVendorProfileScreen> {
-//            VendorProfileScreen(
-//                viewModel = appViewModel,
-//                onLoginClick = onLoginClick,
-//                onHomeClick = onHomeClick
-//            )
-//        }
-
-//        composable<RouteCustomerProfileScreen> {
-//            CustomerProfileScreen(
-//                viewModel = appViewModel,
-//                onLoginClick = onLoginClick,
-//                onHomeClick = onHomeClick
-//            )
-//        }
 
         composable<RouteProfileScreen> {
             ProfileScreen(
                 viewModel = appViewModel,
                 onLoginClick = onLoginClick,
-                onHomeClick = onHomeClick
+                onHomeClick = onProfileHomeClick
             )
         }
 

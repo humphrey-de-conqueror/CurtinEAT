@@ -148,11 +148,11 @@ fun RegistrationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    AppText(
-                        text = "Account details",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
+//                    AppText(
+//                        text = "Account details",
+//                        style = MaterialTheme.typography.titleLarge,
+//                        fontWeight = FontWeight.SemiBold
+//                    )
 
                     // Account type selector
                     Card(
@@ -265,14 +265,14 @@ fun RegistrationScreen(
                             ) {
                                 Icon(
                                     imageVector = if (passwordVisible) {
-                                        Icons.Default.VisibilityOff
-                                    } else {
                                         Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
                                     },
                                     contentDescription = if (passwordVisible) {
-                                        "Hide password"
-                                    } else {
                                         "Show password"
+                                    } else {
+                                        "Hide password"
                                     }
                                 )
                             }
@@ -313,14 +313,14 @@ fun RegistrationScreen(
                             ) {
                                 Icon(
                                     imageVector = if (confirmPasswordVisible) {
-                                        Icons.Default.VisibilityOff
-                                    } else {
                                         Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
                                     },
                                     contentDescription = if (confirmPasswordVisible) {
-                                        "Hide confirm password"
-                                    } else {
                                         "Show confirm password"
+                                    } else {
+                                        "Hide confirm password"
                                     }
                                 )
                             }

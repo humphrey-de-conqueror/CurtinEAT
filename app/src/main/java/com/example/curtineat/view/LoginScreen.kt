@@ -191,14 +191,14 @@ fun LoginScreen(
                             ) {
                                 Icon(
                                     imageVector = if (passwordVisible) {
-                                        Icons.Default.VisibilityOff
-                                    } else {
                                         Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
                                     },
                                     contentDescription = if (passwordVisible) {
-                                        "Hide password"
-                                    } else {
                                         "Show password"
+                                    } else {
+                                        "Hide password"
                                     }
                                 )
                             }
