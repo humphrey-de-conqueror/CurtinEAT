@@ -63,6 +63,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.curtineat.ui.components.ConfirmDialog
 
 private const val IMAGE_BASE_URL =
@@ -236,7 +237,10 @@ fun AddProductScreen(
                         Modifier.width(6.dp)
                     )
 
-                    Text("Edit Product")
+                    Text(text = "Edit Product",
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis)
                 }
             }
         }

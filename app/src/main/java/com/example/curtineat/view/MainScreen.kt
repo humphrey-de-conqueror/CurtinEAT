@@ -308,7 +308,7 @@ fun TopBarScreen(
     showSearch: Boolean = true,
     showNotifications: Boolean = true
 ) {
-    var searching by remember { mutableStateOf(false) }
+    var searching by rememberSaveable { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
     var notificationsOpen by remember { mutableStateOf(false) }
 
@@ -736,9 +736,53 @@ fun BodyScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item(key = "search") {
+//            OutlinedTextField(
+//                value = searchText,
+//                onValueChange = { searchText = it },
+//                modifier = Modifier.fillMaxWidth(),
+//                singleLine = true,
+//                shape = RoundedCornerShape(16.dp),
+//                placeholder = {
+//                    Text("Search food...")
+//                },
+//                leadingIcon = {
+//                    Icon(
+//                        imageVector = Icons.Default.Search,
+//                        contentDescription = null
+//                    )
+//                },
+//                trailingIcon = {
+//                    AnimatedVisibility(
+//                        visible = searchText.isNotBlank(),
+//                        enter = fadeIn(tween(120)),
+//                        exit = fadeOut(tween(120))
+//                    ) {
+//                        IconButton(
+//                            onClick = {
+//                                searchText = ""
+//                                appViewModel.searchProduct("")
+//                            }
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Close,
+//                                contentDescription = "Clear search"
+//                            )
+//                        }
+//                    }
+//                },
+//                keyboardOptions = KeyboardOptions(
+//                    imeAction = ImeAction.Search
+//                ),
+//                keyboardActions = KeyboardActions(
+//                    onSearch = {
+//                        appViewModel.searchProduct(searchText.trim())
+//                    }
+//                )
+//            )
+
             OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = searchQuery,
+                onValueChange = { appViewModel.updateSearchText(it) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
@@ -753,13 +797,12 @@ fun BodyScreen(
                 },
                 trailingIcon = {
                     AnimatedVisibility(
-                        visible = searchText.isNotBlank(),
+                        visible = searchQuery.isNotBlank(),
                         enter = fadeIn(tween(120)),
                         exit = fadeOut(tween(120))
                     ) {
                         IconButton(
                             onClick = {
-                                searchText = ""
                                 appViewModel.searchProduct("")
                             }
                         ) {
@@ -775,10 +818,11 @@ fun BodyScreen(
                 ),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        appViewModel.searchProduct(searchText.trim())
+                        appViewModel.searchProduct(searchQuery)
                     }
                 )
             )
+
         }
 
         item(key = "restaurant-heading") {

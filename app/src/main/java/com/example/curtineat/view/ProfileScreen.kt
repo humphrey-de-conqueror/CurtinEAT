@@ -816,21 +816,22 @@ fun ProfileScreen(
 
                         Spacer(Modifier.width(8.dp))
 
-                        Text("Saving...")
+                        Text("Saving...", maxLines = 1)
                     } else {
                         Icon(
-                            imageVector =
-                                Icons.Default.Save,
+                            imageVector = Icons.Default.Save,
                             contentDescription = null,
-                            modifier =
-                                Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp)
                         )
 
                         Spacer(
                             Modifier.width(8.dp)
                         )
 
-                        Text("Save Changes")
+                        Text(text = "Save Changes",
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

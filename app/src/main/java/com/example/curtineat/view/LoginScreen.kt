@@ -1,9 +1,11 @@
 package com.example.curtineat.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -51,6 +53,10 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.input.VisualTransformation
+import com.example.curtineat.ui.components.AppButton
+import com.example.curtineat.ui.components.AppButtonStyle
+import com.example.curtineat.ui.components.AppCard
+import com.example.curtineat.ui.components.AppTextField
 
 @Composable
 fun LoginScreen(
@@ -60,7 +66,7 @@ fun LoginScreen(
     onHomeClick: () -> Unit,
     onBackButtonClick: () -> Unit
 ) {
-    var email by remember {
+    var email by rememberSaveable {
         mutableStateOf("")
     }
 
@@ -87,6 +93,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background) //****//
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
@@ -120,15 +127,11 @@ fun LoginScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            Card(
+            //Apphere
+            AppCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
-                )
+                contentPadding = PaddingValues(20.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -141,80 +144,101 @@ fun LoginScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-
-                    OutlinedTextField(
+//app here
+                    AppTextField(
                         value = email,
                         onValueChange = {
                             email = it
                             errorMessage = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = {
-                            Text("Email address")
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Mail,
-                                contentDescription = null
-                            )
-                        },
-                        singleLine = true,
+                        label = "Email address",
+                        leadingIcon = Icons.Default.Mail,
                         enabled = !isLoginLoading,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        shape = RoundedCornerShape(14.dp)
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+//                        value = email,
+//                        onValueChange = {
+//                            email = it
+//                            errorMessage = null
+//                        },
+//                        modifier = Modifier.fillMaxWidth(),
+//                        label = {
+//                            Text("Email address")
+//                        },
+//                        leadingIcon = {
+//                            Icon(
+//                                imageVector = Icons.Default.Mail,
+//                                contentDescription = null
+//                            )
+//                        },
+//                        singleLine = true,
+//                        enabled = !isLoginLoading,
+//                        keyboardOptions = KeyboardOptions(
+//                            keyboardType = KeyboardType.Email,
+//                            imeAction = ImeAction.Next
+//                        ),
+//                        shape = RoundedCornerShape(14.dp)
                     )
-
-                    OutlinedTextField(
+//app here
+                    AppTextField(
                         value = password,
                         onValueChange = {
                             password = it
                             errorMessage = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = {
-                            Text("Password")
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    passwordVisible = !passwordVisible
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = if (passwordVisible) {
-                                        Icons.Default.Visibility
-                                    } else {
-                                        Icons.Default.VisibilityOff
-                                    },
-                                    contentDescription = if (passwordVisible) {
-                                        "Show password"
-                                    } else {
-                                        "Hide password"
-                                    }
-                                )
-                            }
-                        },
-                        singleLine = true,
+                        label = "Password",
+                        leadingIcon = Icons.Default.Lock,
                         enabled = !isLoginLoading,
-                        visualTransformation = if (passwordVisible) {
-                            VisualTransformation.None
-                        } else {
-                            PasswordVisualTransformation()
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        shape = RoundedCornerShape(14.dp)
+                        isPassword = true,
+                        imeAction = ImeAction.Done
+
+//                        value = password,
+//                        onValueChange = {
+//                            password = it
+//                            errorMessage = null
+//                        },
+//                        modifier = Modifier.fillMaxWidth(),
+//                        label = {
+//                            Text("Password")
+//                        },
+//                        leadingIcon = {
+//                            Icon(
+//                                imageVector = Icons.Default.Lock,
+//                                contentDescription = null
+//                            )
+//                        },
+//                        trailingIcon = {
+//                            IconButton(
+//                                onClick = {
+//                                    passwordVisible = !passwordVisible
+//                                }
+//                            ) {
+//                                Icon(
+//                                    imageVector = if (passwordVisible) {
+//                                        Icons.Default.Visibility
+//                                    } else {
+//                                        Icons.Default.VisibilityOff
+//                                    },
+//                                    contentDescription = if (passwordVisible) {
+//                                        "Show password"
+//                                    } else {
+//                                        "Hide password"
+//                                    }
+//                                )
+//                            }
+//                        },
+//                        singleLine = true,
+//                        enabled = !isLoginLoading,
+//                        visualTransformation = if (passwordVisible) {
+//                            VisualTransformation.None
+//                        } else {
+//                            PasswordVisualTransformation()
+//                        },
+//                        keyboardOptions = KeyboardOptions(
+//                            keyboardType = KeyboardType.Password,
+//                            imeAction = ImeAction.Done
+//                        ),
+//                        shape = RoundedCornerShape(14.dp)
                     )
 
                     // Account type selection
@@ -256,6 +280,7 @@ fun LoginScreen(
 
                     // Login error
                     if (errorMessage != null) {
+                        //Apphere
                         Card(
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
@@ -272,7 +297,84 @@ fun LoginScreen(
                     }
 
                     // Login action
-                    Button(
+
+                    //Apphere
+//                    Button(
+//                        onClick = {
+//                            errorMessage = null
+//                            isLoginLoading = true
+//
+//                            appViewModel.login(
+//                                email = email.trim(),
+//                                password = password,
+//                                isVendor = isVendor
+//                            ) { success ->
+//                                isLoginLoading = false
+//
+//                                if (success) {
+//                                    onLoginSuccess(isVendor)
+//                                } else {
+//                                    errorMessage = if (isVendor) {
+//                                        "Invalid login or this account is not registered as a vendor."
+//                                    } else {
+//                                        "Invalid login or this account is not registered as a customer."
+//                                    }
+//                                }
+//                            }
+//                        },
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(52.dp),
+//                        enabled = !isLoginLoading &&
+//                                email.isNotBlank() &&
+//                                password.isNotBlank(),
+//                        shape = RoundedCornerShape(14.dp)
+//                    ) {
+//                        if (isLoginLoading) {
+//                            CircularProgressIndicator(
+//                                modifier = Modifier.size(20.dp),
+//                                strokeWidth = 2.dp,
+//                                color = MaterialTheme.colorScheme.onPrimary
+//                            )
+//
+//                            Spacer(Modifier.size(10.dp))
+//
+//                            //Apphere
+//
+//                            Text("Signing in...")
+//                        } else {
+//                            Text(
+//                                text = "Log in",
+//                                style = MaterialTheme.typography.labelLarge
+//                            )
+//                        }
+//                    }
+//
+//                    HorizontalDivider(
+//                        color = MaterialTheme.colorScheme.outlineVariant
+//                    )
+//
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.Center,
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        AppText(
+//                            text = "Don't have an account?",
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant
+//                        )
+//
+//                        TextButton(
+//                            onClick = onRegistrationClick,
+//                            enabled = !isLoginLoading
+//                        ) {
+//                            Text("Register")
+
+                    AppButton(
+                        text = "Log in",
+                        loading = isLoginLoading,
+                        loadingText = "Signing in...",
                         onClick = {
                             errorMessage = null
                             isLoginLoading = true
@@ -295,31 +397,10 @@ fun LoginScreen(
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        enabled = !isLoginLoading &&
-                                email.isNotBlank() &&
-                                password.isNotBlank(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        if (isLoginLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-
-                            Spacer(Modifier.size(10.dp))
-
-                            Text("Signing in...")
-                        } else {
-                            Text(
-                                text = "Log in",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
+                        modifier = Modifier.height(52.dp),
+                        fullWidth = true,
+                        enabled = email.isNotBlank() && password.isNotBlank()
+                    )
 
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant
@@ -336,15 +417,15 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        TextButton(
+                        AppButton(
+                            text = "Register",
                             onClick = onRegistrationClick,
+                            style = AppButtonStyle.TEXT,
                             enabled = !isLoginLoading
-                        ) {
-                            Text("Register")
+                        )
                         }
                     }
                 }
             }
         }
     }
-}

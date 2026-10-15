@@ -49,9 +49,9 @@ import com.example.curtineat.data.local.room.entity.OrderProductEntity
 import com.example.curtineat.ui.components.AppText
 import com.example.curtineat.viewmodel.AppViewModel
 
-private val PaperColor = Color(0xFFFFFDF7)
-private val InkColor = Color(0xFF222222)
-private val FaintInkColor = Color(0xFF9E9E9E)
+//private val PaperColor = Color(0xFFFFFDF7)
+//private val InkColor = Color(0xFF222222)
+//private val FaintInkColor = Color(0xFF9E9E9E)
 
 // Rectangle with a zigzag (torn) bottom edge.
 private val ReceiptShape = GenericShape { size, _ ->
@@ -166,9 +166,13 @@ fun OrderDetailScreen(
 			} else {
 				val currentOrder = order!!
 
-				val vendorName = vendorState.data.firstOrNull {
+				val orderVendor = vendorState.data.firstOrNull {
 					it.vendorId == currentOrder.vendorId
-				}?.vendorName ?: "Vendor"
+				}
+
+				val vendorName = orderVendor?.vendorName ?: "Vendor"
+
+				val storelocation = orderVendor?.location.orEmpty()
 
 				val customerName = customerState.data
 					?.takeIf {
@@ -187,6 +191,7 @@ fun OrderDetailScreen(
 						order = currentOrder,
 						products = products,
 						vendorName = vendorName,
+						storelocation = storelocation,
 						customerName = customerName
 					)
 				}
@@ -195,11 +200,12 @@ fun OrderDetailScreen(
 	}
 }
 
-@Composable
+@Composable //here is the details
 private fun ReceiptPaper(
 	order: OrderEntity,
 	products: List<OrderProductEntity>,
 	vendorName: String,
+	storelocation: String,
 	customerName: String?
 ) {
 	Surface(
@@ -207,7 +213,7 @@ private fun ReceiptPaper(
 			.widthIn(max = 420.dp)
 			.fillMaxWidth(),
 		shape = ReceiptShape,
-		color = PaperColor,
+		color = MaterialTheme.colorScheme.surface,
 		shadowElevation = 6.dp
 	) {
 		Column(
@@ -228,6 +234,13 @@ private fun ReceiptPaper(
 				text = vendorName.uppercase(),
 				modifier = Modifier.fillMaxWidth(),
 				fontSize = 16.sp,
+				align = TextAlign.Center
+			)
+
+			ReceiptText(
+				text = storelocation.ifBlank { "Location not provided" },
+				modifier = Modifier.fillMaxWidth(),
+				fontSize = 12.sp,
 				align = TextAlign.Center
 			)
 
@@ -305,9 +318,7 @@ private fun ReceiptPaper(
 				fontSize = 18.sp
 			)
 
-			DashedDivider()
-
-			Barcode(seed = order.orderId)
+//			DashedDivider()
 
 			Spacer(Modifier.height(12.dp))
 
@@ -332,7 +343,7 @@ private fun ReceiptText(
 	Text(
 		text = text,
 		modifier = modifier,
-		color = InkColor,
+		color = MaterialTheme.colorScheme.onSurface,
 		fontFamily = FontFamily.Monospace,
 		fontSize = fontSize,
 		fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
@@ -371,6 +382,9 @@ private fun ReceiptRow(
 
 @Composable
 private fun DashedDivider() {
+
+	val dividerColor = MaterialTheme.colorScheme.outline
+
 	Canvas(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -378,7 +392,7 @@ private fun DashedDivider() {
 			.height(1.dp)
 	) {
 		drawLine(
-			color = FaintInkColor,
+			color = dividerColor,
 			start = Offset(0f, 0f),
 			end = Offset(size.width, 0f),
 			strokeWidth = 2f,
@@ -389,36 +403,37 @@ private fun DashedDivider() {
 	}
 }
 
-// Decorative barcode generated from the order ID.
-@Composable
-private fun Barcode(seed: String) {
-	val chars = seed.ifEmpty { "0" }
 
-	Canvas(
-		modifier = Modifier
-			.fillMaxWidth()
-			.height(48.dp)
-	) {
-		var x = 0f
-		var i = 0
-
-		while (x < size.width) {
-			val code = chars[i % chars.length].code
-
-			val barWidth = (code % 3 + 1) * 3f
-			val gapWidth = (code % 2 + 1) * 3f
-
-			drawRect(
-				color = InkColor,
-				topLeft = Offset(x, 0f),
-				size = Size(
-					minOf(barWidth, size.width - x),
-					size.height
-				)
-			)
-
-			x += barWidth + gapWidth
-			i++
-		}
-	}
-}
+//// Decorative barcode generated from the order ID.
+//@Composable
+//private fun Barcode(seed: String) {
+//	val chars = seed.ifEmpty { "0" }
+//
+//	Canvas(
+//		modifier = Modifier
+//			.fillMaxWidth()
+//			.height(48.dp)
+//	) {
+//		var x = 0f
+//		var i = 0
+//
+//		while (x < size.width) {
+//			val code = chars[i % chars.length].code
+//
+//			val barWidth = (code % 3 + 1) * 3f
+//			val gapWidth = (code % 2 + 1) * 3f
+//
+//			drawRect(
+//				color = InkColor,
+//				topLeft = Offset(x, 0f),
+//				size = Size(
+//					minOf(barWidth, size.width - x),
+//					size.height
+//				)
+//			)
+//
+//			x += barWidth + gapWidth
+//			i++
+//		}
+//	}
+//}

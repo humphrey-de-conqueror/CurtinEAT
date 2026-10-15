@@ -1176,6 +1176,19 @@ class AppViewModel(
     // Product search
     // ---------------------------------------------------------
 
+//    fun searchProduct(productName: String) {
+//        val query = productName.trim()
+//        _searchQuery.value = query
+//
+//        _searchVendorId.value = if (query.isBlank()) {
+//            null
+//        } else {
+//            productState.value.data.firstOrNull {
+//                it.productName.contains(query, ignoreCase = true)
+//            }?.vendorId
+//        }
+//    }
+
     fun searchProduct(productName: String) {
         val query = productName.trim()
         _searchQuery.value = query
@@ -1188,6 +1201,11 @@ class AppViewModel(
             }?.vendorId
         }
     }
+
+    fun updateSearchText(text: String) {
+        _searchQuery.value = text
+    }
+
 
     // ---------------------------------------------------------
     // Cart operations

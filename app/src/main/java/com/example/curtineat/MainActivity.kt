@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.compose.NavHost
@@ -32,10 +34,15 @@ import com.example.curtineat.ui.theme.AppThemeMode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.example.curtineat.ui.components.OfflineBanner
 import kotlinx.coroutines.flow.first
 import com.example.curtineat.ui.theme.ThemePreferences
 import com.example.curtineat.view.ProfileScreen
 import com.example.curtineat.view.StartupScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.curtineat.util.OnlineCheck
 
 class MainActivity : ComponentActivity() {
 
@@ -46,6 +53,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val themePreferences by lazy { ThemePreferences(applicationContext) }
+    private val onlineCheck by lazy { OnlineCheck(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +68,8 @@ class MainActivity : ComponentActivity() {
 //            }
 
             val scope = rememberCoroutineScope()
+
+
 
             val themeMode by themePreferences.themeMode
                 .collectAsState(initial = initialMode)
@@ -80,9 +90,13 @@ class MainActivity : ComponentActivity() {
             }
 
             CurtinEATTheme(themeMode = themeMode) {
+                val isOnline by onlineCheck.isOnline
+                    .collectAsStateWithLifecycle(initialValue = true)
+
                 ScreenNavigation(
                     appViewModel = vm,
                     themeMode = themeMode,
+                    isOnline = isOnline,
                     onThemeModeChange = { scope.launch { themePreferences.setThemeMode(it) } }
                 )
             }
@@ -130,6 +144,7 @@ data class RouteOrderDetailScreen(
 fun ScreenNavigation(
     appViewModel: AppViewModel,
     themeMode: AppThemeMode,
+    isOnline: Boolean,
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val nav = rememberNavController()
@@ -288,152 +303,158 @@ fun ScreenNavigation(
         nav.navigate(RouteOrderDetailScreen(orderId))
     }
 
-    NavHost(
-        navController = nav,
-        startDestination = RouteStartupScreen
-    ) {
-        composable<RouteStartupScreen> {
+    Box(Modifier.fillMaxSize()) {
 
-            StartupScreen(
-                appViewModel = appViewModel,
-                onRoleResolved = { role ->
 
-                    when (role) {
+        NavHost(
+            navController = nav,
+            startDestination = RouteStartupScreen
+        ) {
+            composable<RouteStartupScreen> {
 
-                        UserRole.VENDOR -> {
-                            nav.navigate(RouteVendorLandingScreen) {
-                                popUpTo(RouteStartupScreen) {
-                                    inclusive = true
+                StartupScreen(
+                    appViewModel = appViewModel,
+                    onRoleResolved = { role ->
+
+                        when (role) {
+
+                            UserRole.VENDOR -> {
+                                nav.navigate(RouteVendorLandingScreen) {
+                                    popUpTo(RouteStartupScreen) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
                                 }
-                                launchSingleTop = true
                             }
-                        }
 
-                        UserRole.CUSTOMER,
-                        UserRole.NONE -> {
-                            nav.navigate(RouteMainScreen) {
-                                popUpTo(RouteStartupScreen) {
-                                    inclusive = true
+                            UserRole.CUSTOMER,
+                            UserRole.NONE -> {
+                                nav.navigate(RouteMainScreen) {
+                                    popUpTo(RouteStartupScreen) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
                                 }
-                                launchSingleTop = true
                             }
                         }
                     }
-                }
-            )
+                )
+            }
+
+            composable<RouteMainScreen> {
+                MainScreen(
+                    appViewModel = appViewModel,
+                    onCartButtonClick = onCartButtonClick,
+                    onProfileClick = onProfileClick,
+                    onHomeClick = onHomeClick,
+                    onWalletClick = onWalletClick,
+                    onLoginClick = onLoginClick,
+                    onHistoryClick = onHistoryClick,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                    onLogoutClick = onLogoutClick,
+                )
+            }
+
+            composable<RouteCartScreen> {
+                CartScreen(
+                    appViewModel = appViewModel,
+                    onBackButtonClick = onBackButtonClick,
+                    onHomeClick = onHomeClick,
+                    onProfileClick = onProfileClick,
+                    onWalletClick = onWalletClick,
+                    onLoginClick = onLoginClick,
+                    onHistoryClick = onHistoryClick,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                    onLogoutClick = onLogoutClick,
+                )
+            }
+
+            composable<RouteLoginScreen> {
+                LoginScreen(
+                    appViewModel = appViewModel,
+                    onLoginSuccess = onLoginSuccess,
+                    onRegistrationClick = onRegistrationClick,
+                    onHomeClick = onHomeClick,
+                    onBackButtonClick = onBackButtonClick
+                )
+            }
+
+            composable<RouteRegistrationScreen> {
+                RegistrationScreen(
+                    appViewModel = appViewModel,
+                    onLoginSuccess = onLoginSuccess,
+                    onHomeClick = onHomeClick,
+                    onBackButtonClick = onBackButtonClick
+                )
+            }
+
+
+            composable<RouteVendorLandingScreen> {
+                VendorLandingScreen(
+                    appViewModel = appViewModel,
+                    onHomeClick = onHomeClick,
+                    onProfileClick = onProfileClick,
+                    onWalletClick = onWalletClick,
+                    onLoginClick = onLoginClick,
+                    onHistoryClick = onHistoryClick,
+                    onFoodClick = onProductClick,
+                    onAddProductClick = onAddProductClick,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                    onLogoutClick = onLogoutClick,
+                )
+            }
+
+            composable<RouteProfileScreen> {
+                ProfileScreen(
+                    viewModel = appViewModel,
+                    onLoginClick = onLoginClick,
+                    onHomeClick = onProfileHomeClick
+                )
+            }
+
+            composable<RouteAddProductScreen> { backStackEntry ->
+
+                val route =
+                    backStackEntry.toRoute<RouteAddProductScreen>()
+
+                AddProductScreen(
+                    viewModel = appViewModel,
+                    productId = route.productId,
+                    onBackClick = {
+                        nav.popBackStack()
+                    }
+                )
+            }
+
+            composable<RouteOrderHistoryScreen> {
+                OrderHistoryScreen(
+                    appViewModel = appViewModel,
+                    onHomeClick = onHomeClick,
+                    onProfileClick = onProfileClick,
+                    onWalletClick = onWalletClick,
+                    onLoginClick = onLoginClick,
+                    onHistoryClick = onHistoryClick,
+                    onOrderClick = onOrderClick,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                    onLogoutClick = onLogoutClick,
+                )
+            }
+
+            composable<RouteOrderDetailScreen> { backStackEntry ->
+                val route = backStackEntry.toRoute<RouteOrderDetailScreen>()
+
+                OrderDetailScreen(
+                    appViewModel = appViewModel,
+                    orderId = route.orderId,
+                    onBackButtonClick = onBackButtonClick
+                )
+            }
         }
 
-        composable<RouteMainScreen> {
-        MainScreen(
-            appViewModel = appViewModel,
-            onCartButtonClick = onCartButtonClick,
-            onProfileClick = onProfileClick,
-            onHomeClick = onHomeClick,
-            onWalletClick = onWalletClick,
-            onLoginClick = onLoginClick,
-            onHistoryClick = onHistoryClick,
-            themeMode = themeMode,
-            onThemeModeChange = onThemeModeChange,
-            onLogoutClick = onLogoutClick,
-        )
-    }
-
-        composable<RouteCartScreen> {
-            CartScreen(
-                appViewModel = appViewModel,
-                onBackButtonClick = onBackButtonClick,
-                onHomeClick = onHomeClick,
-                onProfileClick = onProfileClick,
-                onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick,
-                onHistoryClick = onHistoryClick,
-                themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange,
-                onLogoutClick = onLogoutClick,
-            )
-        }
-
-        composable<RouteLoginScreen> {
-            LoginScreen(
-                appViewModel = appViewModel,
-                onLoginSuccess = onLoginSuccess,
-                onRegistrationClick = onRegistrationClick,
-                onHomeClick = onHomeClick,
-                onBackButtonClick = onBackButtonClick
-            )
-        }
-
-        composable<RouteRegistrationScreen> {
-            RegistrationScreen(
-                appViewModel = appViewModel,
-                onLoginSuccess = onLoginSuccess,
-                onHomeClick = onHomeClick,
-                onBackButtonClick = onBackButtonClick
-            )
-        }
-
-
-        composable<RouteVendorLandingScreen> {
-            VendorLandingScreen(
-                appViewModel = appViewModel,
-                onHomeClick = onHomeClick,
-                onProfileClick = onProfileClick,
-                onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick,
-                onHistoryClick = onHistoryClick,
-                onFoodClick = onProductClick,
-                onAddProductClick = onAddProductClick,
-                themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange,
-                onLogoutClick = onLogoutClick,
-            )
-        }
-
-        composable<RouteProfileScreen> {
-            ProfileScreen(
-                viewModel = appViewModel,
-                onLoginClick = onLoginClick,
-                onHomeClick = onProfileHomeClick
-            )
-        }
-
-        composable<RouteAddProductScreen> { backStackEntry ->
-
-            val route =
-                backStackEntry.toRoute<RouteAddProductScreen>()
-
-            AddProductScreen(
-                viewModel = appViewModel,
-                productId = route.productId,
-                onBackClick = {
-                    nav.popBackStack()
-                }
-            )
-        }
-
-        composable<RouteOrderHistoryScreen> {
-            OrderHistoryScreen(
-                appViewModel = appViewModel,
-                onHomeClick = onHomeClick,
-                onProfileClick = onProfileClick,
-                onWalletClick = onWalletClick,
-                onLoginClick = onLoginClick,
-                onHistoryClick = onHistoryClick,
-                onOrderClick = onOrderClick,
-                themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange,
-                onLogoutClick = onLogoutClick,
-            )
-        }
-
-        composable<RouteOrderDetailScreen> { backStackEntry ->
-            val route = backStackEntry.toRoute<RouteOrderDetailScreen>()
-
-            OrderDetailScreen(
-                appViewModel = appViewModel,
-                orderId = route.orderId,
-                onBackButtonClick = onBackButtonClick
-            )
-        }
+        OfflineBanner(isOnline, Modifier.align(Alignment.BottomCenter))
     }
 }
