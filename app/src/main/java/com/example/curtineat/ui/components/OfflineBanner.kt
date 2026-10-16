@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun OfflineBanner(
@@ -61,10 +62,8 @@ fun OfflineBanner(
         modifier = modifier
     ) {
         val offline = !isOnline
-        val container = if (offline) MaterialTheme.colorScheme.errorContainer
-        else MaterialTheme.colorScheme.tertiaryContainer
-        val content = if (offline) MaterialTheme.colorScheme.onErrorContainer
-        else MaterialTheme.colorScheme.onTertiaryContainer
+        val container = if (offline) MaterialTheme.colorScheme.errorContainer else Color(0xFF2E7D32)
+        val content = if (offline) MaterialTheme.colorScheme.onErrorContainer else Color.White
 
         Row(
             modifier = Modifier
