@@ -54,6 +54,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
+import com.example.curtineat.util.NotificationHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -68,8 +70,22 @@ class MainActivity : ComponentActivity() {
     private val themePreferences by lazy { ThemePreferences(applicationContext) }
     private val onlineCheck by lazy { OnlineCheck(applicationContext) }
 
+    private val notificationHelper by lazy { NotificationHelper(applicationContext) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        notificationHelper.createChannel()
+
+        lifecycleScope.launch {
+            vm.newNotifications.collect { notifications ->
+
+                if (notifications.isNotEmpty()) {
+                    notificationHelper
+                        .onNewNotifications(notifications)
+                }
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)

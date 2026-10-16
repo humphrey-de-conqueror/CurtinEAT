@@ -163,6 +163,8 @@ class AppViewModel(
     private var orderRealtimeListener: ListenerRegistration? = null
     private var notificationRealtimeListener: ListenerRegistration? = null
 
+    val newNotifications = notificationSync.newNotifications
+
     init {
         observeVendors()
         observeProducts()
