@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.state.ImageUiState
@@ -26,10 +27,10 @@ fun CachedImage(
 	viewModel: AppViewModel,
 	contentDescription: String?,
 	modifier: Modifier = Modifier,
-	retryOnTap: Boolean = false
+	retryOnTap: Boolean = false,
+	placeholderIcon: ImageVector = Icons.Default.AccountCircle
 ) {
 	val imageStates by viewModel.imageStates.collectAsState()
-
 	val imageState = imageStates[imageId]
 
 	LaunchedEffect(imageId) {
@@ -72,7 +73,7 @@ fun CachedImage(
 			)
 		} else {
 			Icon(
-				imageVector = Icons.Default.AccountCircle,
+				imageVector = placeholderIcon,
 				contentDescription = contentDescription,
 				modifier = Modifier.fillMaxSize()
 			)

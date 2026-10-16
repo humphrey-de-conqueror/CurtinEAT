@@ -36,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
@@ -1029,7 +1030,8 @@ fun FoodItem(
                 contentDescription = product.productName,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(112.dp)
+                    .height(112.dp),
+                placeholderIcon = Icons.Default.Fastfood
             )
 
             Column(
