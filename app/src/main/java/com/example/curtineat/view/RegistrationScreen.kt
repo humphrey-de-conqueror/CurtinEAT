@@ -279,14 +279,25 @@ fun RegistrationScreen(
 
                     // Vendor-only category
                     if (isVendor) {
-                        VendorCategoryDropdown(
-                            selectedCategory = category,
-                            onCategorySelected = {
-                                category = it
-                                message = null
-                            },
-                            enabled = !isRegistering
-                        )
+
+                        Column() {
+                            Text(
+                                text = "Category",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            VendorCategoryDropdown(
+                                selectedCategory = category,
+                                onCategorySelected = {
+                                    category = it
+                                    message = null
+                                },
+                                enabled = !isRegistering
+                            )
+                        }
+
                     }
 
                     Spacer(Modifier.height(10.dp))
