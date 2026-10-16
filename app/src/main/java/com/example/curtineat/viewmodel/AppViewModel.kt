@@ -710,6 +710,39 @@ class AppViewModel(
     // Profile operations
     // ---------------------------------------------------------
 
+    fun recoverSessionAfterReconnect(
+        onResult: (UserRole) -> Unit = {}
+    ) {
+        if (
+            authenticationRepository.currentUserId == null
+        ) {
+            onResult(UserRole.NONE)
+            return
+        }
+
+        checkCurrentUserRole { role ->
+
+            val userId =
+                _authenticationState.value.userId
+
+            if (userId != null) {
+                when (role) {
+                    UserRole.CUSTOMER -> {
+                        refreshCustomer(userId)
+                    }
+
+                    UserRole.VENDOR -> {
+                        refreshVendors()
+                    }
+
+                    UserRole.NONE -> Unit
+                }
+            }
+
+            onResult(role)
+        }
+    }
+
     fun updateCustomerProfile(
         customerId: String,
         customerName: String,
