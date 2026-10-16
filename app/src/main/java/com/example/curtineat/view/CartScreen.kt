@@ -213,47 +213,6 @@ fun CartScreen(
                     }
 
                     // Place order action
-                    Button(
-                        onClick = {
-                            if (loggedInCustomerId == null) {
-                                onLoginClick()
-                            } else {
-                                appViewModel.checkout(
-                                    customerId = loggedInCustomerId
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        enabled = !checkoutInProgress,
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        if (checkoutInProgress) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                // added this from login yet i see no change
-                                color = MaterialTheme.colorScheme.onPrimary
-
-                            )
-
-                            Spacer(Modifier.size(8.dp))
-
-                            AppText(text = "Placing Order...")
-                        } else {
-                            AppText(
-                                text = if (loggedInCustomerId == null) {
-                                    "Log in to Place Order"
-                                } else {
-                                    "Place Order"
-                                },
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
-                    // Checkout action
                     AppButton(
                         text = if (loggedInCustomerId == null) {
                             "Log in to Place Order"
