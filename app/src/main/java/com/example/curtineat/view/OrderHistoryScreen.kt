@@ -372,7 +372,8 @@ fun OrderHistoryEmptyState(
 		contentPadding = PaddingValues(
 			horizontal = 24.dp,
 			vertical = 36.dp
-		)
+		),
+		showShadow = true
 	) {
 		Column(
 			modifier = Modifier.fillMaxWidth(),

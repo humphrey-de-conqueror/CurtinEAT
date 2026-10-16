@@ -142,6 +142,7 @@ fun AppScaffold(
     ) { onMenuClick ->
 
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopBarScreen(
                     appViewModel = appViewModel,

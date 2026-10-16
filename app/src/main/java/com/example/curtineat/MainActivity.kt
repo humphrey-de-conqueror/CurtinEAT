@@ -48,6 +48,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -317,8 +319,9 @@ fun ScreenNavigation(
         nav.navigate(RouteOrderDetailScreen(orderId))
     }
 
-    Box(Modifier.fillMaxSize()) {
-
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    ) {
 
         NavHost(
             navController = nav,
