@@ -2,9 +2,10 @@ package com.example.curtineat.ui.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,9 +21,10 @@ fun AppBackButton(
 		modifier = modifier
 	) {
 		Icon(
-			imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+			imageVector = Icons.Default.ChevronLeft,
 			contentDescription = contentDescription,
-			modifier = Modifier.size(24.dp)
+			modifier = Modifier.size(24.dp),
+			tint = MaterialTheme.colorScheme.onSurface,
 		)
 	}
 }
