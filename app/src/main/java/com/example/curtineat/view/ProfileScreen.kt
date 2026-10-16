@@ -383,8 +383,8 @@ fun ProfileScreen(
         AppCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            contentPadding =
-                PaddingValues(20.dp)
+            contentPadding = PaddingValues(20.dp),
+            showShadow = true
         ) {
             Column(
                 modifier =
@@ -558,14 +558,11 @@ fun ProfileScreen(
         // Account details
         // -------------------------------------------------
 
-        // -------------------------------------------------
-// Account details
-// -------------------------------------------------
-
         AppCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            contentPadding = PaddingValues(20.dp)
+            contentPadding = PaddingValues(20.dp),
+            showShadow = true
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),

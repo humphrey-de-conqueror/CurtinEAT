@@ -188,7 +188,8 @@ fun CartScreen(
                         AppCard(
                             modifier = Modifier.fillMaxWidth(),
                             containerColor = androidx.compose.material3.MaterialTheme
-                                .colorScheme.errorContainer
+                                .colorScheme.errorContainer,
+                            showShadow = true
                         ) {
                             AppText(
                                 text = checkoutError.orEmpty(),
@@ -390,7 +391,8 @@ fun CartItemRow(
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(12.dp)
+        contentPadding = PaddingValues(12.dp),
+        showShadow = true
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -484,7 +486,8 @@ fun CartPaymentSummary(
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        showShadow = true
     ) {
         AppText(
             text = "Payment",

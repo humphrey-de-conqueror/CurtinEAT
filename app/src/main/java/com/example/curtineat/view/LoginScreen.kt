@@ -127,11 +127,11 @@ fun LoginScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            //Apphere
             AppCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                contentPadding = PaddingValues(20.dp)
+                contentPadding = PaddingValues(20.dp),
+                showShadow = true
             ) {
                 Column(
                     modifier = Modifier

@@ -146,7 +146,8 @@ fun RegistrationScreen(
             Spacer(Modifier.height(28.dp))
             AppCard(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(20.dp)
+                contentPadding = PaddingValues(20.dp),
+                showShadow = false
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -160,7 +161,8 @@ fun RegistrationScreen(
                         contentPadding = PaddingValues(
                             horizontal = 16.dp,
                             vertical = 12.dp
-                        )
+                        ),
+                        showShadow = true
                     ) {
                         Row(
                             modifier = Modifier
@@ -397,8 +399,6 @@ fun RegistrationScreen(
             }
 
 
-            //Apphere
-
             AppCard(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -406,7 +406,8 @@ fun RegistrationScreen(
                     .padding(top = 8.dp),
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 shape = RoundedCornerShape(14.dp),
-                contentPadding = PaddingValues(16.dp)
+                contentPadding = PaddingValues(16.dp),
+                showShadow = true
             ) {
                 AppText(
                     text = message.orEmpty(),

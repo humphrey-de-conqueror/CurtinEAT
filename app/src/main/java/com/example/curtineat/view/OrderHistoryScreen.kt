@@ -199,7 +199,8 @@ fun OrderHistoryTitleCard(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(16.dp),
-		contentPadding = PaddingValues(20.dp)
+		contentPadding = PaddingValues(20.dp),
+		showShadow = true
 	) {
 		AppText(
 			text = "Order History",
@@ -232,7 +233,8 @@ fun OrderHistoryCard(
 	AppCard(
 		modifier = Modifier.fillMaxWidth(),
 		onClick = onClick,
-		contentPadding = PaddingValues(16.dp)
+		contentPadding = PaddingValues(16.dp),
+		showShadow = true
 	) {
 		// Counterpart and status
 		Row(
