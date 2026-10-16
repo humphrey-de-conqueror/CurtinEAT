@@ -43,9 +43,16 @@ import com.example.curtineat.view.ProfileScreen
 import com.example.curtineat.view.StartupScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.curtineat.util.OnlineCheck
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
 
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val vm: AppViewModel by viewModels {
         (application as CurtinEATApplication)
             .appContainer
@@ -57,6 +64,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         val initialMode = runBlocking { themePreferences.themeMode.first() }
 
