@@ -12,11 +12,19 @@ import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class NotificationSyncRepository(
 	private val remote: FirebaseNotificationRepository,
 	private val local: NotificationLocalRepository
 ) {
+	private val _newNotifications =
+		MutableSharedFlow<List<NotificationEntity>>(extraBufferCapacity = 8)
+
+	val newNotifications: SharedFlow<List<NotificationEntity>> =
+		_newNotifications.asSharedFlow()
 	fun observeNotifications(
 		recipientId: String,
 		recipientType: String
@@ -80,6 +88,9 @@ class NotificationSyncRepository(
 		scope: CoroutineScope
 	): ListenerRegistration {
 
+		// null = first snapshot of this listener, which only sets the baseline
+		var knownIds: Set<String>? = null
+
 		return remote.listenToNotificationsByRecipientId(
 			recipientId
 		) { remoteNotifications ->
@@ -89,21 +100,32 @@ class NotificationSyncRepository(
 				"$recipientType $recipientId received ${remoteNotifications.size} notifications"
 			)
 
+			val notifications = remoteNotifications
+				.filter { it.recipientType == recipientType }
+				.map { it.toEntity() }
+
+			val previous = knownIds
+			knownIds = notifications.map { it.notificationId }.toSet()
+
+			val fresh = if (previous == null) {
+				emptyList()
+			} else {
+				notifications.filter {
+					!it.isRead && it.notificationId !in previous
+				}
+			}
+
 			scope.launch {
 				try {
-					val notifications = remoteNotifications
-						.filter {
-							it.recipientType == recipientType
-						}
-						.map {
-							it.toEntity()
-						}
-
 					local.replaceByRecipient(
 						recipientId = recipientId,
 						recipientType = recipientType.name,
 						notifications = notifications
 					)
+
+					if (fresh.isNotEmpty()) {
+						_newNotifications.emit(fresh)
+					}
 				} catch (exception: Exception) {
 					Log.e(
 						"NOTIFICATION_REALTIME",

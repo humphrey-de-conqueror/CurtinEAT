@@ -111,4 +111,7 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // noti
+    implementation("androidx.lifecycle:lifecycle-process:2.9.4")
 }
