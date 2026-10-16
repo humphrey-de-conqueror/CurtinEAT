@@ -512,7 +512,10 @@ private fun NotificationAction(
                         animationSpec = tween(120),
                         targetOffsetY = { -it / 3 }
                     ),
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 6.dp, end = 6.dp)
+
         ) {
             Box(
                 modifier = Modifier
