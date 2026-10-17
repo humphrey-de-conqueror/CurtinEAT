@@ -48,6 +48,12 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
 
@@ -162,6 +168,52 @@ fun ScreenNavigation(
     onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val nav = rememberNavController()
+
+    var wasOffline by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(isOnline) {
+
+        if (!isOnline) {
+            wasOffline = true
+            return@LaunchedEffect
+        }
+
+        if (wasOffline) {
+
+            val needsRoleRecovery =
+                appViewModel
+                    .authenticationState
+                    .value
+                    .userId != null &&
+                        appViewModel
+                            .authenticationState
+                            .value
+                            .role == UserRole.NONE
+
+            appViewModel
+                .recoverSessionAfterReconnect { role ->
+
+                    if (
+                        needsRoleRecovery &&
+                        role == UserRole.VENDOR
+                    ) {
+                        nav.navigate(
+                            RouteVendorLandingScreen
+                        ) {
+                            popUpTo(RouteMainScreen) {
+                                inclusive = true
+                            }
+
+                            launchSingleTop = true
+                        }
+                    }
+                }
+
+            wasOffline = false
+        }
+    }
 
     val onCartButtonClick: () -> Unit = {
         nav.navigate(RouteCartScreen)
@@ -317,8 +369,9 @@ fun ScreenNavigation(
         nav.navigate(RouteOrderDetailScreen(orderId))
     }
 
-    Box(Modifier.fillMaxSize()) {
-
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    ) {
 
         NavHost(
             navController = nav,

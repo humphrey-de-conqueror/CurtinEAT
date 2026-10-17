@@ -46,7 +46,10 @@ import com.example.curtineat.ui.theme.AppThemeMode
 import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
-
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import com.example.curtineat.ui.components.AppButton
+import com.example.curtineat.ui.components.AppButtonStyle
 // ---------------- CART SCREEN ----------------
 
 @Composable
@@ -131,48 +134,6 @@ fun CartScreen(
                         .padding(top = 16.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Customer information
-//                    AppCard(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        contentPadding = PaddingValues(16.dp)
-//                    ) {
-//                        AppText(
-//                            text = "Customer information",
-//                            style = androidx.compose.material3.MaterialTheme
-//                                .typography.titleMedium,
-//                            fontWeight = FontWeight.SemiBold
-//                        )
-//
-//                        Spacer(Modifier.height(8.dp))
-//
-//                        if (loggedInCustomerId != null) {
-//                            AppText(
-//                                text = "Customer ID: $loggedInCustomerId",
-//                                style = androidx.compose.material3.MaterialTheme
-//                                    .typography.bodyMedium,
-//                                color = androidx.compose.material3.MaterialTheme
-//                                    .colorScheme.onSurfaceVariant
-//                            )
-//
-//                            AppText(
-//                                text = "Ordering as: ${
-//                                    currentCustomer?.customerName
-//                                        ?: "Loading customer..."
-//                                }",
-//                                style = androidx.compose.material3.MaterialTheme
-//                                    .typography.bodyMedium
-//                            )
-//                        } else {
-//                            AppText(
-//                                text = "You are not logged in. Log in before placing your order.",
-//                                style = androidx.compose.material3.MaterialTheme
-//                                    .typography.bodyMedium,
-//                                color = androidx.compose.material3.MaterialTheme
-//                                    .colorScheme.onSurfaceVariant
-//                            )
-//                        }
-//                    }
-
                     // Vendor header
                     CartHeader(
                         vendorName = cartVendor?.vendorName
@@ -227,7 +188,8 @@ fun CartScreen(
                         AppCard(
                             modifier = Modifier.fillMaxWidth(),
                             containerColor = androidx.compose.material3.MaterialTheme
-                                .colorScheme.errorContainer
+                                .colorScheme.errorContainer,
+                            showShadow = true
                         ) {
                             AppText(
                                 text = checkoutError.orEmpty(),
@@ -251,8 +213,13 @@ fun CartScreen(
                         }
                     }
 
-                    // Checkout action
-                    Button(
+                    // Place order action
+                    AppButton(
+                        text = if (loggedInCustomerId == null) {
+                            "Log in to Place Order"
+                        } else {
+                            "Place Order"
+                        },
                         onClick = {
                             if (loggedInCustomerId == null) {
                                 onLoginClick()
@@ -262,35 +229,14 @@ fun CartScreen(
                                 )
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        enabled = !checkoutInProgress,
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        if (checkoutInProgress) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                // added this from login yet i see no change
-                                color = MaterialTheme.colorScheme.onPrimary
+                        modifier = Modifier.height(52.dp),
+                        style = AppButtonStyle.PRIMARY,
+                        enabled = true,
+                        fullWidth = true,
+                        loading = checkoutInProgress,
+                        loadingText = "Placing Order..."
+                    )
 
-                            )
-
-                            Spacer(Modifier.size(8.dp))
-
-                            AppText(text = "Placing Order...")
-                        } else {
-                            AppText(
-                                text = if (loggedInCustomerId == null) {
-                                    "Log in to Place Order"
-                                } else {
-                                    "Place Order"
-                                },
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -445,7 +391,8 @@ fun CartItemRow(
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(12.dp)
+        contentPadding = PaddingValues(12.dp),
+        showShadow = true
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -539,7 +486,8 @@ fun CartPaymentSummary(
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        showShadow = true
     ) {
         AppText(
             text = "Payment",

@@ -1,5 +1,7 @@
 package com.example.curtineat.view
 
+import android.R.attr.shadowColor
+import android.R.attr.shadowRadius
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -10,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,11 +71,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.curtineat.data.local.room.entity.ProductEntity
@@ -135,6 +142,7 @@ fun AppScaffold(
     ) { onMenuClick ->
 
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopBarScreen(
                     appViewModel = appViewModel,
@@ -251,7 +259,8 @@ fun NotificationItem(
             horizontal = 12.dp,
             vertical = 16.dp
         ),
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(14.dp),
+        showShadow = true
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -419,7 +428,7 @@ fun TopBarScreen(
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
-                    .fillMaxHeight(0.85f)
+                    .fillMaxHeight(0.85f),
             ) {
                 if (notificationDrawerLoading) {
                     item {
@@ -880,23 +889,23 @@ fun BodyScreen(
                                         )
                     }
 
-                AnimatedVisibility(
-                    visible = true,
-                    enter =
-                        fadeIn(tween(220)) +
-                                slideInVertically(
-                                    animationSpec = tween(220),
-                                    initialOffsetY = {
-                                        it / 12
-                                    }
-                                )
-                ) {
+//                AnimatedVisibility(
+//                    visible = true,
+//                    enter =
+//                        fadeIn(tween(220)) +
+//                                slideInVertically(
+//                                    animationSpec = tween(220),
+//                                    initialOffsetY = {
+//                                        it / 12
+//                                    }
+//                                )
+//                ) {
                     RestaurantCard(
                         appViewModel = appViewModel,
                         vendor = vendor,
                         products = vendorProducts
                     )
-                }
+//                }
             }
         }
 
@@ -914,19 +923,32 @@ fun RestaurantCard(
     vendor: VendorEntity,
     products: List<ProductEntity>
 ) {
+//    AppCard(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .animateContentSize(
+//                animationSpec = spring(
+//                    dampingRatio = Spring.DampingRatioNoBouncy,
+//                    stiffness = Spring.StiffnessMedium
+//                )
+//            ),
+//        shape = RoundedCornerShape(20.dp),
+//        contentPadding = PaddingValues(16.dp)
+//    )
     AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(16.dp),
+        showShadow = true
+    )
+    {
+        Column(
+            modifier = Modifier.animateContentSize(
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
                     stiffness = Spring.StiffnessMedium
                 )
             ),
-        shape = RoundedCornerShape(20.dp),
-        contentPadding = PaddingValues(16.dp)
-    ) {
-        Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             AppText(
@@ -1013,10 +1035,29 @@ fun FoodItem(
     val addButtonScale = remember { Animatable(1f) }
 
     Card(
-        modifier = Modifier.width(156.dp),
+        modifier = Modifier.width(156.dp).dropShadow(
+            shape = RoundedCornerShape(16.dp),
+            shadow = Shadow(
+                radius = 10.dp,
+                spread = 0.dp,
+                color = Color.Black.copy(alpha = 0.06f),
+                offset = DpOffset(0.dp, 2.dp)
+            )
+        ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        border = BorderStroke(
+            width = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+            disabledElevation = 0.dp
         ),
         onClick = {
             if (enabled) {

@@ -58,6 +58,7 @@ fun OrderHistoryScreen(
 	val orderState by appViewModel.orderState.collectAsState()
 	val vendorState by appViewModel.vendorState.collectAsState()
 	val authenticationState by appViewModel.authenticationState.collectAsState()
+	val customerNames by appViewModel.customerNames.collectAsState()
 
 	var role by remember {
 		mutableStateOf<UserRole?>(null)
@@ -92,6 +93,14 @@ fun OrderHistoryScreen(
 
 	val sortedOrders = orderState.data.sortedByDescending {
 		it.timestamp
+	}
+
+	val customerIds = sortedOrders.map { it.customerId }.toSet()
+
+	LaunchedEffect(isVendorAccount, customerIds) {
+		if (isVendorAccount) {
+			appViewModel.loadCustomerNames(customerIds)
+		}
 	}
 
 	AppScaffold(
@@ -165,9 +174,9 @@ fun OrderHistoryScreen(
 							items = sortedOrders,
 							key = { it.orderId }
 						) { order ->
-
+							// the name parts
 							val counterpartLabel = if (isVendorAccount) {
-								"Customer"
+								customerNames[order.customerId] ?: "Customer"
 							} else {
 								vendorState.data.firstOrNull {
 									it.vendorId == order.vendorId
@@ -199,7 +208,8 @@ fun OrderHistoryTitleCard(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(16.dp),
-		contentPadding = PaddingValues(20.dp)
+		contentPadding = PaddingValues(20.dp),
+		showShadow = true
 	) {
 		AppText(
 			text = "Order History",
@@ -232,7 +242,8 @@ fun OrderHistoryCard(
 	AppCard(
 		modifier = Modifier.fillMaxWidth(),
 		onClick = onClick,
-		contentPadding = PaddingValues(16.dp)
+		contentPadding = PaddingValues(16.dp),
+		showShadow = true
 	) {
 		// Counterpart and status
 		Row(
@@ -361,7 +372,8 @@ fun OrderHistoryEmptyState(
 		contentPadding = PaddingValues(
 			horizontal = 24.dp,
 			vertical = 36.dp
-		)
+		),
+		showShadow = true
 	) {
 		Column(
 			modifier = Modifier.fillMaxWidth(),
@@ -401,6 +413,7 @@ fun orderStatusColor(status: String): Color {
 
 		"COMPLETED" ->
 			Color(0xFF2E7D32)
+		// hard coded, find replacement
 
 		"CANCELLED" ->
 			MaterialTheme.colorScheme.error

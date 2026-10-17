@@ -710,6 +710,39 @@ class AppViewModel(
     // Profile operations
     // ---------------------------------------------------------
 
+    fun recoverSessionAfterReconnect(
+        onResult: (UserRole) -> Unit = {}
+    ) {
+        if (
+            authenticationRepository.currentUserId == null
+        ) {
+            onResult(UserRole.NONE)
+            return
+        }
+
+        checkCurrentUserRole { role ->
+
+            val userId =
+                _authenticationState.value.userId
+
+            if (userId != null) {
+                when (role) {
+                    UserRole.CUSTOMER -> {
+                        refreshCustomer(userId)
+                    }
+
+                    UserRole.VENDOR -> {
+                        refreshVendors()
+                    }
+
+                    UserRole.NONE -> Unit
+                }
+            }
+
+            onResult(role)
+        }
+    }
+
     fun updateCustomerProfile(
         customerId: String,
         customerName: String,
@@ -1157,6 +1190,8 @@ class AppViewModel(
         observedRecipientType = null
 
         _customerState.value = DataUiState(data = null)
+        _customerNames.value = emptyMap()
+        requestedCustomerIds.clear()
         _vendorProfileState.value = DataUiState(data = null)
         _orderState.value = DataUiState(data = emptyList())
         _notificationState.value = DataUiState(data = emptyList())
@@ -1417,6 +1452,42 @@ class AppViewModel(
             }
         }
     }
+
+
+    //
+    //------------------------------------------------
+    // Name cache for vendor to see customer name
+    //------------------------------------------------
+    private val _customerNames = MutableStateFlow<Map<String, String>>(emptyMap())
+    val customerNames: StateFlow<Map<String, String>> = _customerNames.asStateFlow()
+
+    private val requestedCustomerIds = mutableSetOf<String>()
+
+    fun loadCustomerNames(customerIds: Set<String>) {
+        // add() returns false for ids we've already requested
+        val toLoad = customerIds.filter { requestedCustomerIds.add(it) }
+
+        toLoad.forEach { id ->
+            viewModelScope.launch {
+                try {
+                    customerSync.refresh(id)
+                    val name = customerSync.observeCustomer(id).first()?.customerName
+
+                    if (!name.isNullOrBlank()) {
+                        _customerNames.update { it + (id to name) }
+                    }
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    Log.w("AppViewModel", "Could not load customer $id", exception)
+                    requestedCustomerIds.remove(id) // allow a retry later
+                }
+            }
+        }
+    }
+
+
+    //
 
     // ---------------------------------------------------------
     // Order status

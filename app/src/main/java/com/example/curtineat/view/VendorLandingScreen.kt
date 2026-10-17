@@ -1,5 +1,6 @@
 package com.example.curtineat.view
 
+import android.R.attr.radius
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -43,8 +44,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.example.curtineat.data.local.room.entity.OrderEntity
 import com.example.curtineat.data.local.room.entity.ProductEntity
@@ -57,6 +60,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.example.curtineat.view.CachedImage
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
+
 
 
 @Composable
@@ -179,7 +186,8 @@ fun VendorLandingScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+
                 ) {
                     VendorSummaryCard(
                         title = "Active Orders",
@@ -321,8 +329,9 @@ fun VendorSummaryCard(
     modifier: Modifier = Modifier
 ) {
     AppCard(
-        modifier = modifier.animateContentSize(),
-        contentPadding = PaddingValues(16.dp)
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        showShadow = true
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -369,9 +378,20 @@ fun VendorSectionHeader(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .animateContentSize(),
+            .animateContentSize()
+            .dropShadow(
+                shape = RoundedCornerShape(16.dp),
+                shadow = Shadow(
+                    radius = 4.dp,
+                    spread = 0.dp,
+                    color = Color.Black.copy(alpha = 0.20f),
+                    offset = DpOffset(0.dp, 2.dp)
+                )
+            ),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shadowElevation = 0.dp,
+        border = null,
     ) {
         Row(
             modifier = Modifier.padding(
@@ -423,7 +443,8 @@ fun VendorEmptyState(
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(24.dp)
+        contentPadding = PaddingValues(24.dp),
+        showShadow = true
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -456,9 +477,9 @@ fun VendorOrderItem(
 
     AppCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
-        contentPadding = PaddingValues(16.dp)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        showShadow = true
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -559,10 +580,10 @@ fun VendorFoodItem(
 ) {
     AppCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
+            .fillMaxWidth(),
         onClick = onClick,
-        contentPadding = PaddingValues(12.dp)
+        contentPadding = PaddingValues(12.dp),
+        showShadow = true
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),

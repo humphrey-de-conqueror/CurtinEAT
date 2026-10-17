@@ -10,8 +10,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -22,19 +26,51 @@ fun AppCard(
 	contentPadding: PaddingValues = PaddingValues(16.dp),
 	onClick: (() -> Unit)? = null,
 	enabled: Boolean = true,
+
+	// Optional shadow settings
+	showShadow: Boolean = false,
+	shadowRadius: Dp = 4.dp,
+	shadowSpread: Dp = 0.dp,
+	shadowColor: Color = Color.Black.copy(alpha = 0.20f),
+	shadowOffset: DpOffset = DpOffset(0.dp, 2.dp),
+
 	content: @Composable ColumnScope.() -> Unit
 ) {
 	val colors = CardDefaults.cardColors(
 		containerColor = containerColor
 	)
 
+	val elevation = CardDefaults.cardElevation(
+		defaultElevation = 0.dp,
+		pressedElevation = 0.dp,
+		focusedElevation = 0.dp,
+		hoveredElevation = 0.dp,
+		disabledElevation = 0.dp
+	)
+
+	val cardModifier = if (showShadow) {
+		modifier.dropShadow(
+			shape = shape,
+			shadow = Shadow(
+				radius = shadowRadius,
+				spread = shadowSpread,
+				color = shadowColor,
+				offset = shadowOffset
+			)
+		)
+	} else {
+		modifier
+	}
+
 	if (onClick != null) {
 		Card(
 			onClick = onClick,
-			modifier = modifier,
+			modifier = cardModifier,
 			enabled = enabled,
 			shape = shape,
-			colors = colors
+			colors = colors,
+			elevation = elevation,
+			border = null
 		) {
 			Column(
 				modifier = Modifier.padding(contentPadding),
@@ -43,9 +79,11 @@ fun AppCard(
 		}
 	} else {
 		Card(
-			modifier = modifier,
+			modifier = cardModifier,
 			shape = shape,
-			colors = colors
+			colors = colors,
+			elevation = elevation,
+			border = null
 		) {
 			Column(
 				modifier = Modifier.padding(contentPadding),

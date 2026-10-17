@@ -127,11 +127,11 @@ fun LoginScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            //Apphere
             AppCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                contentPadding = PaddingValues(20.dp)
+                contentPadding = PaddingValues(20.dp),
+                showShadow = true
             ) {
                 Column(
                     modifier = Modifier
@@ -144,7 +144,7 @@ fun LoginScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-//app here
+
                     AppTextField(
                         value = email,
                         onValueChange = {
@@ -156,30 +156,8 @@ fun LoginScreen(
                         enabled = !isLoginLoading,
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
-//                        value = email,
-//                        onValueChange = {
-//                            email = it
-//                            errorMessage = null
-//                        },
-//                        modifier = Modifier.fillMaxWidth(),
-//                        label = {
-//                            Text("Email address")
-//                        },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Mail,
-//                                contentDescription = null
-//                            )
-//                        },
-//                        singleLine = true,
-//                        enabled = !isLoginLoading,
-//                        keyboardOptions = KeyboardOptions(
-//                            keyboardType = KeyboardType.Email,
-//                            imeAction = ImeAction.Next
-//                        ),
-//                        shape = RoundedCornerShape(14.dp)
                     )
-//app here
+                    //app here
                     AppTextField(
                         value = password,
                         onValueChange = {
@@ -192,53 +170,6 @@ fun LoginScreen(
                         isPassword = true,
                         imeAction = ImeAction.Done
 
-//                        value = password,
-//                        onValueChange = {
-//                            password = it
-//                            errorMessage = null
-//                        },
-//                        modifier = Modifier.fillMaxWidth(),
-//                        label = {
-//                            Text("Password")
-//                        },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Lock,
-//                                contentDescription = null
-//                            )
-//                        },
-//                        trailingIcon = {
-//                            IconButton(
-//                                onClick = {
-//                                    passwordVisible = !passwordVisible
-//                                }
-//                            ) {
-//                                Icon(
-//                                    imageVector = if (passwordVisible) {
-//                                        Icons.Default.Visibility
-//                                    } else {
-//                                        Icons.Default.VisibilityOff
-//                                    },
-//                                    contentDescription = if (passwordVisible) {
-//                                        "Show password"
-//                                    } else {
-//                                        "Hide password"
-//                                    }
-//                                )
-//                            }
-//                        },
-//                        singleLine = true,
-//                        enabled = !isLoginLoading,
-//                        visualTransformation = if (passwordVisible) {
-//                            VisualTransformation.None
-//                        } else {
-//                            PasswordVisualTransformation()
-//                        },
-//                        keyboardOptions = KeyboardOptions(
-//                            keyboardType = KeyboardType.Password,
-//                            imeAction = ImeAction.Done
-//                        ),
-//                        shape = RoundedCornerShape(14.dp)
                     )
 
                     // Account type selection
@@ -280,7 +211,6 @@ fun LoginScreen(
 
                     // Login error
                     if (errorMessage != null) {
-                        //Apphere
                         Card(
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(

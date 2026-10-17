@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -255,7 +256,18 @@ fun AddProductScreen(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 1.dp
+                defaultElevation = 1.dp,
+                pressedElevation = 1.dp,
+                focusedElevation = 2.dp,
+                hoveredElevation = 2.dp,
+                disabledElevation = 0.dp
+            ),
+
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme
+                    .outlineVariant
+                    .copy(alpha = 0.45f)
             )
         ) {
             Column(

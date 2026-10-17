@@ -1,5 +1,6 @@
 package com.example.curtineat.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +58,7 @@ import com.example.curtineat.ui.components.AppButton
 import com.example.curtineat.ui.components.AppButtonStyle
 import com.example.curtineat.ui.components.AppTextField
 import com.example.curtineat.ui.components.VendorCategoryDropdown
+import androidx.compose.foundation.background
 
 @Composable
 fun RegistrationScreen(
@@ -112,6 +114,7 @@ fun RegistrationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
@@ -141,329 +144,295 @@ fun RegistrationScreen(
             )
 
             Spacer(Modifier.height(28.dp))
-
-//                    AppText(
-//                        text = "Account details",
-//                        style = MaterialTheme.typography.titleLarge,
-//                        fontWeight = FontWeight.SemiBold
-//                    )
-
+            AppCard(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(20.dp),
+                showShadow = false
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     // Account type selector
-
-                    //Apphere
-
-//                    Card(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        shape = RoundedCornerShape(16.dp),
-//                        colors = CardDefaults.cardColors(
-//                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-//                        )
-//                    )
-                    //changes here
                     AppCard(
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(20.dp)
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp,
+                            vertical = 12.dp
+                        ),
+                        showShadow = true
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Account type selector
-                            AppCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(
-                                    horizontal = 16.dp,
-                                    vertical = 12.dp
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        AppText(
-                                            text = if (isVendor) {
-                                                "Vendor account"
-                                            } else {
-                                                "Customer account"
-                                            },
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-
-                                        AppText(
-                                            text = if (isVendor) {
-                                                "Register as a Vendor."
-                                            } else {
-                                                "Register as a Customer."
-                                            },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-
-                                    Switch(
-                                        checked = isVendor,
-                                        onCheckedChange = {
-                                            isVendor = it
-                                            message = null
-                                        },
-                                        enabled = !isRegistering
-                                    )
-                                }
-                            }
-
-                            // Name
-                            AppTextField(
-                                value = name,
-                                onValueChange = {
-                                    name = it
-                                    message = null
-                                },
-                                label = if (isVendor) "Restaurant name" else "Full name",
-                                enabled = !isRegistering,
-                                imeAction = ImeAction.Next
-                            )
-
-                            // Email
-                            AppTextField(
-                                value = email,
-                                onValueChange = {
-                                    email = it
-                                    message = null
-                                },
-                                label = "Email address",
-                                enabled = !isRegistering,
-                                keyboardType = KeyboardType.Email,
-                                imeAction = ImeAction.Next
-                            )
-
-                            // Password
-                            AppTextField(
-                                value = password,
-                                onValueChange = {
-                                    password = it
-                                    message = null
-                                },
-                                label = "Password",
-                                supportingText = "At least 6 characters",
-                                enabled = !isRegistering,
-                                isPassword = true,
-                                imeAction = ImeAction.Next
-                            )
-
-                            // Confirm password
-                            AppTextField(
-                                value = confirmPassword,
-                                onValueChange = {
-                                    confirmPassword = it
-                                    message = null
-                                },
-                                label = "Confirm password",
-                                enabled = !isRegistering,
-                                isPassword = true,
-                                imeAction = ImeAction.Done
-                            )
-
-                            // Vendor address
-                            if (isVendor) {
-                                AppTextField(
-                                    value = location,
-                                    onValueChange = {
-                                        location = it
-                                        message = null
-                                    },
-                                    label = "Restaurant address",
-                                    placeholder = "Enter your restaurant address",
-                                    singleLine = false,
-                                    minLines = 2,
-                                    maxLines = 3,
-                                    enabled = !isRegistering,
-                                    imeAction = ImeAction.Next
-                                )
-                            }
-
-                            // Vendor-only category
-                            if (isVendor) {
-                                VendorCategoryDropdown(
-                                    selectedCategory = category,
-                                    onCategorySelected = {
-                                        category = it
-                                        message = null
-                                    },
-                                    enabled = !isRegistering
-                                )
-                            }
-
-                            Spacer(Modifier.height(10.dp))
-
-                            // Registration action
-
-                            //Apphere
-                            AppButton(
-                                text = "Create account",
-                                loading = isRegistering,
-                                loadingText = "Creating account...",
-                                onClick = {
-                                    message = null
-
-                                    if (name.isBlank()) {
-                                        message = "Name cannot be empty"
-                                        return@AppButton
-                                    }
-
-                                    if (isVendor && category.isBlank()) {
-                                        message = "Category cannot be empty"
-                                        return@AppButton
-                                    }
-
-                                    if (email.isBlank()) {
-                                        message = "Email cannot be empty"
-                                        return@AppButton
-                                    }
-
-                                    if (password != confirmPassword) {
-                                        message = "Passwords do not match"
-                                        return@AppButton
-                                    }
-
-                                    if (password.isBlank()) {
-                                        message = "Password cannot be empty"
-                                        return@AppButton
-                                    }
-
-                                    if (password.length < 6) {
-                                        message = "Password must be at least 6 characters long"
-                                        return@AppButton
-                                    }
-
-                                    isRegistering = true
-
-                                    appViewModel.register(
-                                        email = email.trim(),
-                                        password = password,
-                                        name = name.trim(),
-                                        category = category.trim(),
-                                        isVendor = isVendor
-                                    ) { result ->
-                                        isRegistering = false
-
-                                        when (result) {
-                                            RegisterResult.SUCCESS -> {
-                                                onLoginSuccess(isVendor)
-                                            }
-
-                                            RegisterResult.INVALID_EMAIL -> {
-                                                message = "Please enter a valid email"
-                                            }
-
-                                            RegisterResult.EMAIL_EXISTS -> {
-                                                message =
-                                                    "An account with this email already exists"
-                                            }
-
-                                            RegisterResult.ERROR -> {
-                                                message =
-                                                    "Registration failed. Please try again"
-                                            }
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.height(52.dp),
-                                fullWidth = true
-                            )
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .height(52.dp),
-//                        enabled = !isRegistering,
-//                        shape = RoundedCornerShape(14.dp)
-//                    ) {
-//                        if (isRegistering) {
-//                            CircularProgressIndicator(
-//                                modifier = Modifier.size(20.dp),
-//                                strokeWidth = 2.dp,
-//                                color = MaterialTheme.colorScheme.onPrimary
-//                            )
-//
-//                            Spacer(Modifier.size(10.dp))
-//
-//                            Text("Creating account...")
-//                        } else {
-//                            Text("Create account")
-//                        }
-//                    }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 AppText(
-                                    text = "Already have an account?",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = if (isVendor) {
+                                        "Vendor account"
+                                    } else {
+                                        "Customer account"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                AppText(
+                                    text = if (isVendor) {
+                                        "Register as a Vendor."
+                                    } else {
+                                        "Register as a Customer."
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-
-                                AppButton(
-                                    text = "Log in",
-                                    onClick = onBackButtonClick,
-                                    style = AppButtonStyle.TEXT,
-                                    enabled = !isRegistering
-                                )
-
-//                        TextButton(
-//                            onClick = onBackButtonClick,
-//                            enabled = !isRegistering
-//                        ) {
-//                            Text("Log in")
-//                        }
                             }
+
+                            Switch(
+                                checked = isVendor,
+                                onCheckedChange = {
+                                    isVendor = it
+                                    message = null
+                                },
+                                enabled = !isRegistering
+                            )
                         }
                     }
 
-                    Spacer(Modifier.height(16.dp))
-                }
+                    // Name
+                    AppTextField(
+                        value = name,
+                        onValueChange = {
+                            name = it
+                            message = null
+                        },
+                        label = if (isVendor) "Restaurant name" else "Full name",
+                        enabled = !isRegistering,
+                        imeAction = ImeAction.Next
+                    )
 
-                // Temporary message
-                if (message != null) {
-                    LaunchedEffect(message) {
-                        delay(3000)
-                        message = null
+                    // Email
+                    AppTextField(
+                        value = email,
+                        onValueChange = {
+                            email = it
+                            message = null
+                        },
+                        label = "Email address",
+                        enabled = !isRegistering,
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
+
+                    // Password
+                    AppTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            message = null
+                        },
+                        label = "Password",
+                        supportingText = "At least 6 characters",
+                        enabled = !isRegistering,
+                        isPassword = true,
+                        imeAction = ImeAction.Next
+                    )
+
+                    // Confirm password
+                    AppTextField(
+                        value = confirmPassword,
+                        onValueChange = {
+                            confirmPassword = it
+                            message = null
+                        },
+                        label = "Confirm password",
+                        enabled = !isRegistering,
+                        isPassword = true,
+                        imeAction = ImeAction.Done
+                    )
+
+                    // Vendor address
+                    if (isVendor) {
+                        AppTextField(
+                            value = location,
+                            onValueChange = {
+                                location = it
+                                message = null
+                            },
+                            label = "Restaurant address",
+                            placeholder = "Enter your restaurant address",
+                            singleLine = false,
+                            minLines = 2,
+                            maxLines = 3,
+                            enabled = !isRegistering,
+                            imeAction = ImeAction.Next
+                        )
                     }
 
+                    // Vendor-only category
+                    if (isVendor) {
+
+                        Column() {
+                            Text(
+                                text = "Category",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            VendorCategoryDropdown(
+                                selectedCategory = category,
+                                onCategorySelected = {
+                                    category = it
+                                    message = null
+                                },
+                                enabled = !isRegistering
+                            )
+                        }
+
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // Registration action
 
                     //Apphere
+                    AppButton(
+                        text = "Create account",
+                        loading = isRegistering,
+                        loadingText = "Creating account...",
+                        onClick = {
+                            message = null
 
-                    AppCard(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(14.dp),
-                        contentPadding = PaddingValues(16.dp)
+                            if (name.isBlank()) {
+                                message = "Name cannot be empty"
+                                return@AppButton
+                            }
+
+                            if (isVendor && category.isBlank()) {
+                                message = "Category cannot be empty"
+                                return@AppButton
+                            }
+
+                            if (email.isBlank()) {
+                                message = "Email cannot be empty"
+                                return@AppButton
+                            }
+
+                            if (password != confirmPassword) {
+                                message = "Passwords do not match"
+                                return@AppButton
+                            }
+
+                            if (password.isBlank()) {
+                                message = "Password cannot be empty"
+                                return@AppButton
+                            }
+
+                            if (password.length < 6) {
+                                message = "Password must be at least 6 characters long"
+                                return@AppButton
+                            }
+
+                            isRegistering = true
+
+                            appViewModel.register(
+                                email = email.trim(),
+                                password = password,
+                                name = name.trim(),
+                                category = category.trim(),
+                                isVendor = isVendor
+                            ) { result ->
+                                isRegistering = false
+
+                                when (result) {
+                                    RegisterResult.SUCCESS -> {
+                                        onLoginSuccess(isVendor)
+                                    }
+
+                                    RegisterResult.INVALID_EMAIL -> {
+                                        message = "Please enter a valid email"
+                                    }
+
+                                    RegisterResult.EMAIL_EXISTS -> {
+                                        message =
+                                            "An account with this email already exists"
+                                    }
+
+                                    RegisterResult.ERROR -> {
+                                        message =
+                                            "Registration failed. Please try again"
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.height(52.dp),
+                        fullWidth = true
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         AppText(
-                            text = message.orEmpty(),
-                            modifier = Modifier.padding(16.dp),
+                            text = "Already have an account?",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            fontWeight = FontWeight.Medium
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        AppButton(
+                            text = "Log in",
+                            onClick = onBackButtonClick,
+                            style = AppButtonStyle.TEXT,
+                            enabled = !isRegistering
                         )
                     }
                 }
+            }
 
-                AppBackButton(
-                    onClick = onBackButtonClick,
-                    modifier = Modifier.align(Alignment.TopStart)
+            Spacer(Modifier.height(16.dp))
+        }
+
+        // Temporary message
+        if (message != null) {
+            LaunchedEffect(message) {
+                delay(3000)
+                message = null
+            }
+
+
+            AppCard(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(16.dp),
+                showShadow = true
+            ) {
+                AppText(
+                    text = message.orEmpty(),
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
+
+        AppBackButton(
+            onClick = onBackButtonClick,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+    }
+}
