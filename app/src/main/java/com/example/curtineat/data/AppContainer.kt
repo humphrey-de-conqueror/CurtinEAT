@@ -122,7 +122,9 @@ class AppContainer(context: Context) {
 		local = orderLocal
 	)
 
-	private val notificationSync = NotificationSyncRepository(
+	// sad story, system noti use it directly without accessing view model for simplicity
+	// thats why it is not private val
+	val notificationSync = NotificationSyncRepository(
 		remote = notificationRemote,
 		local = notificationLocal
 	)
