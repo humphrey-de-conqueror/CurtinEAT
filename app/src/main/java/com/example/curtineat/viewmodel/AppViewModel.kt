@@ -830,6 +830,8 @@ class AppViewModel(
 
         viewModelScope.launch {
             try {
+                //manual delay
+                //delay(4000)
                 val bytes = imageCache.getImageBytes(imageId)
 
                 _imageStates.value = _imageStates.value +

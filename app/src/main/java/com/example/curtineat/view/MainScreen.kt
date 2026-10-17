@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
@@ -1071,6 +1072,7 @@ fun FoodItem(
                 imageId = product.productImage,
                 viewModel = appViewModel,
                 contentDescription = product.productName,
+                placeholderIcon = Icons.Default.Restaurant,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(112.dp)
