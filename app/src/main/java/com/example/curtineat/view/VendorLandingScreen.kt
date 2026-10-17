@@ -373,25 +373,34 @@ fun VendorSectionHeader(
     expanded: Boolean,
     onClick: () -> Unit
 ) {
+//    Surface(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clip(RoundedCornerShape(16.dp))
+//            .clickable(onClick = onClick)
+//            .animateContentSize()
+//            .dropShadow(
+//                shape = RoundedCornerShape(16.dp),
+//                shadow = Shadow(
+//                    radius = 4.dp,
+//                    spread = 0.dp,
+//                    color = Color.Black.copy(alpha = 0.20f),
+//                    offset = DpOffset(0.dp, 2.dp)
+//                )
+//            ),
+//
+//        shape = RoundedCornerShape(16.dp),
+//        color = MaterialTheme.colorScheme.surfaceVariant,
+//        shadowElevation = 0.dp,
+//        border = null,
+//    ) {
+
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .animateContentSize()
-            .dropShadow(
-                shape = RoundedCornerShape(16.dp),
-                shadow = Shadow(
-                    radius = 4.dp,
-                    spread = 0.dp,
-                    color = Color.Black.copy(alpha = 0.20f),
-                    offset = DpOffset(0.dp, 2.dp)
-                )
-            ),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 0.dp,
-        border = null,
+        shadowElevation = 4.dp
     ) {
         Row(
             modifier = Modifier.padding(
