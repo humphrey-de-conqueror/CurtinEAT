@@ -94,6 +94,7 @@ import com.example.curtineat.viewmodel.AppViewModel
 import com.example.curtineat.viewmodel.UserRole
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.CompositingStrategy
 
 @Composable
 fun AppScaffold(
@@ -900,12 +901,37 @@ fun BodyScreen(
 //                                    }
 //                                )
 //                ) {
-                    RestaurantCard(
-                        appViewModel = appViewModel,
-                        vendor = vendor,
-                        products = vendorProducts
-                    )
+//                    RestaurantCard(
+//                        appViewModel = appViewModel,
+//                        vendor = vendor,
+//                        products = vendorProducts
+//                    )
 //                }
+
+
+                val progress = remember(vendor.vendorId) {
+                    Animatable(0f)
+                }
+
+                LaunchedEffect(vendor.vendorId) {
+                    progress.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(220)
+                    )
+                }
+
+                RestaurantCard(
+                    appViewModel = appViewModel,
+                    vendor = vendor,
+                    products = vendorProducts,
+                    modifier = Modifier.graphicsLayer {
+                        alpha = progress.value
+                        translationY = (1f - progress.value) * 12.dp.toPx()
+                        clip = false
+                        compositingStrategy = CompositingStrategy.ModulateAlpha
+                    }
+                )
+
             }
         }
 
@@ -917,12 +943,12 @@ fun BodyScreen(
     }
 }
 
-@Composable
-fun RestaurantCard(
-    appViewModel: AppViewModel,
-    vendor: VendorEntity,
-    products: List<ProductEntity>
-) {
+//@Composable
+//fun RestaurantCard(
+//    appViewModel: AppViewModel,
+//    vendor: VendorEntity,
+//    products: List<ProductEntity>
+//) {
 //    AppCard(
 //        modifier = Modifier
 //            .fillMaxWidth()
@@ -935,12 +961,28 @@ fun RestaurantCard(
 //        shape = RoundedCornerShape(20.dp),
 //        contentPadding = PaddingValues(16.dp)
 //    )
-    AppCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        contentPadding = PaddingValues(16.dp),
-        showShadow = true
-    )
+
+
+//    AppCard(
+//        modifier = Modifier.fillMaxWidth(),
+//        shape = RoundedCornerShape(20.dp),
+//        contentPadding = PaddingValues(16.dp),
+//        showShadow = true
+//    )
+
+    @Composable
+    fun RestaurantCard(
+        appViewModel: AppViewModel,
+        vendor: VendorEntity,
+        products: List<ProductEntity>,
+        modifier: Modifier = Modifier
+    ) {
+        AppCard(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            contentPadding = PaddingValues(16.dp),
+            showShadow = true
+        )
     {
         Column(
             modifier = Modifier.animateContentSize(
