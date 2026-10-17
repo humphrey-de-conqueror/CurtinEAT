@@ -27,7 +27,10 @@ class CurtinEATApplication : Application() {
 
 		appScope.launch {
 			appContainer.notificationSync.newNotifications
-				.collect { notificationHelper.onNewNotifications(it) }
+				.collect {
+					android.util.Log.d("NOTIF_DEBUG", "2 collector got ${it.size}")
+					notificationHelper.onNewNotifications(it)
+				}
 		}
 	}
 }

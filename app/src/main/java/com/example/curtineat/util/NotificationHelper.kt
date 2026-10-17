@@ -7,13 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import com.example.curtineat.MainActivity
 import com.example.curtineat.data.local.room.entity.NotificationEntity
 
@@ -41,22 +37,24 @@ class NotificationHelper(private val context: Context) {
 	}
 
 	fun onNewNotifications(notifications: List<NotificationEntity>) {
-		if (isAppInForeground()) {
-			// Bell badge already shows it, so just a short buzz
-			vibrate()
-		} else {
-			notifications.forEach { show(it) }
-		}
-	}
+		val manager = NotificationManagerCompat.from(context)
 
-	private fun isAppInForeground(): Boolean =
-		ProcessLifecycleOwner.get().lifecycle.currentState
-			.isAtLeast(Lifecycle.State.STARTED)
+		Log.d(
+			"NOTIF_DEBUG",
+			"3 helper: count=${notifications.size} enabled=${manager.areNotificationsEnabled()}"
+		)
+
+		notifications.forEach { show(it) }
+	}
 
 	@SuppressLint("MissingPermission")
 	private fun show(notification: NotificationEntity) {
 		val manager = NotificationManagerCompat.from(context)
-		if (!manager.areNotificationsEnabled()) return
+
+		if (!manager.areNotificationsEnabled()) {
+			Log.d("NOTIF_DEBUG", "3 blocked: notifications disabled for app")
+			return
+		}
 
 		val intent = Intent(context, MainActivity::class.java).apply {
 			flags = Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -83,24 +81,7 @@ class NotificationHelper(private val context: Context) {
 			.build()
 
 		manager.notify(notification.notificationId.hashCode(), built)
-	}
 
-	private fun vibrate() {
-		val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-			(context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
-				as VibratorManager).defaultVibrator
-		} else {
-			@Suppress("DEPRECATION")
-			context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			vibrator.vibrate(
-				VibrationEffect.createOneShot(250, VibrationEffect.DEFAULT_AMPLITUDE)
-			)
-		} else {
-			@Suppress("DEPRECATION")
-			vibrator.vibrate(250)
-		}
+		Log.d("NOTIF_DEBUG", "4 posted id=${notification.notificationId}")
 	}
 }

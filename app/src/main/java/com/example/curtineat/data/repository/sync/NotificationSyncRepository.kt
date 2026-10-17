@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flow
 
 class NotificationSyncRepository(
 	private val remote: FirebaseNotificationRepository,
@@ -28,8 +29,36 @@ class NotificationSyncRepository(
 	fun observeNotifications(
 		recipientId: String,
 		recipientType: String
-	): Flow<List<NotificationEntity>> =
-		local.observeByRecipient(recipientId, recipientType)
+	): Flow<List<NotificationEntity>> = flow {
+
+		// ids already seen by this collector; only ever grows, so a brief
+		// empty emission during replaceByRecipient can't cause a re-alert
+		var knownIds: Set<String>? = null
+
+		local.observeByRecipient(recipientId, recipientType).collect { list ->
+			val previous = knownIds
+			knownIds = (previous ?: emptySet()) + list.map { it.notificationId }
+
+			if (previous != null) {
+				val fresh = list.filter {
+					!it.isRead && it.notificationId !in previous
+				}
+
+				Log.d(
+					"NOTIF_DEBUG",
+					"1 room flow: total=${list.size} known=${previous.size} fresh=${fresh.size}"
+				)
+
+				if (fresh.isNotEmpty()) {
+					_newNotifications.tryEmit(fresh)
+				}
+			} else {
+				Log.d("NOTIF_DEBUG", "1 room flow: baseline set, total=${list.size}")
+			}
+
+			emit(list)
+		}
+	}
 
 	suspend fun refreshAll() {
 		val notifications = remote.getAllNotifications()
@@ -88,9 +117,6 @@ class NotificationSyncRepository(
 		scope: CoroutineScope
 	): ListenerRegistration {
 
-		// null = first snapshot of this listener, which only sets the baseline
-		var knownIds: Set<String>? = null
-
 		return remote.listenToNotificationsByRecipientId(
 			recipientId
 		) { remoteNotifications ->
@@ -100,32 +126,17 @@ class NotificationSyncRepository(
 				"$recipientType $recipientId received ${remoteNotifications.size} notifications"
 			)
 
-			val notifications = remoteNotifications
-				.filter { it.recipientType == recipientType }
-				.map { it.toEntity() }
-
-			val previous = knownIds
-			knownIds = notifications.map { it.notificationId }.toSet()
-
-			val fresh = if (previous == null) {
-				emptyList()
-			} else {
-				notifications.filter {
-					!it.isRead && it.notificationId !in previous
-				}
-			}
-
 			scope.launch {
 				try {
+					val notifications = remoteNotifications
+						.filter { it.recipientType == recipientType }
+						.map { it.toEntity() }
+
 					local.replaceByRecipient(
 						recipientId = recipientId,
 						recipientType = recipientType.name,
 						notifications = notifications
 					)
-
-					if (fresh.isNotEmpty()) {
-						_newNotifications.emit(fresh)
-					}
 				} catch (exception: Exception) {
 					Log.e(
 						"NOTIFICATION_REALTIME",
