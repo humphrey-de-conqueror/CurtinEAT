@@ -909,27 +909,10 @@ fun BodyScreen(
 //                }
 
 
-                val progress = remember(vendor.vendorId) {
-                    Animatable(0f)
-                }
-
-                LaunchedEffect(vendor.vendorId) {
-                    progress.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(220)
-                    )
-                }
-
                 RestaurantCard(
                     appViewModel = appViewModel,
                     vendor = vendor,
-                    products = vendorProducts,
-                    modifier = Modifier.graphicsLayer {
-                        alpha = progress.value
-                        translationY = (1f - progress.value) * 12.dp.toPx()
-                        clip = false
-                        compositingStrategy = CompositingStrategy.ModulateAlpha
-                    }
+                    products = vendorProducts
                 )
 
             }
@@ -985,12 +968,6 @@ fun BodyScreen(
         )
     {
         Column(
-            modifier = Modifier.animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-            ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             AppText(
@@ -1077,15 +1054,16 @@ fun FoodItem(
     val addButtonScale = remember { Animatable(1f) }
 
     Card(
-        modifier = Modifier.width(156.dp).dropShadow(
-            shape = RoundedCornerShape(16.dp),
-            shadow = Shadow(
-                radius = 10.dp,
-                spread = 0.dp,
-                color = Color.Black.copy(alpha = 0.06f),
-                offset = DpOffset(0.dp, 2.dp)
-            )
-        ),
+        modifier = Modifier.width(156.dp),
+//            .dropShadow(
+//            shape = RoundedCornerShape(16.dp),
+//            shadow = Shadow(
+//                radius = 10.dp,
+//                spread = 0.dp,
+//                color = Color.Black.copy(alpha = 0.06f),
+//                offset = DpOffset(0.dp, 2.dp)
+//            )
+//        ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
