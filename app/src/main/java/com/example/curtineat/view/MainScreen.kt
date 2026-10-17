@@ -1027,7 +1027,11 @@ fun BodyScreen(
             } else {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 2.dp)
+                    contentPadding = PaddingValues(
+                        horizontal = 4.dp,
+                        vertical = 6.dp
+                    )
+//                    contentPadding = PaddingValues(vertical = 2.dp)
                 ) {
                     items(
                         items = products,
@@ -1072,12 +1076,17 @@ fun FoodItem(
             width = 0.5.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
         ),
+//        elevation = CardDefaults.cardElevation(
+//            defaultElevation = 0.dp,
+//            pressedElevation = 0.dp,
+//            focusedElevation = 0.dp,
+//            hoveredElevation = 0.dp,
+//            disabledElevation = 0.dp
+//        ),
+
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp,
-            disabledElevation = 0.dp
+            defaultElevation = 2.dp,
+            pressedElevation = 1.dp
         ),
         onClick = {
             if (enabled) {
