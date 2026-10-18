@@ -1,15 +1,32 @@
+# Build output
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local machine config (contains your SDK path)
 local.properties
+
+# IDE settings
+.idea/
+.DS_Store
+
+# Packaged builds
+*.apk
+*.aab
+*.ap_
+*.dex
+/app/release/
+/app/debug/
+
+
+# Signing keys: never share these
+*.jks
+*.keystore
+keystore.properties
+
+# Logs and temp
+*.log
+*.hprof

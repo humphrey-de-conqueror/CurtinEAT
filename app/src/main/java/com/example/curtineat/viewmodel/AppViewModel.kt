@@ -43,6 +43,7 @@ import android.util.Log
 import com.example.curtineat.data.remote.firebase.model.FirebaseNotificationData
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 
 class AppViewModel(
     private val vendorSync: VendorSyncRepository,
@@ -816,44 +817,45 @@ class AppViewModel(
     fun loadImage(imageId: String) {
         if (imageId.isBlank()) return
 
-        val currentState = _imageStates.value[imageId]
-
-        if (
-            currentState is ImageUiState.Loading ||
-            currentState is ImageUiState.Loaded
-        ) {
-            return
+        // Atomically claim the load: only one caller gets shouldLoad = true
+        var shouldLoad = false
+        _imageStates.update { current ->
+            val state = current[imageId]
+            if (state is ImageUiState.Loading || state is ImageUiState.Loaded) {
+                shouldLoad = false
+                current
+            } else {
+                shouldLoad = true
+                current + (imageId to ImageUiState.Loading)
+            }
         }
 
-        _imageStates.value = _imageStates.value +
-                (imageId to ImageUiState.Loading)
+        if (!shouldLoad) return
 
         viewModelScope.launch {
             try {
-                //manual delay
-                //delay(4000)
                 val bytes = imageCache.getImageBytes(imageId)
 
-                _imageStates.value = _imageStates.value +
-                        (
-                                imageId to if (bytes != null) {
-                                    ImageUiState.Loaded(bytes)
-                                } else {
-                                    ImageUiState.Unavailable
-                                }
-                                )
+                _imageStates.update { current ->
+                    current + (
+                            imageId to if (bytes != null) {
+                                ImageUiState.Loaded(bytes)
+                            } else {
+                                ImageUiState.Unavailable
+                            }
+                            )
+                }
             } catch (exception: CancellationException) {
-                _imageStates.value = _imageStates.value - imageId
+                _imageStates.update { it - imageId }
                 throw exception
             } catch (exception: Exception) {
-                _imageStates.value = _imageStates.value +
-                        (imageId to ImageUiState.Unavailable)
+                _imageStates.update { it + (imageId to ImageUiState.Unavailable) }
             }
         }
     }
 
     fun retryImage(imageId: String) {
-        _imageStates.value = _imageStates.value - imageId
+        _imageStates.update { it - imageId }
         loadImage(imageId)
     }
 

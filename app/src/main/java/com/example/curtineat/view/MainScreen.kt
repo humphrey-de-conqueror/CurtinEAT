@@ -711,22 +711,29 @@ fun BodyScreen(
     val vendors = vendorState.data
     val products = productState.data
 
-    val visibleVendors =
-        vendors.filter { vendor ->
-            products.any { product ->
-                product.vendorId == vendor.vendorId && product.isAvailable &&
-                        (searchQuery.isBlank() || product.productName
-                            .contains(searchQuery, ignoreCase = true))
+// Computed once per change of products/search, not on every recomposition
+    val productsByVendor = remember(products, searchQuery) {
+        products
+            .filter { product ->
+                product.isAvailable && (
+                        searchQuery.isBlank() ||
+                                product.productName.contains(searchQuery, ignoreCase = true)
+                        )
             }
-        }
+            .groupBy { it.vendorId }
+    }
+
+    val visibleVendors = remember(vendors, productsByVendor) {
+        vendors.filter { productsByVendor.containsKey(it.vendorId) }
+    }
 
     LaunchedEffect(searchQuery) {
         searchText = searchQuery
     }
 
-    LaunchedEffect(searchVendorId, vendors) {
+    LaunchedEffect(searchVendorId, visibleVendors) {
         if (searchVendorId != null) {
-            val index = vendors.indexOfFirst {
+            val index = visibleVendors.indexOfFirst {
                 it.vendorId == searchVendorId
             }
 
@@ -870,43 +877,15 @@ fun BodyScreen(
             }
 
         } else {
-
             items(
                 items = visibleVendors,
                 key = { it.vendorId }
             ) { vendor ->
-
-                val vendorProducts =
-                    products.filter { product ->
-
-                        product.vendorId == vendor.vendorId &&
-                                product.isAvailable &&
-                                (
-                                        searchQuery.isBlank() ||
-                                                product.productName.contains(
-                                                    searchQuery,
-                                                    ignoreCase = true
-                                                )
-                                        )
-                    }
-
-//                AnimatedVisibility(
-//                    visible = true,
-//                    enter =
-//                        fadeIn(tween(220)) +
-//                                slideInVertically(
-//                                    animationSpec = tween(220),
-//                                    initialOffsetY = {
-//                                        it / 12
-//                                    }
-//                                )
-//                ) {
-                    RestaurantCard(
-                        appViewModel = appViewModel,
-                        vendor = vendor,
-                        products = vendorProducts
-                    )
-//                }
+                RestaurantCard(
+                    appViewModel = appViewModel,
+                    vendor = vendor,
+                    products = productsByVendor[vendor.vendorId].orEmpty()
+                )
             }
         }
 
@@ -924,18 +903,6 @@ fun RestaurantCard(
     vendor: VendorEntity,
     products: List<ProductEntity>
 ) {
-//    AppCard(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .animateContentSize(
-//                animationSpec = spring(
-//                    dampingRatio = Spring.DampingRatioNoBouncy,
-//                    stiffness = Spring.StiffnessMedium
-//                )
-//            ),
-//        shape = RoundedCornerShape(20.dp),
-//        contentPadding = PaddingValues(16.dp)
-//    )
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -944,12 +911,6 @@ fun RestaurantCard(
     )
     {
         Column(
-            modifier = Modifier.animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-            ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             AppText(

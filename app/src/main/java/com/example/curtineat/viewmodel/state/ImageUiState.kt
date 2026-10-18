@@ -1,10 +1,13 @@
-
 package com.example.curtineat.viewmodel.state
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 sealed interface ImageUiState {
 	data object Loading : ImageUiState
 
-	data class Loaded(
+	@Immutable
+	class Loaded(
 		val bytes: ByteArray
 	) : ImageUiState
 

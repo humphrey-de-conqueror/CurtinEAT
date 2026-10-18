@@ -18,8 +18,7 @@ class ImageCacheRepository(
 	private val remote: ImageRepository,
 	private val maxCacheBytes: Long = DEFAULT_MAX_CACHE_BYTES
 ) {
-	private val imageLocks = ConcurrentHashMap<String, Mutex>()
-
+	private val imageLocks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
 	// Protect cache writes and eviction across different image requests.
 	private val cacheMutationLock = Mutex()
 
@@ -41,11 +40,12 @@ class ImageCacheRepository(
 
 			try {
 				val imageBytes = withContext(Dispatchers.IO) {
-					remote.getImage(imageId).use { it.bytes() }
+					val bytes = remote.getImage(imageId).use { it.bytes() }
+					if (isDecodableImage(bytes)) bytes else null
 				}
 
-				if (!isDecodableImage(imageBytes)) {
-					Log.w(TAG, "Not an image: $imageId (${imageBytes.size} bytes)")
+				if (imageBytes == null) {
+					Log.w(TAG, "Not an image: $imageId")
 					return@withLock null
 				}
 
@@ -88,10 +88,9 @@ class ImageCacheRepository(
 	}
 
 	private fun isDecodableImage(bytes: ByteArray): Boolean {
-		if (bytes.isEmpty()) return false
-		val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-		BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
-		return opts.outWidth > 0 && opts.outHeight > 0
+		val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+		BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+		return options.outWidth > 0 && options.outHeight > 0
 	}
 
 	companion object {
